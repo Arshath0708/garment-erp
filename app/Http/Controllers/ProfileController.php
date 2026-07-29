@@ -48,6 +48,10 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        if ($user->isProtected()) {
+            return back()->with('error', 'The Super Admin account cannot be deleted.');
+        }
+
         Auth::logout();
 
         $user->delete();
