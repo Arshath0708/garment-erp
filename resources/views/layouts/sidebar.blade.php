@@ -59,9 +59,6 @@
                     @can('po-format.view')
                         <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-file-earmark-ruled"></i><p>PO Format</p></a></li>
                     @endcan
-                    @can('contract.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-file-earmark-text"></i><p>Contract</p></a></li>
-                    @endcan
                     @can('markup.view')
                         <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-percent"></i><p>Markup</p></a></li>
                     @endcan
