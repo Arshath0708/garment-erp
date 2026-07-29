@@ -50,11 +50,22 @@
                     @can('agent.view')
                         <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-person-badge"></i><p>Agent</p></a></li>
                     @endcan
-                    @can('product.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-box-seam"></i><p>Product</p></a></li>
-                    @endcan
+                    {{-- Built. Category first: Product points at it. --}}
                     @can('category.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-tags"></i><p>Category</p></a></li>
+                        <li class="nav-item">
+                            <a href="{{ route('masters.categories.index') }}"
+                               class="nav-link {{ request()->routeIs('masters.categories.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-tags"></i><p>Category</p>
+                            </a>
+                        </li>
+                    @endcan
+                    @can('product.view')
+                        <li class="nav-item">
+                            <a href="{{ route('masters.products.index') }}"
+                               class="nav-link {{ request()->routeIs('masters.products.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-box-seam"></i><p>Product</p>
+                            </a>
+                        </li>
                     @endcan
                     @can('po-format.view')
                         <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-file-earmark-ruled"></i><p>PO Format</p></a></li>

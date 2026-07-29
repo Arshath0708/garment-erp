@@ -134,6 +134,77 @@
             .matrix-table td { padding-top: .4rem; padding-bottom: .4rem; }
             .matrix-table .form-check-input { cursor: pointer; }
 
+            /* ============================ FORMS ============================ */
+            /* Long master forms are grouped into labelled sections — see the
+               ui.form-section component. A flat 20-field grid is unreadable.
+               Note: never write a component tag inside this stylesheet, even in
+               a comment — Blade parses it and the layout stops compiling. */
+            .form-section { margin-bottom: 1.75rem; }
+            .form-section-head {
+                display: flex; align-items: flex-start; gap: .65rem;
+                padding-bottom: .6rem; margin-bottom: 1.1rem;
+                border-bottom: 1px solid #e9edf2;
+            }
+            .form-section-icon {
+                width: 30px; height: 30px; flex-shrink: 0;
+                display: grid; place-items: center;
+                border-radius: 8px;
+                background: #eff4ff; color: #2563eb; font-size: .95rem;
+            }
+            .form-section-title {
+                margin: 0; font-size: .95rem; font-weight: 600; color: #111827;
+                line-height: 1.7;
+            }
+            .form-section-subtitle {
+                margin: 0; font-size: .8rem; color: #8b95a5;
+            }
+
+            /* Read-only fields the system fills in (auto codes, calculated
+               values) look different from fields the user types into. */
+            .form-control[readonly] {
+                background-color: #f5f7fa;
+                color: #6b7280;
+                border-style: dashed;
+            }
+
+            /* Incentive grid — mirrors the sheet's L..U column layout, so one
+               header row instead of the same four labels repeated per scheme. */
+            .grid-table { --bs-table-bg: transparent; }
+            .grid-table th {
+                font-size: .75rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: .04em; color: #8b95a5; white-space: nowrap;
+                border-bottom-width: 1px;
+            }
+            .grid-table td { vertical-align: top; padding: .45rem .4rem; }
+            .grid-table td:first-child, .grid-table th:first-child { padding-left: 0; }
+            .grid-table .scheme-name { font-weight: 600; color: #374151; padding-top: .5rem; }
+            .grid-table .cell-error { font-size: .78rem; color: var(--bs-danger); margin-top: .2rem; }
+            .grid-table .na { color: #c2c9d4; padding-top: .5rem; }
+
+            /* One field per line, label on the left. Capped width — a text
+               input stretched across a 1900px monitor is harder to read, not
+               easier. */
+            .form-stack { max-width: 860px; }
+            .form-stack .form-line { margin-bottom: 1rem; }
+            .form-stack .form-line:last-child { margin-bottom: 0; }
+            .form-stack .col-form-label { color: #374151; }
+            @media (max-width: 575.98px) {
+                .form-stack .col-form-label { padding-bottom: .15rem; }
+            }
+
+            /* Save bar stays reachable at the bottom of a long form. */
+            .form-actions {
+                position: sticky; bottom: 0;
+                display: flex; gap: .5rem; align-items: center;
+                padding: .85rem 0 .35rem;
+                margin-top: .5rem;
+                background: linear-gradient(to top, #fff 70%, rgba(255,255,255,0));
+                border-top: 1px solid #e9edf2;
+            }
+
+            /* Required marker */
+            .form-label .req { color: var(--bs-danger); font-weight: 400; }
+
             /* Role picker cards on the user form */
             .role-option { cursor: pointer; transition: border-color .15s, background-color .15s; }
             .role-option:hover { border-color: var(--bs-primary) !important; }
