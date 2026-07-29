@@ -15,9 +15,119 @@
         @stack('styles')
 
         <style>
+            /* ============================ SIDEBAR — LIGHT ============================ */
+            .app-sidebar {
+                background: #ffffff;
+                border-right: 1px solid #e9edf2;
+            }
+
+            /* Brand */
+            .app-sidebar .sidebar-brand {
+                background: #ffffff;
+                border-bottom: 1px solid #eef1f5;
+                padding: .9rem 1rem;
+            }
+            .app-sidebar .brand-link {
+                display: flex; align-items: center; gap: .65rem;
+                text-decoration: none; padding: 0;
+            }
+            .app-sidebar .brand-mark {
+                width: 38px; height: 38px; flex-shrink: 0;
+                display: grid; place-items: center;
+                border-radius: 10px;
+                background: linear-gradient(135deg, #2563eb, #1d4ed8);
+                color: #fff; font-weight: 700; font-size: .95rem; letter-spacing: .5px;
+                box-shadow: 0 2px 6px rgba(37, 99, 235, .28);
+            }
+            .app-sidebar .brand-text {
+                display: flex; flex-direction: column; line-height: 1.15;
+                font-weight: 600; font-size: .98rem; color: #111827;
+            }
+            .app-sidebar .brand-text small {
+                font-size: .68rem; font-weight: 500; color: #9aa4b2;
+                text-transform: uppercase; letter-spacing: .06em;
+            }
+
+            /* Section headers */
+            .app-sidebar .nav-header {
+                color: #9aa4b2;
+                font-size: .68rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: .08em;
+                padding: 1.1rem 1.15rem .4rem;
+                background: transparent;
+            }
+
+            /* Links */
+            .app-sidebar .sidebar-menu .nav-link {
+                color: #4b5563;
+                font-size: .885rem;
+                font-weight: 500;
+                border-radius: 8px;
+                margin: 1px .6rem;
+                padding: .5rem .7rem;
+                display: flex; align-items: center;
+                transition: background-color .12s ease, color .12s ease;
+            }
+            .app-sidebar .sidebar-menu .nav-link .nav-icon {
+                font-size: 1rem;
+                width: 1.5rem;
+                color: #8b95a5;
+                transition: color .12s ease;
+            }
+            .app-sidebar .sidebar-menu .nav-link:hover {
+                background: #f3f6fa;
+                color: #111827;
+            }
+            .app-sidebar .sidebar-menu .nav-link:hover .nav-icon { color: #2563eb; }
+
+            .app-sidebar .sidebar-menu .nav-link.active {
+                background: #eff4ff;
+                color: #1d4ed8;
+                font-weight: 600;
+                box-shadow: inset 3px 0 0 #2563eb;
+            }
+            .app-sidebar .sidebar-menu .nav-link.active .nav-icon { color: #2563eb; }
+
+            /* Treeview children */
+            .app-sidebar .nav-treeview .nav-link {
+                font-size: .845rem;
+                padding-left: 1.9rem;
+                margin-left: 1rem;
+            }
+            .app-sidebar .nav-treeview .nav-link .nav-icon {
+                font-size: 1.15rem;
+                width: 1rem;
+                opacity: .5;
+            }
+
             /* Modules whose screens are not built yet — visible but clearly inert. */
-            .sidebar-menu .disabled-module { opacity: .55; cursor: not-allowed; }
-            .sidebar-menu .disabled-module:hover { opacity: .75; }
+            .app-sidebar .nav-link.soon { color: #a3acb9; cursor: default; }
+            .app-sidebar .nav-link.soon .nav-icon { color: #c2c9d4; }
+            .app-sidebar .nav-link.soon:hover { background: #f7f9fc; color: #6b7280; }
+            .app-sidebar .nav-link.soon > p::after {
+                content: "";
+                display: inline-block;
+                width: 5px; height: 5px;
+                border-radius: 50%;
+                background: #d6dbe3;
+                margin-left: .45rem;
+                vertical-align: middle;
+            }
+
+            /* Scrollbar */
+            .app-sidebar .sidebar-wrapper::-webkit-scrollbar { width: 6px; }
+            .app-sidebar .sidebar-wrapper::-webkit-scrollbar-thumb {
+                background: #dfe4ea; border-radius: 3px;
+            }
+            .app-sidebar .sidebar-wrapper::-webkit-scrollbar-thumb:hover { background: #c8cfd8; }
+
+            /* ============================ CONTENT ============================ */
+            body { background: #f5f7fa; }
+            .app-header { border-bottom: 1px solid #e9edf2; }
+            .card { border: 1px solid #e9edf2; }
+            .app-content-header h3 { font-weight: 600; color: #111827; }
 
             /* Permission matrix */
             .matrix-table th { font-weight: 600; font-size: .8125rem; white-space: nowrap; }
@@ -109,7 +219,7 @@
             });
 
             // Modules that have no screen yet.
-            document.querySelectorAll('.disabled-module').forEach(function (link) {
+            document.querySelectorAll('.nav-link.soon').forEach(function (link) {
                 link.addEventListener('click', function (e) { e.preventDefault(); });
             });
         });

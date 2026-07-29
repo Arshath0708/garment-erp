@@ -26,11 +26,12 @@ the sidebar.
 |---|---|---|
 | 0 | Roles, Permissions & Users | ✅ **Done** |
 | 1 | CRUD skeleton + Category reference module | ⬜ Next |
-| 2 | Lookup masters (Country, Currency, Port, Unit, Size, Colour, …) | ⬜ |
+| 2 | Lookups screen (units, ports, currencies, HSN, sizes, …) | ⬜ |
 | 3 | Agent & Category | ⬜ *blocked — Agent field list not supplied* |
 | 4 | Product (+ incentives, rates, packing specs) | ⬜ |
 | 5 | Buyer (+ carton markings) | ⬜ |
 | 6 | Supplier / Jobber (+ qty-slab rates) | ⬜ |
+| — | PO Format · Contract · Markup | ⬜ *blocked — scope not defined* |
 | 7 | Inquiry → Quotation → OC | ⬜ |
 | 8 | Sample → PO → Material Issue | ⬜ |
 | 9 | Inward → QC → Debit Note | ⬜ |
@@ -39,6 +40,9 @@ the sidebar.
 | 12 | Accounts & Payments | ⬜ |
 | 13 | Reports & Dashboard | ⬜ |
 | 14 | Jobworker Portal | ⬜ |
+
+**Masters (client-confirmed):** Supplier · Buyer · Agent · Product · Category ·
+PO Format · Contract · Markup
 
 Full breakdown and checklist: **[docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md)**
 
@@ -107,13 +111,13 @@ php artisan permission:sync --prune    # delete permissions dropped from config
 
 | Role | Permissions | Scope |
 |---|---:|---|
-| Super Admin | all | Bypasses every check via `Gate::before()` |
-| Admin | 181 | Full operations; cannot edit roles |
-| Merchandising & Manufacturing | 61 | Inquiry → PO, products, suppliers |
-| Accounts | 37 | Bills, payments, commission, outstanding |
-| Export Documentation & Foreign Payment | 25 | Shipment, export docs, foreign receipts |
-| Packing | 14 | Packing lists and cartons |
+| Super Admin | all (132) | Bypasses every check via `Gate::before()` |
+| Admin | 127 | Full operations; cannot edit roles |
+| Merchandising & Manufacturing | 50 | Inquiry → PO, products, suppliers |
+| Accounts | 36 | Bills, payments, commission, outstanding |
+| Export Documentation & Foreign Payment | 23 | Shipment, export docs, foreign receipts |
 | Quality Checker | 12 | Inward inspection |
+| Packing | 11 | Packing lists and cartons |
 | Jobworker | 5 | External jobber — own POs only |
 
 > ⚠️ **Do not assign the Jobworker role yet.** Per-jobber data scoping needs

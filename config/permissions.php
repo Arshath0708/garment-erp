@@ -55,8 +55,6 @@ return [
         'approve'  => 'Approve',
         'export'   => 'Export',
         'generate' => 'Generate',
-        'download' => 'Download',
-        'restore'  => 'Restore',
         'sync'     => 'Sync',
     ],
 
@@ -65,7 +63,7 @@ return [
     | Modules, grouped for the UI
     |--------------------------------------------------------------------------
     | key    => permission prefix, e.g. "product" => product.view, product.create
-    | label  => shown in the permission matrix
+    | label  => shown in the permission matrix and the sidebar
     | actions=> optional override of default_actions
     | built  => false means the screen does not exist yet; it still gets a
     |           permission so roles can be configured ahead of the build,
@@ -73,37 +71,21 @@ return [
     */
     'groups' => [
 
-        'User Management' => [
-            'user'       => ['label' => 'Users'],
-            'role'       => ['label' => 'Roles'],
-            'permission' => ['label' => 'Permissions', 'actions' => ['view', 'sync']],
-        ],
-
+        /*
+         * The eight masters confirmed by the client. Nothing else belongs here —
+         * supporting lookups (units, ports, currencies, HSN codes, sizes,
+         * colours, payment terms, incoterms) are dropdown sources, not business
+         * masters, and live on one Lookups screen under Settings.
+         */
         'Masters' => [
-            'company'         => ['label' => 'Company',          'built' => false],
-            'category'        => ['label' => 'Category',         'built' => false],
-            'product'         => ['label' => 'Product',          'built' => false],
-            'buyer'           => ['label' => 'Buyer',            'built' => false],
-            'supplier'        => ['label' => 'Supplier (Jobber)', 'built' => false],
-            'supplier-rate'   => ['label' => 'Supplier Rates',   'built' => false],
-            'agent'           => ['label' => 'Agent',            'built' => false],
-            'brand'           => ['label' => 'Brand',            'built' => false],
-            'warehouse'       => ['label' => 'Warehouse',        'built' => false],
-            'document-format' => ['label' => 'Document Formats', 'built' => false],
-        ],
-
-        'General Setup' => [
-            'country'         => ['label' => 'Country',         'built' => false],
-            'currency'        => ['label' => 'Currency',        'built' => false],
-            'port'            => ['label' => 'Port',            'built' => false],
-            'unit'            => ['label' => 'Unit',            'built' => false],
-            'size'            => ['label' => 'Size',            'built' => false],
-            'colour'          => ['label' => 'Colour',          'built' => false],
-            'hsn-code'        => ['label' => 'HSN Code',        'built' => false],
-            'incoterm'        => ['label' => 'Incoterms',       'built' => false],
-            'payment-term'    => ['label' => 'Payment Terms',   'built' => false],
-            'shipment-method' => ['label' => 'Shipment Method', 'built' => false],
-            'price-band'      => ['label' => 'Price Band',      'built' => false],
+            'supplier'  => ['label' => 'Supplier (Jobber)', 'built' => false],
+            'buyer'     => ['label' => 'Buyer',             'built' => false],
+            'agent'     => ['label' => 'Agent',             'built' => false],
+            'product'   => ['label' => 'Product',           'built' => false],
+            'category'  => ['label' => 'Category',          'built' => false],
+            'po-format' => ['label' => 'PO Format',         'built' => false],
+            'contract'  => ['label' => 'Contract',          'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
+            'markup'    => ['label' => 'Markup',            'built' => false],
         ],
 
         'Transactions' => [
@@ -115,33 +97,35 @@ return [
             'material-issue'     => ['label' => 'Material Issue',     'built' => false],
             'inward-entry'       => ['label' => 'Inward Entry',       'built' => false],
             'quality-check'      => ['label' => 'Quality Check',      'actions' => ['view', 'create', 'edit', 'approve'], 'built' => false],
-            'debit-note'         => ['label' => 'Debit Note',         'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
             'packing'            => ['label' => 'Packing',            'built' => false],
             'shipment'           => ['label' => 'Shipment',           'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => false],
-        ],
-
-        'Export Documents' => [
-            'export-document' => ['label' => 'Export Documents', 'actions' => ['view', 'generate', 'download'], 'built' => false],
+            'export-document'    => ['label' => 'Export Documents',   'actions' => ['view', 'generate', 'export'], 'built' => false],
         ],
 
         'Accounts' => [
-            'purchase-bill'    => ['label' => 'Purchase Bills',    'built' => false],
-            'payment'          => ['label' => 'Payments',          'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
-            'foreign-payment'  => ['label' => 'Foreign Payments',  'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
-            'agent-commission' => ['label' => 'Agent Commission',  'built' => false],
-            'credit-note'      => ['label' => 'Credit Note',       'built' => false],
-            'outstanding'      => ['label' => 'Outstanding',       'actions' => ['view', 'export'], 'built' => false],
+            'purchase-bill'    => ['label' => 'Purchase Bills',   'built' => false],
+            'payment'          => ['label' => 'Payments',         'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
+            'foreign-payment'  => ['label' => 'Foreign Payments', 'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
+            'debit-note'       => ['label' => 'Debit Notes',      'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
+            'agent-commission' => ['label' => 'Agent Commission', 'built' => false],
+            'outstanding'      => ['label' => 'Outstanding',      'actions' => ['view', 'export'], 'built' => false],
         ],
 
         'Reports' => [
             'report' => ['label' => 'Reports', 'actions' => ['view', 'export'], 'built' => false],
         ],
 
+        'Administration' => [
+            'user'       => ['label' => 'Users'],
+            'role'       => ['label' => 'Roles'],
+            'permission' => ['label' => 'Permissions', 'actions' => ['view', 'sync']],
+        ],
+
         'Settings' => [
-            'setting'       => ['label' => 'Application Settings', 'actions' => ['view', 'edit'], 'built' => false],
-            'number-series' => ['label' => 'Number Series',        'actions' => ['view', 'edit'], 'built' => false],
-            'activity-log'  => ['label' => 'Activity Logs',        'actions' => ['view'], 'built' => false],
-            'backup'        => ['label' => 'Backup & Restore',     'actions' => ['view', 'create', 'restore'], 'built' => false],
+            'lookup'        => ['label' => 'Lookups',         'built' => false],
+            'company'       => ['label' => 'Company Profile', 'actions' => ['view', 'edit'], 'built' => false],
+            'number-series' => ['label' => 'Number Series',   'actions' => ['view', 'edit'], 'built' => false],
+            'activity-log'  => ['label' => 'Activity Logs',   'actions' => ['view'], 'built' => false],
         ],
 
     ],
@@ -169,26 +153,22 @@ return [
             'description' => 'Full operational access. Cannot manage permissions.',
             'permissions' => [
                 'user.*', 'role.view',
-                'company.*', 'category.*', 'product.*', 'buyer.*', 'supplier.*',
-                'supplier-rate.*', 'agent.*', 'brand.*', 'warehouse.*', 'document-format.*',
-                'country.*', 'currency.*', 'port.*', 'unit.*', 'size.*', 'colour.*',
-                'hsn-code.*', 'incoterm.*', 'payment-term.*', 'shipment-method.*', 'price-band.*',
+                'supplier.*', 'buyer.*', 'agent.*', 'product.*', 'category.*',
+                'po-format.*', 'contract.*', 'markup.*',
                 'inquiry.*', 'quotation.*', 'order-confirmation.*', 'sample-approval.*',
                 'purchase-order.*', 'material-issue.*', 'inward-entry.*', 'quality-check.*',
-                'debit-note.*', 'packing.*', 'shipment.*', 'export-document.*',
-                'purchase-bill.*', 'payment.*', 'foreign-payment.*', 'agent-commission.*',
-                'credit-note.*', 'outstanding.*', 'report.*',
-                'setting.*', 'number-series.*', 'activity-log.*', 'backup.*',
+                'packing.*', 'shipment.*', 'export-document.*',
+                'purchase-bill.*', 'payment.*', 'foreign-payment.*', 'debit-note.*',
+                'agent-commission.*', 'outstanding.*', 'report.*',
+                'lookup.*', 'company.*', 'number-series.*', 'activity-log.*',
             ],
         ],
 
         'Merchandising & Manufacturing' => [
             'description' => 'Handles inquiry to purchase order, suppliers and products.',
             'permissions' => [
-                'category.view', 'product.*', 'buyer.view', 'supplier.*', 'supplier-rate.*',
-                'agent.view', 'brand.view',
-                'country.view', 'currency.view', 'port.view', 'unit.view', 'size.view',
-                'colour.view', 'hsn-code.view', 'incoterm.view', 'payment-term.view',
+                'supplier.*', 'product.*', 'category.view', 'agent.view',
+                'buyer.view', 'contract.view', 'po-format.view', 'lookup.view',
                 'inquiry.*', 'quotation.*', 'order-confirmation.*', 'sample-approval.*',
                 'purchase-order.*', 'material-issue.*',
                 'inward-entry.view', 'shipment.view',
@@ -199,10 +179,11 @@ return [
         'Accounts' => [
             'description' => 'Bills, payments, commission and outstanding.',
             'permissions' => [
-                'buyer.view', 'supplier.view', 'agent.view',
+                'supplier.view', 'buyer.view', 'agent.view', 'product.view',
+                'markup.view', 'contract.view',
                 'purchase-order.view', 'inward-entry.view', 'shipment.view',
-                'purchase-bill.*', 'payment.*', 'foreign-payment.*',
-                'agent-commission.*', 'debit-note.*', 'credit-note.*', 'outstanding.*',
+                'purchase-bill.*', 'payment.*', 'foreign-payment.*', 'debit-note.*',
+                'agent-commission.*', 'outstanding.*',
                 'report.view', 'report.export',
             ],
         ],
@@ -210,8 +191,7 @@ return [
         'Export Documentation & Foreign Payment' => [
             'description' => 'Shipment, export documents and foreign payment realisation.',
             'permissions' => [
-                'buyer.view', 'product.view', 'category.view',
-                'port.view', 'incoterm.view', 'currency.view', 'shipment-method.view',
+                'buyer.view', 'product.view', 'category.view', 'contract.view', 'lookup.view',
                 'order-confirmation.view', 'packing.view',
                 'shipment.*', 'export-document.*',
                 'foreign-payment.*',
@@ -222,8 +202,7 @@ return [
         'Packing' => [
             'description' => 'Packing lists, cartons and markings.',
             'permissions' => [
-                'product.view', 'buyer.view', 'warehouse.view',
-                'size.view', 'colour.view', 'unit.view',
+                'product.view', 'buyer.view', 'lookup.view',
                 'order-confirmation.view', 'purchase-order.view', 'inward-entry.view',
                 'packing.*',
                 'report.view',
