@@ -79,7 +79,7 @@ return [
          */
         'Masters' => [
             'supplier'  => ['label' => 'Supplier (Jobber)', 'built' => false],
-            'buyer'     => ['label' => 'Buyer',             'built' => false],
+            'buyer'     => ['label' => 'Buyer'],
             'agent'     => ['label' => 'Agent',             'built' => false],
             'product'   => ['label' => 'Product'],
             'category'  => ['label' => 'Category'],

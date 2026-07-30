@@ -49,10 +49,10 @@ class CategoryService
     }
 
     /**
-     * A category with products behind it cannot be deleted — those products
-     * would be left pointing at nothing, and the FK is restrictOnDelete so the
-     * database would reject it anyway. Checked here so the user gets a sentence
-     * instead of a 500.
+     * A category with products or buyers behind it cannot be deleted — they
+     * would be left pointing at nothing, and both FKs are restrictOnDelete so
+     * the database would reject it anyway. Checked here so the user gets a
+     * sentence instead of a 500.
      *
      * @return array{allowed: bool, reason: ?string}
      */
@@ -64,6 +64,16 @@ class CategoryService
             return [
                 'allowed' => false,
                 'reason'  => "This category is used by {$productCount} product(s). Reassign or delete them first.",
+            ];
+        }
+
+        // Buyer sheet col D links a buyer to any number of categories.
+        $buyerCount = $category->buyers()->count();
+
+        if ($buyerCount > 0) {
+            return [
+                'allowed' => false,
+                'reason'  => "This category is used by {$buyerCount} buyer(s). Remove it from them first.",
             ];
         }
 

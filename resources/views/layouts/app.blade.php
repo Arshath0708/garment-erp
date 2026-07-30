@@ -204,6 +204,47 @@
 
             /* Required marker */
             .form-label .req { color: var(--bs-danger); font-weight: 400; }
+            .col-form-label .req { color: var(--bs-danger); font-weight: 400; }
+
+            /* Carton marking details — Buyer sheet col X. A stack of labelled
+               lines with a live preview beside it, mirroring the widget the
+               client mocked up on the sheet. */
+            .carton-line { margin-bottom: .7rem; }
+            .carton-line-head {
+                display: flex; align-items: center; gap: .5rem;
+                margin-bottom: .2rem;
+            }
+            /* The label is editable but reads as a caption, not a second field —
+               the value below it is what the user is filling in. */
+            .carton-label-input {
+                flex: 1 1 auto; min-width: 0;
+                border: 0; border-bottom: 1px dashed transparent;
+                background: transparent; padding: 0;
+                font-size: .7rem; font-weight: 600; letter-spacing: .06em;
+                text-transform: uppercase; color: #8b95a5;
+            }
+            .carton-label-input:hover { border-bottom-color: #d4dae2; }
+            .carton-label-input:focus {
+                outline: none; color: #374151; border-bottom-color: var(--bs-primary);
+            }
+            .carton-preview {
+                border-radius: 10px; overflow: hidden;
+                background: #1f2430; border: 1px solid #2b3140;
+                position: sticky; top: 1rem;
+            }
+            .carton-preview-head {
+                padding: .5rem .85rem;
+                font-size: .68rem; font-weight: 600;
+                letter-spacing: .08em; text-transform: uppercase;
+                color: #8b95a5; border-bottom: 1px solid #2b3140;
+            }
+            .carton-preview-body {
+                padding: .85rem; margin: 0; min-height: 8rem;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                font-size: .82rem; line-height: 1.7; color: #e5e7eb;
+                white-space: pre-wrap; word-break: break-word;
+            }
+            .carton-preview-body.is-empty { color: #6b7280; font-style: italic; }
 
             /* Role picker cards on the user form */
             .role-option { cursor: pointer; transition: border-color .15s, background-color .15s; }
