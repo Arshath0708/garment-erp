@@ -80,7 +80,7 @@ return [
         'Masters' => [
             'supplier'  => ['label' => 'Supplier (Jobber)', 'built' => false],
             'buyer'     => ['label' => 'Buyer',             'built' => false],
-            'agent'     => ['label' => 'Agent',             'built' => false],
+            'agent'     => ['label' => 'Agent'],
             'product'   => ['label' => 'Product'],
             'category'  => ['label' => 'Category'],
             'po-format' => ['label' => 'PO Format',         'built' => false],

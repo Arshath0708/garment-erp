@@ -284,6 +284,17 @@ class ProductTest extends TestCase
             ->assertOk()->assertJson(['available' => true]);
     }
 
+    public function test_the_code_availability_endpoint_reports_taken_even_for_soft_deleted_products(): void
+    {
+        $user = $this->actingAsRole('Super Admin');
+        $product = Product::create($this->payload());
+        $product->delete();
+
+        $this->actingAs($user)
+            ->getJson(route('masters.products.check-code', ['field' => 'item_group_code', 'value' => 'PRD001']))
+            ->assertOk()->assertJson(['available' => false]);
+    }
+
     public function test_the_code_availability_endpoint_rejects_an_arbitrary_column(): void
     {
         // `field` lands in a where() — it must be whitelisted.
@@ -291,6 +302,24 @@ class ProductTest extends TestCase
             ->getJson(route('masters.products.check-code', ['field' => 'created_by', 'value' => '1']))
             ->assertStatus(422);
     }
+
+    public function test_inactive_category_relation_validation_fails_on_edit(): void
+    {
+        $user = $this->actingAsRole('Super Admin');
+        $category = Category::forceCreate(['code' => 'CAT800', 'name' => 'To Be Inactive', 'status' => 'active']);
+        $product = Product::create([
+            'category_id'     => $category->id,
+            'item_group_code' => 'PRD800',
+            'name'            => 'Inactive Cat Product',
+            'status'          => 'active',
+        ]);
+
+        $category->update(['status' => 'inactive']);
+
+        $response = $this->actingAs($user)->get(route('masters.products.edit', $product));
+        $response->assertSee($category->name);
+    }
+
 
     /*
     |--------------------------------------------------------------------------

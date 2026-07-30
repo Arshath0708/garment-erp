@@ -48,7 +48,12 @@
                         <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-globe-asia-australia"></i><p>Buyer</p></a></li>
                     @endcan
                     @can('agent.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-person-badge"></i><p>Agent</p></a></li>
+                        <li class="nav-item">
+                            <a href="{{ route('masters.agents.index') }}"
+                               class="nav-link {{ request()->routeIs('masters.agents.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-person-badge"></i><p>Agent</p>
+                            </a>
+                        </li>
                     @endcan
                     {{-- Built. Category first: Product points at it. --}}
                     @can('category.view')
