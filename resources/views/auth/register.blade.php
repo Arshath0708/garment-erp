@@ -37,7 +37,10 @@
                 <label class="form-label fw-bold text-secondary small">Password</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                    <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" placeholder="••••••••" required autocomplete="new-password">
+                    <input type="password" name="password" class="form-control border-end-0 @error('password') is-invalid @enderror" placeholder="••••••••" required autocomplete="new-password">
+                    <button class="input-group-text toggle-password" type="button" aria-label="Toggle password visibility" style="cursor: pointer; border-left: none;">
+                        <i class="bi bi-eye"></i>
+                    </button>
                 </div>
                 @error('password')
                     <div class="text-danger small mt-1 d-block">{{ $message }}</div>
@@ -49,7 +52,10 @@
                 <label class="form-label fw-bold text-secondary small">Confirm Password</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-check-circle"></i></span>
-                    <input type="password" name="password_confirmation" class="form-control @error('password_confirmation') is-invalid @enderror" placeholder="••••••••" required autocomplete="new-password">
+                    <input type="password" name="password_confirmation" class="form-control border-end-0 @error('password_confirmation') is-invalid @enderror" placeholder="••••••••" required autocomplete="new-password">
+                    <button class="input-group-text toggle-password" type="button" aria-label="Toggle password visibility" style="cursor: pointer; border-left: none;">
+                        <i class="bi bi-eye"></i>
+                    </button>
                 </div>
             </div>
         </div>

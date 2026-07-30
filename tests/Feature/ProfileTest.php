@@ -96,4 +96,25 @@ class ProfileTest extends TestCase
 
         $this->assertNotNull($user->fresh());
     }
+
+    public function test_protected_super_admin_cannot_delete_their_own_account_via_profile(): void
+    {
+        $user = User::factory()->create([
+            'email' => config('permissions.super_admin.email', 'admin@gurutraders.com'),
+            'password' => \Illuminate\Support\Facades\Hash::make('password'),
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->from('/profile')
+            ->delete('/profile', [
+                'password' => 'password',
+            ]);
+
+        $response
+            ->assertSessionHas('error')
+            ->assertRedirect('/profile');
+
+        $this->assertNotNull($user->fresh());
+    }
 }
