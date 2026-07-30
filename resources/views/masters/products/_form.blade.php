@@ -1,0 +1,341 @@
+@props([
+    'product' => null,
+    'categories' => [],
+    'unitSuggestions' => [],
+    'priceBands' => [],
+    'gstRates' => [],
+    'calculationBases' => [],
+])
+
+@php
+    use App\Models\ProductIncentive;
+
+    /**
+     * Product form — every field here is a column on the client's Product
+     * Master sheet, in the sheet's own order. Nothing has been added.
+     *
+     * Laid out one field per line, label on the left, same as the Category
+     * master. 27 fields in a three-column grid made the eye jump around.
+     *
+     * Reads an incentive field, preferring old input after a failed validation
+     * round-trip so a long form is never retyped.
+     */
+    $incentive = fn (string $scheme, string $field) => old(
+        "incentives.{$scheme}.{$field}",
+        $product?->incentive($scheme)?->{$field}
+    );
+@endphp
+
+{{-- ===================== A–E · IDENTIFICATION ===================== --}}
+<x-ui.form-section title="Identification" icon="bi-tag"
+                   subtitle="What the product is called, here and on export documents.">
+    <div class="form-stack">
+
+        {{-- Col A --}}
+        <x-ui.select name="category_id" label="Category" required horizontal searchable
+                     :options="$categories" :selected="$product?->category_id"
+                     placeholder="Search category…" />
+
+        {{-- Col B — "incase a code is already taken I should get an alert here" --}}
+        <div class="row form-line">
+            <label for="item_group_code" class="col-sm-4 col-lg-3 col-form-label fw-semibold">
+                Item Group Code <span class="req">*</span>
+            </label>
+            <div class="col-sm-8 col-lg-9">
+                <input type="text" id="item_group_code" name="item_group_code" maxlength="20" required
+                       value="{{ old('item_group_code', $product?->item_group_code) }}"
+                       class="form-control js-unique-check @error('item_group_code') is-invalid @enderror"
+                       data-field="item_group_code" placeholder="PRD001" autocomplete="off">
+                @error('item_group_code')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                {{-- Written by JS only once a code has actually been checked. --}}
+                <div class="form-text js-unique-feedback"></div>
+            </div>
+        </div>
+
+        {{-- Col C — same alert rule --}}
+        <div class="row form-line">
+            <label for="name" class="col-sm-4 col-lg-3 col-form-label fw-semibold">
+                Product Name <span class="req">*</span>
+            </label>
+            <div class="col-sm-8 col-lg-9">
+                <input type="text" id="name" name="name" maxlength="200" required
+                       value="{{ old('name', $product?->name) }}"
+                       class="form-control js-unique-check @error('name') is-invalid @enderror"
+                       data-field="name" placeholder="Cotton Casual Shirt" autocomplete="off">
+                @error('name')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                <div class="form-text js-unique-feedback"></div>
+            </div>
+        </div>
+
+        {{-- Col D --}}
+        <x-ui.field name="name_on_export_document" label="Product Name as per Export Document"
+                    :value="$product?->name_on_export_document" horizontal
+                    placeholder="Exactly as it must print on the invoice" />
+
+        {{-- Col E — "needs to have text and number allowed" --}}
+        <x-ui.field name="barcode" label="Barcode" :value="$product?->barcode" horizontal
+                    placeholder="Letters and numbers" />
+
+    </div>
+</x-ui.form-section>
+
+{{-- ================= F–K · UNITS AND CLASSIFICATION ================ --}}
+<x-ui.form-section title="Units & Classification" icon="bi-rulers"
+                   subtitle="Units, HSN, price band and tax rate.">
+    <div class="form-stack">
+
+        {{-- Cols F and G — typed, not picked. The Unit Master was cancelled, and
+             the rule is manual entry at master level. The datalist only suggests
+             units already used, so PCS does not drift into Pcs and pcs; anything
+             can still be typed. The unit on a PO is not always the unit declared
+             on the export document, hence two fields. --}}
+        <x-ui.field name="unit_po" label="Unit (PO & OC)" :value="$product?->unit_po"
+                    horizontal placeholder="PCS" list="unit-options" maxlength="20" />
+
+        <x-ui.field name="unit_export" label="Unit (Export Docs)" :value="$product?->unit_export"
+                    horizontal placeholder="PCS" list="unit-options" maxlength="20" />
+
+        <datalist id="unit-options">
+            @foreach($unitSuggestions as $unit)
+                <option value="{{ $unit }}"></option>
+            @endforeach
+        </datalist>
+
+        {{-- Col H — a text box on the sheet, not a dropdown --}}
+        <x-ui.field name="hsn_code" label="HSN Code" :value="$product?->hsn_code"
+                    horizontal placeholder="620520" />
+
+        {{-- Col J --}}
+        <x-ui.select name="price_band_id" label="Price Band" horizontal searchable
+                     :options="$priceBands" :selected="$product?->price_band_id"
+                     placeholder="Search band…" />
+
+        {{-- Col K --}}
+        <x-ui.select name="gst_rate_id" label="GST %" horizontal searchable
+                     :options="$gstRates" :selected="$product?->gst_rate_id"
+                     placeholder="Search rate…" />
+
+        {{-- Col I --}}
+        <x-ui.field name="drawback_sr_no" label="Drawback Sr. No." :value="$product?->drawback_sr_no"
+                    horizontal placeholder="B001" />
+
+    </div>
+</x-ui.form-section>
+
+{{-- ===================== L–U · EXPORT INCENTIVES ==================== --}}
+<x-ui.form-section title="Export Incentives" icon="bi-cash-coin"
+                   subtitle="Leave a row blank if that scheme does not apply to this product.">
+    {{-- The one place that stays a grid. The sheet lays columns L to U out the
+         same way, and three schemes x four fields as separate lines would be
+         twelve rows repeating the same four labels. --}}
+    <div class="form-stack">
+        <div class="table-responsive">
+            <table class="table grid-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:110px">Scheme</th>
+                        <th style="width:120px">Rate %</th>
+                        <th style="width:120px">Rate % 2</th>
+                        <th style="width:140px">Cap Value</th>
+                        <th style="min-width:200px">Calculated On</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(ProductIncentive::SCHEMES as $scheme => $schemeLabel)
+                        @php $twoPercent = in_array($scheme, ProductIncentive::TWO_PERCENT_SCHEMES, true); @endphp
+
+                        <tr>
+                            <td class="scheme-name">{{ $schemeLabel }}</td>
+
+                            <td>
+                                <input type="number" step="0.001" min="0" max="100" placeholder="0.000"
+                                       name="incentives[{{ $scheme }}][percent_1]"
+                                       value="{{ $incentive($scheme, 'percent_1') }}"
+                                       class="form-control @error('incentives.'.$scheme.'.percent_1') is-invalid @enderror">
+                                @error('incentives.'.$scheme.'.percent_1')
+                                    <div class="cell-error">{{ $message }}</div>
+                                @enderror
+                            </td>
+
+                            <td>
+                                @if($twoPercent)
+                                    {{-- Only RoSCTL is quoted as two percentages (sheet cols O and P). --}}
+                                    <input type="number" step="0.001" min="0" max="100" placeholder="0.000"
+                                           name="incentives[{{ $scheme }}][percent_2]"
+                                           value="{{ $incentive($scheme, 'percent_2') }}"
+                                           class="form-control @error('incentives.'.$scheme.'.percent_2') is-invalid @enderror">
+                                    @error('incentives.'.$scheme.'.percent_2')
+                                        <div class="cell-error">{{ $message }}</div>
+                                    @enderror
+                                @else
+                                    <div class="na">—</div>
+                                @endif
+                            </td>
+
+                            <td>
+                                <input type="number" step="0.0001" min="0" placeholder="0.0000"
+                                       name="incentives[{{ $scheme }}][cap_value]"
+                                       value="{{ $incentive($scheme, 'cap_value') }}"
+                                       class="form-control @error('incentives.'.$scheme.'.cap_value') is-invalid @enderror">
+                                @error('incentives.'.$scheme.'.cap_value')
+                                    <div class="cell-error">{{ $message }}</div>
+                                @enderror
+                            </td>
+
+                            <td>
+                                <select name="incentives[{{ $scheme }}][calculation_basis_id]"
+                                        data-searchable data-placeholder="Search basis…"
+                                        class="form-select @error('incentives.'.$scheme.'.calculation_basis_id') is-invalid @enderror">
+                                    <option value="">— Select —</option>
+                                    @foreach($calculationBases as $id => $basis)
+                                        <option value="{{ $id }}"
+                                            @selected((string) $incentive($scheme, 'calculation_basis_id') === (string) $id)>{{ $basis }}</option>
+                                    @endforeach
+                                </select>
+                                @error('incentives.'.$scheme.'.calculation_basis_id')
+                                    <div class="cell-error">{{ $message }}</div>
+                                @enderror
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</x-ui.form-section>
+
+{{-- ==================== V–X · FABRIC MEASUREMENT ==================== --}}
+<x-ui.form-section title="Fabric Measurement" icon="bi-bounding-box"
+                   subtitle="For fabrics and sarees. Leave blank for other products.">
+    <div class="form-stack">
+
+        {{-- Cols V and W --}}
+        <x-ui.field name="fabric_length_mtr" label="Fabric Length (mtrs)" type="number" step="0.001" min="0"
+                    :value="$product?->fabric_length_mtr" horizontal
+                    class="js-sqm-input" placeholder="0.000" />
+
+        <x-ui.field name="fabric_width_inch" label="Fabric Width (inch)" type="number" step="0.001" min="0"
+                    :value="$product?->fabric_width_inch" horizontal
+                    class="js-sqm-input" placeholder="0.000" />
+
+        {{-- Col X — "autocalculated based on inputted values". Shown live for
+             feedback; the stored value is a generated column computed by the
+             database, so the formula has exactly one home. --}}
+        <div class="row form-line">
+            <label class="col-sm-4 col-lg-3 col-form-label fw-semibold">Sq. Mtrs / Unit</label>
+            <div class="col-sm-8 col-lg-9">
+                <div class="input-group">
+                    <span class="input-group-text bg-body-secondary"><i class="bi bi-calculator"></i></span>
+                    <input type="text" id="sqm_preview" class="form-control" readonly
+                           value="{{ $product?->sq_mtr_per_unit }}" placeholder="Calculated">
+                </div>
+            </div>
+        </div>
+
+    </div>
+</x-ui.form-section>
+
+{{-- ==================== Y, Z, AA · OTHER DETAILS =================== --}}
+<x-ui.form-section title="Other Details" icon="bi-card-text">
+    <div class="form-stack">
+
+        {{-- Col Z --}}
+        <x-ui.select name="status" label="Status" required horizontal
+                     :options="['active' => 'Active', 'inactive' => 'Inactive']"
+                     :selected="$product?->status ?? 'active'"
+                     :placeholder="false" />
+
+        {{-- Col Y --}}
+        <x-ui.textarea name="description" label="Description" :value="$product?->description"
+                       horizontal rows="2" placeholder="100% Cotton, 180 GSM" />
+
+        {{-- Col AA --}}
+        <x-ui.textarea name="remarks" label="Remarks" :value="$product?->remarks"
+                       horizontal rows="2" placeholder="Optional notes" />
+
+    </div>
+</x-ui.form-section>
+
+<div class="form-actions">
+    <button type="submit" class="btn btn-primary px-4">
+        <i class="bi bi-check-lg me-1"></i>{{ $product ? 'Update' : 'Save' }} Product
+    </button>
+    <a href="{{ route('masters.products.index') }}" class="btn btn-outline-secondary">Cancel</a>
+</div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    /* ------------------------------------------------------------------ *
+     * Sq. metres preview (sheet col X).
+     * Display only — the stored value is computed by the database, so this
+     * cannot drift from what is saved.
+     * ------------------------------------------------------------------ */
+    const preview = document.getElementById('sqm_preview');
+    const inputs  = document.querySelectorAll('.js-sqm-input');
+
+    function recalcSqm() {
+        const [length, width] = Array.from(inputs).map(el => parseFloat(el.value));
+
+        preview.value = (isNaN(length) || isNaN(width))
+            ? ''
+            : ((length * width) / 39.3701).toFixed(4);
+    }
+
+    inputs.forEach(el => el.addEventListener('input', recalcSqm));
+
+    /* ------------------------------------------------------------------ *
+     * "Tell me if a code / name is already taken" (sheet cols B and C).
+     * A convenience only — the unique index is what actually enforces it.
+     * ------------------------------------------------------------------ */
+    const checkUrl = @json(route('masters.products.check-code'));
+    const ignoreId = @json($product?->id);
+    const original = new Map();
+
+    document.querySelectorAll('.js-unique-check').forEach(function (input) {
+        original.set(input, input.value.trim());
+        const feedback = input.parentElement.querySelector('.js-unique-feedback');
+        let timer = null;
+
+        function clearFeedback() {
+            feedback.textContent = '';
+            feedback.className = 'form-text js-unique-feedback';
+        }
+
+        input.addEventListener('input', function () {
+            clearTimeout(timer);
+            const value = input.value.trim();
+
+            // Unchanged on an edit form is not a clash with itself.
+            if (value === '' || value === original.get(input)) {
+                clearFeedback();
+                input.classList.remove('is-invalid', 'is-valid');
+                return;
+            }
+
+            // Debounced so a 12-character code is one request, not twelve.
+            timer = setTimeout(function () {
+                const params = new URLSearchParams({ field: input.dataset.field, value: value });
+                if (ignoreId) params.append('ignore', ignoreId);
+
+                fetch(checkUrl + '?' + params, { headers: { 'Accept': 'application/json' } })
+                    .then(r => r.ok ? r.json() : Promise.reject())
+                    .then(function (data) {
+                        input.classList.toggle('is-invalid', !data.available);
+                        input.classList.toggle('is-valid', data.available);
+                        feedback.textContent = data.available
+                            ? 'Available.'
+                            : 'Already taken — choose another.';
+                        feedback.className = 'form-text js-unique-feedback ' +
+                            (data.available ? 'text-success' : 'text-danger');
+                    })
+                    // Network failure must not block the form. The unique index
+                    // still rejects a duplicate on submit.
+                    .catch(clearFeedback);
+            }, 350);
+        });
+    });
+});
+</script>
+@endpush

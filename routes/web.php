@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Masters\CategoryController;
+use App\Http\Controllers\Masters\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserManagement\PermissionController;
 use App\Http\Controllers\UserManagement\RoleController;
@@ -23,6 +25,31 @@ Route::middleware('auth')->group(function () {
         Route::get('/profile', 'edit')->name('profile.edit');
         Route::patch('/profile', 'update')->name('profile.update');
         Route::delete('/profile', 'destroy')->name('profile.destroy');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Masters
+    |--------------------------------------------------------------------------
+    | Built in dependency order — Category has no parent, Product needs it.
+    | Agent, Buyer, Supplier, Jobber, PO Format and Markup follow.
+    |
+    | As with User Management, per-action permissions are declared inside each
+    | controller's middleware() method, not here.
+    */
+    Route::prefix('masters')->name('masters.')->group(function () {
+
+        Route::patch('categories/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])
+            ->name('categories.toggle-status');
+        Route::resource('categories', CategoryController::class);
+
+        // Declared before the resource so "check-code" is not swallowed by
+        // products/{product}.
+        Route::get('products/check-code', [ProductController::class, 'checkCode'])
+            ->name('products.check-code');
+        Route::patch('products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])
+            ->name('products.toggle-status');
+        Route::resource('products', ProductController::class);
     });
 
     /*

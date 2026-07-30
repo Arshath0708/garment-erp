@@ -4,4 +4,15 @@
 
 @import "bootstrap/dist/css/bootstrap.min.css";
 @import "bootstrap-icons/font/bootstrap-icons.css";
-@import "admin-lte/dist/css/adminlte.min.css";
+@import "admin-lte/dist/css/adminlte.min.css";@import "tom-select/dist/css/tom-select.bootstrap5.css";
+
+/* Tom Select renders its own control; align it with Bootstrap form-select
+   sizing so a searchable dropdown and a plain one line up in the same row. */
+.ts-wrapper .ts-control {
+    border-color: var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    min-height: calc(1.5em + 0.75rem + 2px);
+    padding: 0.375rem 0.75rem;
+}
+.ts-wrapper.is-invalid .ts-control { border-color: var(--bs-form-invalid-border-color); }
+.ts-wrapper.single .ts-control { background-image: none; }

@@ -17,6 +17,11 @@ class DatabaseSeeder extends Seeder
             PermissionsSeeder::class,
             RolesSeeder::class,
             SuperAdminSeeder::class,
+
+            // Master data prerequisites. Number series must exist before the
+            // first category is saved, or the code generator has no counter.
+            NumberSeriesSeeder::class,
+            LookupSeeder::class,
         ]);
     }
 }
