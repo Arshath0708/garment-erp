@@ -119,13 +119,45 @@
         .input-group-text {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
-            border-right: none;
             color: #64748b;
-            border-top-left-radius: 10px;
-            border-bottom-left-radius: 10px;
         }
-        .input-group > .form-control {
+        /* Leading icon addon: rounded on the left, seamless into the field. */
+        .input-group > .input-group-text:first-child {
+            border-right: none;
+            border-radius: 10px 0 0 10px;
+        }
+        /* Trailing eye button: rounded on the right. */
+        .input-group > .input-group-text:last-child {
             border-left: none;
+            border-radius: 0 10px 10px 0;
+        }
+        /* A field flanked by addons owns neither side border. */
+        .input-group > .input-group-text:first-child + .form-control {
+            border-left: none;
+        }
+        .input-group > .form-control:has(+ .input-group-text) {
+            border-right: none;
+        }
+        /* Bootstrap's focus ring is drawn per-element, so a focused field would
+           highlight only its own middle segment. Lift the ring to the group. */
+        .input-group:focus-within > .input-group-text,
+        .input-group:focus-within > .form-control {
+            border-color: #3b82f6;
+            background-color: #fff;
+        }
+        .input-group:focus-within {
+            border-radius: 10px;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+        .input-group > .form-control:focus {
+            box-shadow: none;
+        }
+        .toggle-password {
+            cursor: pointer;
+            transition: color 0.15s ease;
+        }
+        .toggle-password:hover {
+            color: #2563eb;
         }
         .btn-modern {
             padding: 0.85rem 1.5rem;

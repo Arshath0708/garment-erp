@@ -27,30 +27,43 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Password visibility toggle
-document.addEventListener('click', function (event) {
+/**
+ * Password visibility toggle.
+ *
+ * Delegated from the document so it works for password fields rendered after
+ * load (modals, the user edit form) without re-binding. A button may name its
+ * field with data-target="#id"; otherwise it toggles the field inside its own
+ * input group.
+ */
+document.addEventListener('click', (event) => {
     const button = event.target.closest('.toggle-password');
     if (!button) return;
 
-    const container = button.closest('.input-group') || button.parentElement;
-    if (!container) return;
+    const group = button.closest('.input-group') || button.parentElement;
+    const input = button.dataset.target
+        ? document.querySelector(button.dataset.target)
+        : group?.querySelector('input[type="password"], input[type="text"]');
 
-    const input = container.querySelector('input');
     if (!input) return;
 
-    const icon = button.querySelector('i');
+    const showing = input.type === 'password';
+    input.type = showing ? 'text' : 'password';
 
-    if (input.type === 'password') {
-        input.type = 'text';
-        if (icon) {
-            icon.classList.remove('bi-eye');
-            icon.classList.add('bi-eye-slash');
-        }
-    } else {
-        input.type = 'password';
-        if (icon) {
-            icon.classList.remove('bi-eye-slash');
-            icon.classList.add('bi-eye');
-        }
+    // Outline eye while masked, solid eye while visible. No slashed variant —
+    // a struck-through eye reads as "disabled" more than "hidden".
+    const icon = button.querySelector('i');
+    if (icon) {
+        icon.classList.toggle('bi-eye', !showing);
+        icon.classList.toggle('bi-eye-fill', showing);
+    }
+
+    button.setAttribute('aria-pressed', showing ? 'true' : 'false');
+    button.setAttribute('aria-label', showing ? 'Hide password' : 'Show password');
+
+    // Keep the caret where the user left it — switching `type` sends it to the
+    // end in Chrome, which is jarring mid-edit.
+    if (document.activeElement === input) {
+        const end = input.value.length;
+        input.setSelectionRange(end, end);
     }
 });
