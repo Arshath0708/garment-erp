@@ -20,9 +20,9 @@
                 <label class="form-label small text-body-secondary mb-1">Agent Type</label>
                 <select name="agent_type" class="form-select form-select-sm">
                     <option value="">All types</option>
-                    <option value="supplier" @selected(($filters['agent_type'] ?? '') === 'supplier')>Supplier</option>
-                    <option value="buyer" @selected(($filters['agent_type'] ?? '') === 'buyer')>Buyer</option>
-                    <option value="jobber" @selected(($filters['agent_type'] ?? '') === 'jobber')>Jobber</option>
+                    @foreach (\App\Models\Agent::TYPES as $value => $label)
+                        <option value="{{ $value }}" @selected(($filters['agent_type'] ?? '') === $value)>{{ $label }}</option>
+                    @endforeach
                 </select>
             </div>
             <div class="col-md-2">

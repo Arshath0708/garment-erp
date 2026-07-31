@@ -109,7 +109,7 @@ class BuyerTest extends TestCase
     {
         $shirts   = $this->category("Men's Shirts", 'CAT901');
         $trousers = $this->category("Men's Trousers", 'CAT902');
-        $agent    = Agent::onSide('buyer')->first();
+        $agent    = Agent::ofType('buyer')->first();
         $user     = $this->actingAsRole('Super Admin');
 
         $this->actingAs($user)->post(route('masters.buyers.store'), $this->payload([
@@ -419,11 +419,8 @@ class BuyerTest extends TestCase
 
     public function test_the_agent_dropdown_lists_only_buyer_side_agents(): void
     {
-        $buyerSide    = Agent::create(['display_code' => 'AGB', 'name' => 'Buyer Side Agent']);
-        $supplierSide = Agent::create(['display_code' => 'AGS', 'name' => 'Supplier Side Agent']);
-
-        $buyerSide->sides()->create(['side' => 'buyer']);
-        $supplierSide->sides()->create(['side' => 'supplier']);
+        Agent::create(['display_code' => 'AGB', 'name' => 'Buyer Side Agent', 'agent_type' => 'buyer']);
+        Agent::create(['display_code' => 'AGS', 'name' => 'Supplier Side Agent', 'agent_type' => 'supplier']);
 
         $this->actingAs($this->actingAsRole('Super Admin'))
             ->get(route('masters.buyers.create'))
@@ -435,8 +432,7 @@ class BuyerTest extends TestCase
     public function test_a_supplier_side_agent_is_rejected_even_if_posted_directly(): void
     {
         // The filtered select is a UI convenience; the rule is what enforces it.
-        $supplierSide = Agent::create(['display_code' => 'AGS', 'name' => 'Supplier Side Agent']);
-        $supplierSide->sides()->create(['side' => 'supplier']);
+        $supplierSide = Agent::create(['display_code' => 'AGS', 'name' => 'Supplier Side Agent', 'agent_type' => 'supplier']);
 
         $this->actingAs($this->actingAsRole('Super Admin'))
             ->post(route('masters.buyers.store'), $this->payload(['agent_id' => $supplierSide->id]))
@@ -447,8 +443,7 @@ class BuyerTest extends TestCase
 
     public function test_an_inactive_agent_is_not_offered(): void
     {
-        $retired = Agent::create(['display_code' => 'AGX', 'name' => 'Retired Agent', 'status' => 'inactive']);
-        $retired->sides()->create(['side' => 'buyer']);
+        Agent::create(['display_code' => 'AGX', 'name' => 'Retired Agent', 'status' => 'inactive', 'agent_type' => 'buyer']);
 
         $this->actingAs($this->actingAsRole('Super Admin'))
             ->get(route('masters.buyers.create'))

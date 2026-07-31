@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Masters;
 
+use App\Models\Agent;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -20,7 +21,7 @@ class UpdateAgentRequest extends FormRequest
         $agentId = $this->route('agent')->id;
 
         return [
-            'agent_type'           => ['required', Rule::in(['supplier', 'buyer', 'jobber'])],
+            'agent_type'           => ['required', Rule::in(array_keys(Agent::TYPES))],
             'name'                 => ['required', 'string', 'max:200'],
             'display_code'         => ['required', 'string', 'max:5', 'regex:/^[a-zA-Z0-9]+$/', Rule::unique('agents', 'display_code')->ignore($agentId)],
             'calculation_basis_id' => ['nullable', 'integer', Rule::exists('calculation_bases', 'id')],
