@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Masters\BuyerController;
+use App\Http\Controllers\Masters\AgentController;
 use App\Http\Controllers\Masters\CategoryController;
 use App\Http\Controllers\Masters\GeoController;
 use App\Http\Controllers\Masters\ProductController;
@@ -68,6 +69,11 @@ Route::middleware('auth')->group(function () {
         Route::patch('buyers/{buyer}/toggle-status', [BuyerController::class, 'toggleStatus'])
             ->name('buyers.toggle-status');
         Route::resource('buyers', BuyerController::class);
+        Route::get('agents/check-code', [AgentController::class, 'checkCode'])
+            ->name('agents.check-code');
+        Route::patch('agents/{agent}/toggle-status', [AgentController::class, 'toggleStatus'])
+            ->name('agents.toggle-status');
+        Route::resource('agents', AgentController::class);
     });
 
     /*

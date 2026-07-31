@@ -116,7 +116,7 @@
         </div>
 
         @if($products->hasPages())
-            <div class="mt-3">{{ $products->links() }}</div>
+            <div class="mt-3">{{ $products->links('pagination::bootstrap-5') }}</div>
         @endif
 
         <div class="text-body-secondary small mt-2">
