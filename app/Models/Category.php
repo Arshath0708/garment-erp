@@ -6,6 +6,7 @@ use App\Models\Concerns\Filterable;
 use App\Models\Concerns\HasAuditColumns;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -42,6 +43,12 @@ class Category extends Model
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);
+    }
+
+    /** Buyer sheet col D — a buyer selects any number of categories. */
+    public function buyers(): BelongsToMany
+    {
+        return $this->belongsToMany(Buyer::class, 'buyer_category');
     }
 
     /*

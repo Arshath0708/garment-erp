@@ -22,6 +22,14 @@ class DatabaseSeeder extends Seeder
             // first category is saved, or the code generator has no counter.
             NumberSeriesSeeder::class,
             LookupSeeder::class,
+
+            // Needs countries from LookupSeeder. Feeds the cascading
+            // Country -> State -> City dropdowns on the Buyer master.
+            GeoSeeder::class,
+
+            // Gives the Buyer master's agent dropdown something to show until
+            // the Agent screen is built.
+            AgentSeeder::class,
         ]);
     }
 }

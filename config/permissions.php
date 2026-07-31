@@ -79,8 +79,8 @@ return [
          */
         'Masters' => [
             'supplier'  => ['label' => 'Supplier (Jobber)', 'built' => false],
-            'buyer'     => ['label' => 'Buyer',             'built' => false],
-            'agent'     => ['label' => 'Agent'],
+            'buyer'     => ['label' => 'Buyer'],
+            'agent'     => ['label' => 'Agent',             'built' => false],
             'product'   => ['label' => 'Product'],
             'category'  => ['label' => 'Category'],
             'po-format' => ['label' => 'PO Format',         'built' => false],

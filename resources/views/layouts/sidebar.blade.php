@@ -45,7 +45,12 @@
                         <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-truck"></i><p>Supplier</p></a></li>
                     @endcan
                     @can('buyer.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-globe-asia-australia"></i><p>Buyer</p></a></li>
+                        <li class="nav-item">
+                            <a href="{{ route('masters.buyers.index') }}"
+                               class="nav-link {{ request()->routeIs('masters.buyers.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-globe-asia-australia"></i><p>Buyer</p>
+                            </a>
+                        </li>
                     @endcan
                     @can('agent.view')
                         <li class="nav-item">
