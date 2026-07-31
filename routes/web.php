@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Masters\AgentController;
 use App\Http\Controllers\Masters\CategoryController;
 use App\Http\Controllers\Masters\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -50,6 +51,12 @@ Route::middleware('auth')->group(function () {
         Route::patch('products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])
             ->name('products.toggle-status');
         Route::resource('products', ProductController::class);
+
+        Route::get('agents/check-code', [AgentController::class, 'checkCode'])
+            ->name('agents.check-code');
+        Route::patch('agents/{agent}/toggle-status', [AgentController::class, 'toggleStatus'])
+            ->name('agents.toggle-status');
+        Route::resource('agents', AgentController::class);
     });
 
     /*

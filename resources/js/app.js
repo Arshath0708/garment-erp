@@ -19,11 +19,17 @@ window.TomSelect = TomSelect;
  */
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('select[data-searchable]').forEach((el) => {
-        new TomSelect(el, {
+        const settings = {
             allowEmptyOption: true,
             maxOptions: null,
             placeholder: el.dataset.placeholder || 'Search…',
-        });
+        };
+
+        if (el.multiple) {
+            settings.plugins = ['remove_button'];
+        }
+
+        new TomSelect(el, settings);
     });
 });
 

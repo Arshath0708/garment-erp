@@ -47,7 +47,7 @@ class CategoryController extends Controller implements HasMiddleware
             ->search($request->string('search')->toString())
             ->status($request->string('status')->toString())
             ->sort($request->string('sort')->toString(), $request->string('direction')->toString())
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         return view('masters.categories.index', [
@@ -87,7 +87,7 @@ class CategoryController extends Controller implements HasMiddleware
     {
         return view('masters.categories.edit', [
             'category'  => $category,
-            'poFormats' => $this->poFormats(),
+            'poFormats' => $this->poFormats($category),
         ]);
     }
 
@@ -129,12 +129,18 @@ class CategoryController extends Controller implements HasMiddleware
      * formats". Inactive formats are excluded so a retired template cannot be
      * attached to a new category — existing links to it keep working.
      */
-    private function poFormats(): \Illuminate\Support\Collection
+    private function poFormats(?Category $category = null): \Illuminate\Support\Collection
     {
-        return DocumentFormat::query()
-            ->where('module', 'po')
-            ->active()
-            ->orderBy('name')
-            ->pluck('name', 'id');
+        $query = DocumentFormat::query()->where('module', 'po');
+
+        if ($category) {
+            $query->where(function ($q) use ($category) {
+                $q->active()->orWhere('id', $category->po_format_id);
+            });
+        } else {
+            $query->active();
+        }
+
+        return $query->orderBy('name')->pluck('name', 'id');
     }
 }

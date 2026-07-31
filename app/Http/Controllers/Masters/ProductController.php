@@ -45,7 +45,7 @@ class ProductController extends Controller implements HasMiddleware
             ->search($request->string('search')->toString())
             ->status($request->string('status')->toString())
             ->sort($request->string('sort')->toString(), $request->string('direction')->toString())
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         return view('masters.products.index', [
@@ -81,7 +81,7 @@ class ProductController extends Controller implements HasMiddleware
 
     public function edit(Product $product): View
     {
-        return view('masters.products.edit', $this->formData() + [
+        return view('masters.products.edit', $this->formData($product) + [
             'product' => $product->load('incentives'),
         ]);
     }
@@ -135,7 +135,7 @@ class ProductController extends Controller implements HasMiddleware
             return response()->json(['message' => 'Unknown field.'], 422);
         }
 
-        $taken = Product::query()
+        $taken = Product::withTrashed()
             ->where($field, $request->string('value')->toString())
             ->when($request->filled('ignore'), fn ($q) => $q->whereKeyNot($request->integer('ignore')))
             ->exists();
@@ -151,18 +151,45 @@ class ProductController extends Controller implements HasMiddleware
      *
      * @return array<string, mixed>
      */
-    private function formData(): array
+    private function formData(?Product $product = null): array
     {
+        $categoriesQuery = Category::query();
+        if ($product) {
+            $categoriesQuery->where(function ($q) use ($product) {
+                $q->active()->orWhere('id', $product->category_id);
+            });
+        } else {
+            $categoriesQuery->active();
+        }
+
+        $priceBandsQuery = PriceBand::query();
+        if ($product) {
+            $priceBandsQuery->where(function ($q) use ($product) {
+                $q->active()->orWhere('id', $product->price_band_id);
+            });
+        } else {
+            $priceBandsQuery->active();
+        }
+
+        $gstRatesQuery = GstRate::query();
+        if ($product) {
+            $gstRatesQuery->where(function ($q) use ($product) {
+                $q->active()->orWhere('id', $product->gst_rate_id);
+            });
+        } else {
+            $gstRatesQuery->active();
+        }
+
         return [
-            'categories'        => Category::active()->orderBy('name')->pluck('name', 'id'),
+            'categories'        => $categoriesQuery->orderBy('name')->pluck('name', 'id'),
 
             // Unit is typed, not picked. These are only autocomplete hints from
             // what has already been entered, so "PCS" does not become "Pcs" and
             // "pcs" across three products and then three export documents.
             'unitSuggestions'   => $this->unitSuggestions(),
 
-            'priceBands'        => PriceBand::active()->orderBy('code')->get()->pluck('label', 'id'),
-            'gstRates'          => GstRate::active()->orderBy('rate')->get()->pluck('label', 'id'),
+            'priceBands'        => $priceBandsQuery->orderBy('code')->get()->pluck('label', 'id'),
+            'gstRates'          => $gstRatesQuery->orderBy('rate')->get()->pluck('label', 'id'),
             'calculationBases'  => CalculationBasis::active()->orderBy('name')->pluck('name', 'id'),
         ];
     }
