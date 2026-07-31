@@ -23,6 +23,11 @@ class DatabaseSeeder extends Seeder
             NumberSeriesSeeder::class,
             LookupSeeder::class,
 
+            // Supplier sheet cols D and I — the two lookups that sheet asks to
+            // be extensible. Separate from LookupSeeder so the Supplier master
+            // can be reseeded without touching the buyer and product lists.
+            SupplierLookupSeeder::class,
+
             // Needs countries from LookupSeeder. Feeds the cascading
             // Country -> State -> City dropdowns on the Buyer master.
             GeoSeeder::class,

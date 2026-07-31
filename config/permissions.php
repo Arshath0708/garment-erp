@@ -78,7 +78,7 @@ return [
          * masters, and live on one Lookups screen under Settings.
          */
         'Masters' => [
-            'supplier'  => ['label' => 'Supplier (Jobber)', 'built' => false],
+            'supplier'  => ['label' => 'Supplier (Jobber)'],
             'buyer'     => ['label' => 'Buyer'],
             'agent'     => ['label' => 'Agent',             'built' => false],
             'product'   => ['label' => 'Product'],

@@ -5,6 +5,7 @@ use App\Http\Controllers\Masters\AgentController;
 use App\Http\Controllers\Masters\CategoryController;
 use App\Http\Controllers\Masters\GeoController;
 use App\Http\Controllers\Masters\ProductController;
+use App\Http\Controllers\Masters\SupplierController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserManagement\PermissionController;
 use App\Http\Controllers\UserManagement\RoleController;
@@ -69,6 +70,20 @@ Route::middleware('auth')->group(function () {
         Route::patch('buyers/{buyer}/toggle-status', [BuyerController::class, 'toggleStatus'])
             ->name('buyers.toggle-status');
         Route::resource('buyers', BuyerController::class);
+
+        /*
+         * Same ordering rule again. "agents" here is the col X dropdown source
+         * filtered by party type — it is a cascade endpoint on the Supplier
+         * form, not the Agent master, which is masters.agents.* below.
+         */
+        Route::get('suppliers/check-code', [SupplierController::class, 'checkCode'])
+            ->name('suppliers.check-code');
+        Route::get('suppliers/agents', [SupplierController::class, 'agents'])
+            ->name('suppliers.agents');
+        Route::patch('suppliers/{supplier}/toggle-status', [SupplierController::class, 'toggleStatus'])
+            ->name('suppliers.toggle-status');
+        Route::resource('suppliers', SupplierController::class);
+
         Route::get('agents/check-code', [AgentController::class, 'checkCode'])
             ->name('agents.check-code');
         Route::patch('agents/{agent}/toggle-status', [AgentController::class, 'toggleStatus'])

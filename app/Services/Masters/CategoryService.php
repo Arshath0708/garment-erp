@@ -77,6 +77,17 @@ class CategoryService
             ];
         }
 
+        // Supplier sheet col R links a supplier to the categories it makes or
+        // trades. Same restrictOnDelete as the buyer pivot.
+        $supplierCount = $category->suppliers()->count();
+
+        if ($supplierCount > 0) {
+            return [
+                'allowed' => false,
+                'reason'  => "This category is used by {$supplierCount} supplier(s). Remove it from them first.",
+            ];
+        }
+
         return ['allowed' => true, 'reason' => null];
     }
 }

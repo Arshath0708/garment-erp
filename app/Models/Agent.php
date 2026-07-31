@@ -77,6 +77,12 @@ class Agent extends Model
         return $this->hasMany(Buyer::class);
     }
 
+    /** Supplier sheet col X — supplier-side and jobber-side agents. */
+    public function suppliers(): HasMany
+    {
+        return $this->hasMany(Supplier::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes

@@ -51,6 +51,15 @@ class Category extends Model
         return $this->belongsToMany(Buyer::class, 'buyer_category');
     }
 
+    /**
+     * Supplier sheet col R. Jobber Q1: "We link job worker to the category of
+     * product. And for trading we link 1/2 product categories to one supplier."
+     */
+    public function suppliers(): BelongsToMany
+    {
+        return $this->belongsToMany(Supplier::class, 'supplier_category');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Filtering
