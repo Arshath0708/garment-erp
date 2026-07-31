@@ -184,7 +184,7 @@ class BuyerController extends Controller implements HasMiddleware
              * a validation rule in BuyerRequest — this select narrows the list,
              * it does not enforce it.
              */
-            'agents' => Agent::active()->onSide('buyer')->orderBy('name')->get()->pluck('label', 'id'),
+            'agents' => Agent::active()->ofType('buyer')->orderBy('name')->get()->pluck('label', 'id'),
 
             'countries'       => Country::active()->orderBy('name')->get()->pluck('label', 'id'),
 

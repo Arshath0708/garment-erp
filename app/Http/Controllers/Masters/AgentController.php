@@ -136,11 +136,7 @@ class AgentController extends Controller implements HasMiddleware
     private function formData(?Agent $agent = null): array
     {
         return [
-            'agentTypes'       => [
-                'supplier' => 'Supplier',
-                'buyer'    => 'Buyer',
-                'jobber'   => 'Jobber',
-            ],
+            'agentTypes'       => Agent::TYPES,
             'categories'       => $this->categoriesForAgent($agent),
             'calculationBases' => $this->calculationBasesForAgent($agent),
         ];

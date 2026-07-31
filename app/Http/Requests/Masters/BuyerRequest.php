@@ -126,7 +126,9 @@ abstract class BuyerRequest extends FormRequest
              */
             'agent_id'               => [
                 'nullable', 'integer',
-                Rule::exists('agent_sides', 'agent_id')->where('side', 'buyer'),
+                Rule::exists('agents', 'id')
+                    ->where('agent_type', 'buyer')
+                    ->whereNull('deleted_at'),
             ],
 
             // Col P
