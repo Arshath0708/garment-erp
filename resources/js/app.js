@@ -23,11 +23,15 @@ document.addEventListener('DOMContentLoaded', () => {
             allowEmptyOption: true,
             maxOptions: null,
             placeholder: el.dataset.placeholder || 'Search…',
+        };
 
-            // Multi-select (Buyer sheet col D, "allow multiple selection") needs
-            // a way to take one back off without reopening the list.
-            plugins: el.multiple ? ['remove_button'] : [],
-        });
+        // Multi-select (Buyer sheet col D, "allow multiple selection") needs
+        // a way to take one back off without reopening the list.
+        if (el.multiple) {
+            settings.plugins = ['remove_button'];
+        }
+
+        new TomSelect(el, settings);
     });
 
     initCascadingSelects();
