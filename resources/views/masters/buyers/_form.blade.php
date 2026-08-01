@@ -12,14 +12,21 @@
     'incoterms' => [],
     'shipmentMethods' => [],
     'currencies' => [],
+    'orderModes' => [],
+    // Payment term ids that split the payment, so the JS toggle and
+    // BuyerRequest read the same `has_split` column rather than two lists.
+    'splitTermIds' => [],
 ])
 
 @php
     use App\Models\Buyer;
 
     /**
-     * Buyer form — every field here is a column on the client's Buyer Master
-     * sheet, in the sheet's own order. Nothing has been added.
+     * Buyer form — the client's Buyer Master sheet in the sheet's own order,
+     * plus the fields their working prototype carries and the sheet did not:
+     * Order Mode, the advance / at-sight split, and the accepted sets beside
+     * the default currency, incoterm and shipment method. See the 000200
+     * expand migration for why each one exists.
      *
      * Laid out one field per line, label on the left, grouped into sections —
      * same as the Category and Product masters. 26 columns in a flat grid is
@@ -32,6 +39,32 @@
 
     // Categories already linked, for the multi-select.
     $selectedCategories = $buyer?->categories->pluck('id')->all() ?? [];
+
+    /*
+     * The accepted sets. On a buyer saved before these pivots existed the
+     * relation is empty, so the single default stands in — otherwise editing
+     * such a buyer would show an empty multi-select and saving would clear a
+     * default the user was never shown.
+     */
+    $selectedCurrencies = $buyer?->currencies->pluck('id')->all()
+        ?: array_filter([$buyer?->currency_id]);
+
+    $selectedIncoterms = $buyer?->incoterms->pluck('id')->all()
+        ?: array_filter([$buyer?->incoterm_id]);
+
+    $selectedShipmentMethods = $buyer?->shipmentMethods->pluck('id')->all()
+        ?: array_filter([$buyer?->shipment_method_id]);
+
+    /*
+     * Whether the advance / at-sight boxes start open. Resolved server-side so
+     * a failed validation round-trip does not flash them shut before the
+     * script runs — the errors are rendered inside that block.
+     */
+    $splitTermVisible = in_array(
+        (int) old('payment_term_id', $buyer?->payment_term_id),
+        array_map('intval', $splitTermIds),
+        true,
+    );
 
     /**
      * Carton mark rows to render (sheet col X).
@@ -91,6 +124,15 @@
                     :value="$buyer?->name_on_export_invoice" horizontal maxlength="200"
                     placeholder="Exactly as it must print on the invoice"
                     hint="Leave blank to use the company name." />
+
+        {{-- Not on the sheet. From the client's prototype — the Order
+             Confirmation screen branches on it, so it is a property of the
+             buyer rather than a question asked on every order. --}}
+        <x-ui.select name="order_mode" label="Order Mode" required horizontal
+                     :options="$orderModes"
+                     :selected="$buyer?->order_mode ?? 'oc'"
+                     :placeholder="false"
+                     hint="OC Required — a full order confirmation with item lines, sent to the buyer, and POs raised from those lines. Direct Order — a contract number only; items are entered at PO stage." />
 
         {{-- Col D — "allow multiple selection in a drop down menu which is
              connected from the category master" --}}
@@ -233,20 +275,75 @@
                      :selected="$buyer?->payment_term_id" horizontal searchable
                      placeholder="Search terms…" />
 
-        {{-- Col R --}}
-        <x-ui.select name="incoterm_id" label="Inco Terms" :options="$incoterms"
+        {{-- Opens only on a term that splits the payment. The two halves must
+             total 100 — BuyerRequest checks it; this is the affordance. --}}
+        <div id="advance-split-row" class="@unless($splitTermVisible) d-none @endunless">
+            <div class="row form-line">
+                <label class="col-sm-4 col-lg-3 col-form-label fw-semibold">
+                    Advance / At Sight Split <span class="req">*</span>
+                </label>
+                <div class="col-sm-8 col-lg-9">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-auto" style="width:130px">
+                            <div class="input-group input-group-sm">
+                                <input type="number" step="0.01" min="0.01" max="99.99"
+                                       id="advance_percent" name="advance_percent"
+                                       value="{{ old('advance_percent', $buyer?->advance_percent) }}"
+                                       class="form-control @error('advance_percent') is-invalid @enderror"
+                                       aria-label="Advance percentage">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                        <div class="col-auto text-body-secondary">advance</div>
+                        <div class="col-auto text-body-secondary">+</div>
+                        <div class="col-auto" style="width:130px">
+                            <div class="input-group input-group-sm">
+                                <input type="number" step="0.01" min="0.01" max="99.99"
+                                       id="sight_percent" name="sight_percent"
+                                       value="{{ old('sight_percent', $buyer?->sight_percent) }}"
+                                       class="form-control @error('sight_percent') is-invalid @enderror"
+                                       aria-label="At-sight percentage">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                        <div class="col-auto text-body-secondary">at sight</div>
+                        <div class="col-auto"><span class="small" id="split-total"></span></div>
+                    </div>
+                    @error('advance_percent')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                    @error('sight_percent')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
+            </div>
+        </div>
+
+        {{-- Col R. The single value is the default pre-selected on a new order;
+             the multi-select below is everything this buyer accepts. --}}
+        <x-ui.select name="incoterm_id" label="Default Inco Term" :options="$incoterms"
                      :selected="$buyer?->incoterm_id" horizontal searchable
                      placeholder="Search incoterm…" />
 
-        {{-- Col S --}}
-        <x-ui.select name="shipment_method_id" label="Shipment Method" :options="$shipmentMethods"
+        <x-ui.select name="incoterm_ids" label="Accepted Inco Terms" :options="$incoterms"
+                     :selected="$selectedIncoterms" horizontal searchable multiple
+                     placeholder="Search incoterms…"
+                     hint="The default above is added automatically if you leave it out." />
+
+        {{-- Col S — "Air + Sea" is a normal answer, not a contradiction. --}}
+        <x-ui.select name="shipment_method_id" label="Default Shipment Method" :options="$shipmentMethods"
                      :selected="$buyer?->shipment_method_id" horizontal searchable
                      placeholder="Search method…" />
 
-        {{-- Col T --}}
-        <x-ui.select name="currency_id" label="Currency of Payment" :options="$currencies"
+        <x-ui.select name="shipment_method_ids" label="Shipment Methods Used" :options="$shipmentMethods"
+                     :selected="$selectedShipmentMethods" horizontal searchable multiple
+                     placeholder="Search methods…" />
+
+        {{-- Col T — a buyer invoiced in USD on one order and AED on the next is
+             one buyer, so the accepted set is separate from the default. --}}
+        <x-ui.select name="currency_id" label="Default Currency" :options="$currencies"
                      :selected="$buyer?->currency_id" horizontal searchable
                      placeholder="Search currency…" />
+
+        <x-ui.select name="currency_ids" label="Accepted Currencies" :options="$currencies"
+                     :selected="$selectedCurrencies" horizontal searchable multiple
+                     placeholder="Search currencies…" />
 
     </div>
 </x-ui.form-section>
@@ -350,6 +447,57 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+    /* ------------------------------------------------------------------ *
+     * Advance / at-sight split.
+     *
+     * Shown only on a payment term that has one. The id list comes from
+     * payment_terms.has_split — the same column BuyerRequest validates
+     * against, so the affordance and the rule cannot disagree.
+     * ------------------------------------------------------------------ */
+    const splitTermIds = @json(array_map('intval', $splitTermIds));
+    const termSelect   = document.getElementById('payment_term_id');
+    const splitRow     = document.getElementById('advance-split-row');
+    const advanceInput = document.getElementById('advance_percent');
+    const sightInput   = document.getElementById('sight_percent');
+    const splitTotal   = document.getElementById('split-total');
+
+    function renderSplitTotal() {
+        const advance = parseFloat(advanceInput.value);
+        const sight   = parseFloat(sightInput.value);
+
+        if (isNaN(advance) || isNaN(sight)) {
+            splitTotal.textContent = '';
+            return;
+        }
+
+        const total = Math.round((advance + sight) * 100) / 100;
+        const ok    = total === 100;
+
+        splitTotal.textContent = ok ? '= 100% ✓' : '= ' + total + '% — must total 100';
+        splitTotal.className = 'small ' + (ok ? 'text-success' : 'text-danger');
+    }
+
+    function applySplit() {
+        // TomSelect keeps the underlying <select> in sync, so reading .value
+        // works whether or not the widget upgraded this field.
+        const visible = splitTermIds.includes(parseInt(termSelect?.value, 10));
+
+        splitRow.classList.toggle('d-none', ! visible);
+
+        if (! visible) {
+            advanceInput.value = '';
+            sightInput.value = '';
+            splitTotal.textContent = '';
+        } else {
+            renderSplitTotal();
+        }
+    }
+
+    termSelect?.addEventListener('change', applySplit);
+    advanceInput?.addEventListener('input', renderSplitTotal);
+    sightInput?.addEventListener('input', renderSplitTotal);
+    renderSplitTotal();
 
     /* ------------------------------------------------------------------ *
      * Carton marking details (sheet col X) — repeatable lines with a live

@@ -42,7 +42,7 @@ class CategoryController extends Controller implements HasMiddleware
     public function index(Request $request): View
     {
         $categories = Category::query()
-            ->with('poFormat:id,name')
+            ->with('formats:id,name')
             ->withCount('products')
             ->search($request->string('search')->toString())
             ->status($request->string('status')->toString())
@@ -59,7 +59,7 @@ class CategoryController extends Controller implements HasMiddleware
     public function create(): View
     {
         return view('masters.categories.create', [
-            'poFormats' => $this->poFormats(),
+            'formats'  => $this->formats(),
 
             // Shown read-only so the user knows what they are about to get.
             // Not reserved — the real code is assigned at insert time.
@@ -79,15 +79,15 @@ class CategoryController extends Controller implements HasMiddleware
     public function show(Category $category): View
     {
         return view('masters.categories.show', [
-            'category' => $category->load('poFormat', 'creator', 'updater')->loadCount('products'),
+            'category' => $category->load('formats', 'creator', 'updater')->loadCount('products'),
         ]);
     }
 
     public function edit(Category $category): View
     {
         return view('masters.categories.edit', [
-            'category'  => $category,
-            'poFormats' => $this->poFormats($category),
+            'category' => $category->load('formats'),
+            'formats'  => $this->formats($category),
         ]);
     }
 
@@ -127,15 +127,18 @@ class CategoryController extends Controller implements HasMiddleware
     /**
      * Category sheet col F: "drop down with search bar to look for particular
      * formats". Inactive formats are excluded so a retired template cannot be
-     * attached to a new category — existing links to it keep working.
+     * attached to a new category — existing links to it keep working, which is
+     * why an edit form also offers back whatever this category already holds.
      */
-    private function poFormats(?Category $category = null): \Illuminate\Support\Collection
+    private function formats(?Category $category = null): \Illuminate\Support\Collection
     {
         $query = DocumentFormat::query()->where('module', 'po');
 
         if ($category) {
-            $query->where(function ($q) use ($category) {
-                $q->active()->orWhere('id', $category->po_format_id);
+            $attached = $category->formats()->pluck('document_formats.id')->all();
+
+            $query->where(function ($q) use ($attached) {
+                $q->active()->orWhereIn('id', $attached);
             });
         } else {
             $query->active();

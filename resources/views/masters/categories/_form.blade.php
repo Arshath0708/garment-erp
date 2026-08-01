@@ -1,4 +1,4 @@
-@props(['category' => null, 'poFormats' => [], 'nextCode' => null])
+@props(['category' => null, 'formats' => [], 'nextCode' => null])
 
 {{--
     Category form — every field here is a column on the client's Category Master
@@ -39,10 +39,14 @@
         <x-ui.field name="name" label="Category Name" :value="$category?->name" required
                     horizontal placeholder="Men's Shirts" />
 
-        {{-- Col F: "drop down with search bar to look for particular formats" --}}
-        <x-ui.select name="po_format_id" label="PO Format Linked"
-                     :options="$poFormats" :selected="$category?->po_format_id"
-                     horizontal searchable placeholder="Search format…" />
+        {{-- Col F: "drop down with search bar to look for particular formats".
+             Several, not one — each one picked here becomes a choice on the PO
+             screen for products in this category. --}}
+        <x-ui.select name="format_ids" label="Order Formats Linked"
+                     :options="$formats"
+                     :selected="$category?->formats->pluck('id')->all() ?? []"
+                     horizontal searchable multiple placeholder="Search format…"
+                     hint="Every format picked here is offered when raising an order under this category." />
 
         {{-- Col D --}}
         <x-ui.select name="status" label="Status" required horizontal

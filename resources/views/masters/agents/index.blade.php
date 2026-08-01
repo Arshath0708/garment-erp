@@ -14,7 +14,7 @@
             <div class="col-md-4">
                 <label class="form-label small text-body-secondary mb-1">Search</label>
                 <input type="text" name="search" value="{{ $filters['search'] ?? '' }}"
-                       class="form-control form-control-sm" placeholder="Code, name or remarks">
+                       class="form-control form-control-sm" placeholder="Code, name, city, phone or remarks">
             </div>
             <div class="col-md-3">
                 <label class="form-label small text-body-secondary mb-1">Agent Type</label>
@@ -65,7 +65,9 @@
                             </a>
                         </th>
                         <th>Agent Type</th>
-                        <th>Commission Basis</th>
+                        <th style="width:110px">City</th>
+                        <th>Commission</th>
+                        <th style="width:130px">Paid By</th>
                         <th style="width:120px">
                             <a href="{{ route('masters.agents.index', array_merge(request()->query(), ['sort' => 'status', 'direction' => ($filters['sort'] ?? '') === 'status' && ($filters['direction'] ?? '') === 'asc' ? 'desc' : 'asc'])) }}" class="text-decoration-none text-dark">
                                 Status
@@ -88,7 +90,22 @@
                             <td>
                                 <span class="badge text-bg-secondary text-uppercase">{{ $agent->agent_type }}</span>
                             </td>
-                            <td class="text-body-secondary">{{ $agent->commissionBasis?->name ?: '—' }}</td>
+                            <td class="text-body-secondary">{{ $agent->city ?: '—' }}</td>
+                            <td>
+                                {{-- Every entry, not just the first: a "2% plus ₹5 a piece"
+                                     arrangement reads as an error if only half of it shows. --}}
+                                @forelse($agent->commissions as $commission)
+                                    <span class="badge text-bg-light border font-monospace me-1">{{ $commission->label }}</span>
+                                @empty
+                                    <span class="text-body-secondary">—</span>
+                                @endforelse
+                                @if($agent->commissionBasis)
+                                    <div class="small text-body-secondary">on {{ $agent->commissionBasis->name }}</div>
+                                @endif
+                            </td>
+                            <td class="text-body-secondary small">
+                                {{ \App\Models\Agent::COMMISSION_PAYERS[$agent->commission_paid_by] ?? '—' }}
+                            </td>
                             <td>
                                 @can('agent.edit')
                                     <form action="{{ route('masters.agents.toggle-status', $agent) }}" method="POST">
@@ -126,7 +143,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-4">
+                            <td colspan="9" class="text-center py-4">
                                 <div class="text-body-secondary small mb-1">
                                     <i class="bi bi-person-badge fs-2 d-block mb-2 text-secondary"></i>
                                     No agents found.

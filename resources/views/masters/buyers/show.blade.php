@@ -25,6 +25,18 @@
                     <dt class="col-sm-5 text-body-secondary fw-normal">Name on Export Invoice</dt>
                     <dd class="col-sm-7">{{ $buyer->name_on_export_invoice ?: '—' }}</dd>
 
+                    <dt class="col-sm-5 text-body-secondary fw-normal">Order Mode</dt>
+                    <dd class="col-sm-7">
+                        <span class="badge {{ $buyer->requiresOrderConfirmation() ? 'text-bg-primary' : 'text-bg-warning' }}">
+                            {{ \App\Models\Buyer::ORDER_MODES[$buyer->order_mode] ?? $buyer->order_mode }}
+                        </span>
+                        <div class="small text-body-secondary mt-1">
+                            {{ $buyer->requiresOrderConfirmation()
+                                ? 'A full order confirmation with item lines; POs are raised from those lines.'
+                                : 'A contract number only — items are entered at PO stage.' }}
+                        </div>
+                    </dd>
+
                     <dt class="col-sm-5 text-body-secondary fw-normal">Category of Items</dt>
                     <dd class="col-sm-7">
                         @forelse($buyer->categories as $category)
@@ -82,16 +94,50 @@
                     <dt class="col-sm-12 pt-3"><hr class="my-2"></dt>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Payment Terms</dt>
-                    <dd class="col-sm-7">{{ $buyer->paymentTerm?->name ?: '—' }}</dd>
+                    <dd class="col-sm-7">
+                        {{ $buyer->paymentTerm?->name ?: '—' }}
+                        @if(filled($buyer->advance_percent) && filled($buyer->sight_percent))
+                            <div class="small text-body-secondary">
+                                {{ rtrim(rtrim(number_format((float) $buyer->advance_percent, 2), '0'), '.') }}% advance
+                                + {{ rtrim(rtrim(number_format((float) $buyer->sight_percent, 2), '0'), '.') }}% at sight
+                            </div>
+                        @endif
+                    </dd>
 
+                    {{-- Default first, then the full accepted set. The default is
+                         what a new order pre-selects; the set is what is allowed. --}}
                     <dt class="col-sm-5 text-body-secondary fw-normal">Inco Terms</dt>
-                    <dd class="col-sm-7">{{ $buyer->incoterm?->label ?: '—' }}</dd>
+                    <dd class="col-sm-7">
+                        {{ $buyer->incoterm?->label ?: '—' }}
+                        @if($buyer->incoterms->count() > 1)
+                            <div class="small text-body-secondary">
+                                Also accepts:
+                                {{ $buyer->incoterms->where('id', '!=', $buyer->incoterm_id)->pluck('code')->implode(', ') }}
+                            </div>
+                        @endif
+                    </dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Shipment Method</dt>
-                    <dd class="col-sm-7">{{ $buyer->shipmentMethod?->name ?: '—' }}</dd>
+                    <dd class="col-sm-7">
+                        {{ $buyer->shipmentMethod?->name ?: '—' }}
+                        @if($buyer->shipmentMethods->count() > 1)
+                            <div class="small text-body-secondary">
+                                Also uses:
+                                {{ $buyer->shipmentMethods->where('id', '!=', $buyer->shipment_method_id)->pluck('name')->implode(', ') }}
+                            </div>
+                        @endif
+                    </dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Currency of Payment</dt>
-                    <dd class="col-sm-7">{{ $buyer->currency?->label ?: '—' }}</dd>
+                    <dd class="col-sm-7">
+                        {{ $buyer->currency?->label ?: '—' }}
+                        @if($buyer->currencies->count() > 1)
+                            <div class="small text-body-secondary">
+                                Also accepts:
+                                {{ $buyer->currencies->where('id', '!=', $buyer->currency_id)->pluck('iso_code')->implode(', ') }}
+                            </div>
+                        @endif
+                    </dd>
 
                     <dt class="col-sm-12 pt-3"><hr class="my-2"></dt>
 

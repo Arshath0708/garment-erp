@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Masters\StoreAgentRequest;
 use App\Http\Requests\Masters\UpdateAgentRequest;
 use App\Models\Agent;
+use App\Models\AgentCommission;
 use App\Models\CalculationBasis;
 use App\Models\Category;
+use App\Models\Currency;
 use App\Services\Masters\AgentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -39,7 +41,7 @@ class AgentController extends Controller implements HasMiddleware
     public function index(Request $request): View
     {
         $agents = Agent::query()
-            ->with('commissionBasis:id,name')
+            ->with(['commissionBasis:id,name', 'commissions.currency:id,iso_code'])
             ->search($request->string('search')->toString())
             ->status($request->string('status')->toString())
             ->when($request->filled('agent_type'), fn ($q) => $q->where('agent_type', $request->string('agent_type')->toString()))
@@ -70,14 +72,18 @@ class AgentController extends Controller implements HasMiddleware
     public function show(Agent $agent): View
     {
         return view('masters.agents.show', [
-            'agent' => $agent->load(['categories', 'commissionBasis', 'creator', 'updater']),
+            'agent' => $agent->load(['categories', 'commissionBasis', 'commissions.currency', 'creator', 'updater']),
         ]);
     }
 
     public function edit(Agent $agent): View
     {
+        // Loaded before formData(), which reads the commissions to decide which
+        // currencies the picker has to keep.
+        $agent->load(['categories', 'commissions']);
+
         return view('masters.agents.edit', $this->formData($agent) + [
-            'agent' => $agent->load('categories'),
+            'agent' => $agent,
         ]);
     }
 
@@ -139,7 +145,32 @@ class AgentController extends Controller implements HasMiddleware
             'agentTypes'       => Agent::TYPES,
             'categories'       => $this->categoriesForAgent($agent),
             'calculationBases' => $this->calculationBasesForAgent($agent),
+            'currencies'       => $this->currenciesForAgent($agent),
+            'commissionPayers' => Agent::COMMISSION_PAYERS,
+            'paymentTerms'     => Agent::PAYMENT_TERMS,
+            'commissionTypes'  => AgentCommission::TYPES,
         ];
+    }
+
+    /**
+     * Buyer-side commission entries carry their own currency; supplier-side
+     * ones are INR and the form hides the picker. Inactive currencies are
+     * excluded unless this agent already uses one — dropping it from the list
+     * would silently blank a saved entry on the next save.
+     */
+    private function currenciesForAgent(?Agent $agent = null): \Illuminate\Support\Collection
+    {
+        $query = Currency::query();
+
+        if ($agent) {
+            $inUse = $agent->commissions->pluck('currency_id')->filter();
+
+            $query->where(fn ($q) => $q->active()->orWhereIn('id', $inUse));
+        } else {
+            $query->active();
+        }
+
+        return $query->orderBy('iso_code')->get()->pluck('label', 'id');
     }
 
     private function categoriesForAgent(?Agent $agent = null): \Illuminate\Support\Collection

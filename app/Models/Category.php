@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Models\Concerns\Filterable;
 use App\Models\Concerns\HasAuditColumns;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -24,7 +23,6 @@ class Category extends Model
     protected $fillable = [
         'name',
         'description',
-        'po_format_id',
         'status',
         'remarks',
     ];
@@ -35,9 +33,18 @@ class Category extends Model
     |--------------------------------------------------------------------------
     */
 
-    public function poFormat(): BelongsTo
+    /**
+     * Sheet col F, "Po format linked".
+     *
+     * Several, not one: the client's prototype holds a `formats` array on the
+     * category and says "each will be available when creating a PO under this
+     * category". See the 000300 category_format migration.
+     */
+    public function formats(): BelongsToMany
     {
-        return $this->belongsTo(DocumentFormat::class, 'po_format_id');
+        // No withTimestamps() — the pivot has none, same as buyer_category.
+        return $this->belongsToMany(DocumentFormat::class, 'category_format')
+            ->orderBy('name');
     }
 
     public function products(): HasMany

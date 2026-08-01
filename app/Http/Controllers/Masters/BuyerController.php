@@ -94,6 +94,7 @@ class BuyerController extends Controller implements HasMiddleware
             'buyer' => $buyer->load([
                 'categories:id,name', 'cartonMarkings', 'country', 'state', 'city', 'port',
                 'agent', 'paymentTerm', 'incoterm', 'shipmentMethod', 'currency',
+                'currencies', 'incoterms', 'shipmentMethods',
                 'creator', 'updater',
             ]),
         ]);
@@ -105,7 +106,10 @@ class BuyerController extends Controller implements HasMiddleware
             old('country_id', $buyer->country_id) ? (int) old('country_id', $buyer->country_id) : null,
             old('state_id', $buyer->state_id) ? (int) old('state_id', $buyer->state_id) : null,
         ) + [
-            'buyer' => $buyer->load('categories:id', 'cartonMarkings'),
+            'buyer' => $buyer->load(
+                'categories:id', 'cartonMarkings',
+                'currencies:id', 'incoterms:id', 'shipmentMethods:id',
+            ),
         ]);
     }
 
@@ -201,6 +205,18 @@ class BuyerController extends Controller implements HasMiddleware
             'incoterms'       => Incoterm::active()->orderBy('code')->get()->pluck('label', 'id'),
             'shipmentMethods' => ShipmentMethod::active()->orderBy('name')->pluck('name', 'id'),
             'currencies'      => Currency::active()->orderBy('iso_code')->get()->pluck('label', 'id'),
+
+            'orderModes' => Buyer::ORDER_MODES,
+
+            /*
+             * Which payment terms open the advance / at-sight boxes. Sent to the
+             * form as ids so the toggle reads the same `has_split` column
+             * BuyerRequest validates against — a JS list of term names would be
+             * a second answer to the same question, and the two would drift the
+             * first time a term is renamed.
+             */
+            'splitTermIds' => PaymentTerm::active()->forSide('buyer')
+                ->where('has_split', true)->pluck('id')->all(),
         ];
     }
 }

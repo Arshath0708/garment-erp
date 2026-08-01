@@ -2,8 +2,11 @@
 
 namespace App\Http\Requests\Masters;
 
+use App\Models\Buyer;
+use App\Models\PaymentTerm;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 /**
  * Shared rules for creating and updating a buyer.
@@ -57,6 +60,56 @@ abstract class BuyerRequest extends FormRequest
         if (blank($this->input('state_id'))) {
             $this->merge(['city_id' => null]);
         }
+
+        /*
+         * The advance / at-sight split only means something on a payment term
+         * that has one. Clearing it here rather than validating it away means a
+         * buyer moved off "part advance" does not keep a 30/70 split nothing
+         * reads — and does not have to be told about a field the form had
+         * already hidden.
+         */
+        if (! $this->paymentTermHasSplit()) {
+            $this->merge(['advance_percent' => null, 'sight_percent' => null]);
+        }
+
+        /*
+         * The default has to be inside the accepted set, or the OC screen would
+         * pre-select a currency the buyer is not invoiced in. Adding it is the
+         * quiet fix; rejecting the save would be blaming the user for a set the
+         * form builds from the same two widgets.
+         */
+        foreach ([
+            'currency_id'        => 'currency_ids',
+            'incoterm_id'        => 'incoterm_ids',
+            'shipment_method_id' => 'shipment_method_ids',
+        ] as $default => $set) {
+            $value = $this->input($default);
+
+            if (blank($value)) {
+                continue;
+            }
+
+            $chosen = array_map('strval', (array) $this->input($set, []));
+
+            if (! in_array((string) $value, $chosen, true)) {
+                $chosen[] = (string) $value;
+                $this->merge([$set => $chosen]);
+            }
+        }
+    }
+
+    /**
+     * Does the selected payment term carry an advance / at-sight split?
+     *
+     * Read off `payment_terms.has_split`, not off the name. The same table
+     * already carries `days` rather than parsing "30 Days", for the reason its
+     * seeder gives — and name-sniffing would be worse here than there, because
+     * "Advance" and "50% Advance, 50% on Delivery" both contain the word and
+     * only one of them has a split.
+     */
+    protected function paymentTermHasSplit(): bool
+    {
+        return (bool) PaymentTerm::whereKey($this->input('payment_term_id'))->value('has_split');
     }
 
     /**
@@ -135,11 +188,41 @@ abstract class BuyerRequest extends FormRequest
             'agent_commission_type'  => ['nullable', 'required_with:agent_commission_value', Rule::in(['percent', 'amount'])],
             'agent_commission_value' => ['nullable', 'numeric', 'min:0', 'max:99999999.9999'],
 
+            /*
+             * How this buyer's orders are documented. Required — the OC module
+             * branches on it, and a null would leave that branch undecided at
+             * the point an order is being raised.
+             */
+            'order_mode'             => ['required', Rule::in(array_keys(Buyer::ORDER_MODES))],
+
             // Cols Q–T
             'payment_term_id'        => ['nullable', 'integer', Rule::exists('payment_terms', 'id')],
+
+            /*
+             * The part-advance split. Only meaningful when the chosen payment
+             * term is a part advance; prepareForValidation nulls both otherwise,
+             * so these rules cannot fire on a term that has no split. The
+             * "must total 100" check is in withValidator, where it can name both
+             * fields at once.
+             */
+            'advance_percent'        => ['nullable', 'numeric', 'min:0.01', 'max:99.99'],
+            'sight_percent'          => ['nullable', 'numeric', 'min:0.01', 'max:99.99'],
+
+            /*
+             * Default plus accepted set. The default must be one of the set —
+             * checked in withValidator, because Rule::in against another field's
+             * array is not expressible here.
+             */
             'incoterm_id'            => ['nullable', 'integer', Rule::exists('incoterms', 'id')],
             'shipment_method_id'     => ['nullable', 'integer', Rule::exists('shipment_methods', 'id')],
             'currency_id'            => ['nullable', 'integer', Rule::exists('currencies', 'id')],
+
+            'currency_ids'           => ['nullable', 'array'],
+            'currency_ids.*'         => ['integer', Rule::exists('currencies', 'id')],
+            'incoterm_ids'           => ['nullable', 'array'],
+            'incoterm_ids.*'         => ['integer', Rule::exists('incoterms', 'id')],
+            'shipment_method_ids'    => ['nullable', 'array'],
+            'shipment_method_ids.*'  => ['integer', Rule::exists('shipment_methods', 'id')],
 
             // Cols U–W
             'bank_name'              => ['nullable', 'string', 'max:120'],
@@ -158,6 +241,54 @@ abstract class BuyerRequest extends FormRequest
     }
 
     /**
+     * Two cross-field rules that no single-field rule can express.
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $this->validateAdvanceSplit($validator);
+        });
+    }
+
+    /**
+     * On a term that splits the payment, both halves are required and they have
+     * to total 100.
+     *
+     * A 60/30 split is not "mostly right" — it is 10% of the order value with
+     * no instruction attached, and the gap only surfaces when someone is
+     * chasing the balance. prepareForValidation has already cleared both fields
+     * on a term with no split, so nothing here can fire on one.
+     */
+    private function validateAdvanceSplit(Validator $validator): void
+    {
+        if (! $this->paymentTermHasSplit()) {
+            return;
+        }
+
+        $advance = $this->input('advance_percent');
+        $sight   = $this->input('sight_percent');
+
+        if (blank($advance) || blank($sight)) {
+            $validator->errors()->add(
+                blank($advance) ? 'advance_percent' : 'sight_percent',
+                'This payment term splits the payment, so both the advance and the at-sight percentage are needed.'
+            );
+
+            return;
+        }
+
+        // Compared in whole hundredths — 33.33 + 66.67 is exactly 100 there,
+        // and 0.01 apart is a typo rather than a rounding artefact.
+        if (round(((float) $advance + (float) $sight) * 100) !== 10000) {
+            $validator->errors()->add(
+                'sight_percent',
+                'The advance and at-sight percentages must total 100 — they currently total '.
+                rtrim(rtrim(number_format((float) $advance + (float) $sight, 2, '.', ''), '0'), '.').'.'
+            );
+        }
+    }
+
+    /**
      * @return array<string, string>
      */
     public function attributes(): array
@@ -172,6 +303,12 @@ abstract class BuyerRequest extends FormRequest
             'city_id'                => 'city',
             'port_id'                => 'port',
             'agent_id'               => 'agent',
+            'order_mode'             => 'order mode',
+            'advance_percent'        => 'advance percentage',
+            'sight_percent'          => 'at-sight percentage',
+            'currency_ids'           => 'accepted currencies',
+            'incoterm_ids'           => 'accepted incoterms',
+            'shipment_method_ids'    => 'shipment methods',
             'agent_commission_type'  => 'commission type',
             'agent_commission_value' => 'agent commission',
             'payment_term_id'        => 'payment terms',

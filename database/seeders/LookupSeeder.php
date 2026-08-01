@@ -49,8 +49,15 @@ class LookupSeeder extends Seeder
             GstRate::firstOrCreate(['rate' => $rate]);
         }
 
-        // Product sheet cols N, R, U: what an incentive percentage applies to.
-        foreach (['FOB Value', 'Quantity', 'Net Weight', 'Square Metre'] as $basis) {
+        /*
+         * Product sheet cols N, R, U: what an incentive percentage applies to.
+         *
+         * "Net Value" is not on the Product sheet — it comes from the Agent
+         * master, where the client's prototype offers Net Value for a
+         * supplier-side commission and FOB Value for a buyer-side one. Both
+         * screens read the same table, so the list is the union.
+         */
+        foreach (['FOB Value', 'Net Value', 'Quantity', 'Net Weight', 'Square Metre'] as $basis) {
             CalculationBasis::firstOrCreate(['name' => $basis]);
         }
     }
@@ -144,18 +151,30 @@ class LookupSeeder extends Seeder
          * "Against L/C" have no net period — null, not 0, because 0 would mean
          * "due immediately" and these are simply not date-driven.
          */
+        /*
+         * `has_split` says whether the term divides the payment into an advance
+         * and a balance, which is what opens the two percentage boxes on the
+         * Buyer form. Stated here rather than read out of the name — "Advance"
+         * and "50% Advance, 50% on Delivery" both contain the word and only the
+         * second one splits. Same reasoning as `days` above.
+         */
         $paymentTerms = [
-            ['Advance',            null, 'both'],
-            ['30 Days',            30,   'both'],
-            ['45 Days',            45,   'both'],
-            ['60 Days',            60,   'both'],
-            ['90 Days',            90,   'buyer'],
-            ['Against L/C',        null, 'buyer'],
-            ['50% Advance, 50% on Delivery', null, 'both'],
+            // name, days, has_split, applies_to
+            ['Advance',                      null, false, 'both'],
+            ['30 Days',                      30,   false, 'both'],
+            ['45 Days',                      45,   false, 'both'],
+            ['60 Days',                      60,   false, 'both'],
+            ['90 Days',                      90,   false, 'buyer'],
+            ['Against L/C',                  null, false, 'buyer'],
+            ['50% Advance, 50% on Delivery', null, true,  'both'],
+            ['Part Advance & Part at Sight', null, true,  'buyer'],
         ];
 
-        foreach ($paymentTerms as [$name, $days, $appliesTo]) {
-            PaymentTerm::firstOrCreate(['name' => $name], ['days' => $days, 'applies_to' => $appliesTo]);
+        foreach ($paymentTerms as [$name, $days, $hasSplit, $appliesTo]) {
+            PaymentTerm::firstOrCreate(
+                ['name' => $name],
+                ['days' => $days, 'has_split' => $hasSplit, 'applies_to' => $appliesTo],
+            );
         }
 
         // Col S.
