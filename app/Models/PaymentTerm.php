@@ -17,11 +17,14 @@ class PaymentTerm extends Model
 {
     use Filterable;
 
-    protected $fillable = ['name', 'days', 'applies_to', 'status'];
+    protected $fillable = ['name', 'days', 'has_split', 'applies_to', 'status'];
 
     protected function casts(): array
     {
-        return ['days' => 'integer'];
+        return [
+            'days'      => 'integer',
+            'has_split' => 'boolean',
+        ];
     }
 
     /**

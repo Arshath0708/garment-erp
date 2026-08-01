@@ -20,8 +20,14 @@
             <dt class="col-sm-3 text-body-secondary fw-normal">Category Name</dt>
             <dd class="col-sm-9 fw-semibold">{{ $category->name }}</dd>
 
-            <dt class="col-sm-3 text-body-secondary fw-normal">PO Format Linked</dt>
-            <dd class="col-sm-9">{{ $category->poFormat?->name ?: '—' }}</dd>
+            <dt class="col-sm-3 text-body-secondary fw-normal">Order Formats Linked</dt>
+            <dd class="col-sm-9">
+                @forelse($category->formats as $format)
+                    <span class="badge text-bg-light border me-1 mb-1">{{ $format->name }}</span>
+                @empty
+                    —
+                @endforelse
+            </dd>
 
             <dt class="col-sm-3 text-body-secondary fw-normal">Status</dt>
             <dd class="col-sm-9"><x-ui.status-badge :status="$category->status === 'active'" /></dd>

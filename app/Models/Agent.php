@@ -34,26 +34,86 @@ class Agent extends Model
     ];
 
     /**
+     * "Who Pays This Commission?" on the client's prototype.
+     *
+     * Not a cosmetic label — it decides which ledger the commission lands in.
+     * `us` is our payable and produces a debit note; `supplier` is a deduction
+     * from the supplier's bill; `buyer` is a deduction from the export invoice.
+     *
+     * @var array<string, string>
+     */
+    public const COMMISSION_PAYERS = [
+        'us'       => 'We pay',
+        'supplier' => 'Supplier pays',
+        'buyer'    => 'Buyer pays',
+    ];
+
+    /**
+     * When the commission falls due, and therefore when a debit note can be
+     * raised against it. `custom` is described in `payment_term_custom`.
+     *
+     * @var array<string, string>
+     */
+    public const PAYMENT_TERMS = [
+        'after_buyer'    => 'After buyer payment is received by us',
+        'after_supplier' => 'After supplier payment is made',
+        'on_shipment'    => 'On shipment / BL date',
+        'monthly'        => 'Monthly settlement',
+        'custom'         => 'Custom',
+    ];
+
+    /**
      * @var list<string>
      */
     protected $fillable = [
         'agent_type',
         'name',
         'display_code',
+        'phone',
+        'city',
+        'address',
+        'gst_number',
+        'pan_number',
+        'bank_name',
+        'account_number',
+        'ifsc_code',
+        'swift_code',
         'calculation_basis_id',
-        'commission_rate', // Reserved for future use
+        'commission_paid_by',
+        'payment_term',
+        'payment_term_custom',
         'status',
         'remarks',
     ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Side-dependent fields
+    |--------------------------------------------------------------------------
+    | The prototype shows and hides whole blocks by agent type. The lists live
+    | here rather than in the form request or the Blade file, because all three
+    | need the same answer and a fourth caller (the show page) would otherwise
+    | invent its own.
+    */
+
+    /** Tax details are collected for domestic agents only. */
+    public function collectsTaxDetails(): bool
+    {
+        return $this->agent_type !== 'buyer';
+    }
+
+    /** IFSC for a domestic transfer, SWIFT for an international one. */
+    public function bankCodeField(): string
+    {
+        return $this->agent_type === 'buyer' ? 'swift_code' : 'ifsc_code';
+    }
 
     /**
      * @return array<string, string>
      */
     protected function casts(): array
     {
-        return [
-            'commission_rate' => 'decimal:2',
-        ];
+        return [];
     }
 
     /*
@@ -70,6 +130,16 @@ class Agent extends Model
     public function commissionBasis(): BelongsTo
     {
         return $this->belongsTo(CalculationBasis::class, 'calculation_basis_id');
+    }
+
+    /**
+     * Ordered here so no caller has to remember to sort. The costing panel
+     * treats the first entry as the one that applies, so the order is data and
+     * not presentation.
+     */
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(AgentCommission::class)->orderBy('sort_order');
     }
 
     public function buyers(): HasMany
@@ -114,7 +184,7 @@ class Agent extends Model
      */
     public function searchable(): array
     {
-        return ['display_code', 'name', 'remarks'];
+        return ['display_code', 'name', 'city', 'phone', 'remarks'];
     }
 
     /**

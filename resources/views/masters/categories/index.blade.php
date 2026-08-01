@@ -37,7 +37,7 @@
                         <th style="width:60px">#</th>
                         <th style="width:120px">Code</th>
                         <th>Category Name</th>
-                        <th>PO Format</th>
+                        <th>Order Formats</th>
                         <th style="width:100px" class="text-center">Products</th>
                         <th style="width:110px">Status</th>
                         <th class="text-end" style="width:150px">Actions</th>
@@ -49,7 +49,13 @@
                             <td class="text-body-secondary">{{ $loop->iteration + ($categories->currentPage() - 1) * $categories->perPage() }}</td>
                             <td><span class="badge text-bg-light border font-monospace">{{ $category->code }}</span></td>
                             <td class="fw-semibold">{{ $category->name }}</td>
-                            <td class="text-body-secondary">{{ $category->poFormat?->name ?: '—' }}</td>
+                            <td class="text-body-secondary">
+                                @forelse($category->formats as $format)
+                                    <span class="badge text-bg-light border me-1 mb-1">{{ $format->name }}</span>
+                                @empty
+                                    —
+                                @endforelse
+                            </td>
                             <td class="text-center text-body-secondary">{{ $category->products_count }}</td>
                             <td>
                                 @can('category.edit')

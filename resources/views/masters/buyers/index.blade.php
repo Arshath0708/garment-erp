@@ -47,6 +47,7 @@
                         <th style="width:100px">Code</th>
                         <th>Company</th>
                         <th>Country</th>
+                        <th style="width:120px">Order Mode</th>
                         <th>Agent</th>
                         <th style="width:110px" class="text-center">Categories</th>
                         <th style="width:110px">Status</th>
@@ -69,6 +70,13 @@
                                 @if($buyer->city)
                                     <div class="small">{{ $buyer->city->name }}</div>
                                 @endif
+                            </td>
+                            <td>
+                                {{-- Direct-order buyers never get an OC document, so the
+                                     difference is worth seeing without opening the row. --}}
+                                <span class="badge {{ $buyer->requiresOrderConfirmation() ? 'text-bg-primary' : 'text-bg-warning' }}">
+                                    {{ \App\Models\Buyer::ORDER_MODES[$buyer->order_mode] ?? $buyer->order_mode }}
+                                </span>
                             </td>
                             <td class="text-body-secondary">{{ $buyer->agent?->name ?: '—' }}</td>
                             <td class="text-center text-body-secondary">{{ $buyer->categories_count }}</td>
@@ -108,7 +116,7 @@
                             </td>
                         </tr>
                     @empty
-                        <x-ui.empty-state :colspan="8" icon="bi-globe-asia-australia"
+                        <x-ui.empty-state :colspan="9" icon="bi-globe-asia-australia"
                                           title="No buyers yet"
                                           message="Add the first buyer — quotations and order confirmations are raised against one." />
                     @endforelse

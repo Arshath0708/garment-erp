@@ -22,13 +22,15 @@ class CategoryService
             // still governs what a user can set. The code is assigned as a
             // property instead — it is not fillable precisely so that a crafted
             // POST cannot supply one, which also means create() would drop it.
-            $category = new Category($data);
+            $category = new Category($this->columns($data));
 
             // Inside the transaction on purpose: next() holds a row lock on the
             // counter until this insert commits, so two people saving at the
             // same moment cannot both be handed CAT005.
             $category->code = $this->numbers->next('category');
             $category->save();
+
+            $category->formats()->sync($data['format_ids'] ?? []);
 
             return $category;
         });
@@ -43,9 +45,25 @@ class CategoryService
         // that have already been sent.
         unset($data['code']);
 
-        $category->update($data);
+        return DB::transaction(function () use ($category, $data) {
+            $category->update($this->columns($data));
 
-        return $category->refresh();
+            $category->formats()->sync($data['format_ids'] ?? []);
+
+            return $category->refresh();
+        });
+    }
+
+    /**
+     * Strip the one key that is a relation rather than a column, so the rest can
+     * go through mass assignment and $fillable still governs it.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function columns(array $data): array
+    {
+        return array_diff_key($data, array_flip(['format_ids']));
     }
 
     /**

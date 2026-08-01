@@ -18,6 +18,7 @@ class BuyerService
             $buyer = Buyer::create($this->columns($data));
 
             $buyer->categories()->sync($data['category_ids'] ?? []);
+            $this->syncAcceptedSets($buyer, $data);
             $this->syncCartonMarkings($buyer, $data['carton_markings'] ?? []);
 
             return $buyer;
@@ -33,6 +34,7 @@ class BuyerService
             $buyer->update($this->columns($data));
 
             $buyer->categories()->sync($data['category_ids'] ?? []);
+            $this->syncAcceptedSets($buyer, $data);
             $this->syncCartonMarkings($buyer, $data['carton_markings'] ?? []);
 
             return $buyer->refresh();
@@ -60,7 +62,30 @@ class BuyerService
      */
     private function columns(array $data): array
     {
-        return array_diff_key($data, array_flip(['category_ids', 'carton_markings']));
+        return array_diff_key($data, array_flip([
+            'category_ids',
+            'carton_markings',
+            'currency_ids',
+            'incoterm_ids',
+            'shipment_method_ids',
+        ]));
+    }
+
+    /**
+     * The currencies, incoterms and shipment methods this buyer accepts.
+     *
+     * The single `currency_id` / `incoterm_id` / `shipment_method_id` columns
+     * survive as the default within each set — see the 000200 expand migration.
+     * The request has already made sure each default is inside its own set, so
+     * a plain sync here cannot orphan one.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function syncAcceptedSets(Buyer $buyer, array $data): void
+    {
+        $buyer->currencies()->sync($data['currency_ids'] ?? []);
+        $buyer->incoterms()->sync($data['incoterm_ids'] ?? []);
+        $buyer->shipmentMethods()->sync($data['shipment_method_ids'] ?? []);
     }
 
     /**
