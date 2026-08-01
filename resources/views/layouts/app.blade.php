@@ -26,10 +26,29 @@
                 background: #ffffff;
                 border-bottom: 1px solid #eef1f5;
                 padding: .9rem 1rem;
+                display: flex; align-items: center; gap: .5rem;
             }
             .app-sidebar .brand-link {
                 display: flex; align-items: center; gap: .65rem;
                 text-decoration: none; padding: 0;
+                flex: 1 1 auto; min-width: 0;
+            }
+
+            /* Collapse control. Quiet until pointed at — it sits next to the
+               brand all day and should not compete with it. */
+            .app-sidebar .sidebar-toggle {
+                flex: 0 0 auto;
+                width: 28px; height: 28px;
+                display: grid; place-items: center;
+                border: 0; border-radius: 7px;
+                background: transparent; color: #9aa4b2;
+                font-size: .8rem; line-height: 1;
+                cursor: pointer;
+                transition: background-color .12s ease, color .12s ease;
+            }
+            .app-sidebar .sidebar-toggle:hover { background: #f3f6fa; color: #2563eb; }
+            .app-sidebar .sidebar-toggle:focus-visible {
+                outline: 2px solid #2563eb; outline-offset: 2px;
             }
             .app-sidebar .brand-mark {
                 width: 38px; height: 38px; flex-shrink: 0;
@@ -114,6 +133,62 @@
                 background: #d6dbe3;
                 margin-left: .45rem;
                 vertical-align: middle;
+            }
+
+            /* ==================== SIDEBAR — COLLAPSED (icon rail) ====================
+               AdminLTE narrows the aside to 4.6rem and hides every <p> for us,
+               and re-expands it on hover. Three things it cannot know about
+               this theme are corrected below. All of them are scoped with
+               :not(:hover) so the hover-expanded rail stays identical to the
+               normal sidebar. */
+
+            /* 1. Our links carry a .6rem side margin, which pushes AdminLTE's
+                  3.6rem link past the 4.6rem rail and knocks the icons off
+                  centre. Centre them on the rail instead. */
+            .sidebar-mini.sidebar-collapse .app-sidebar:not(:hover) .sidebar-menu .nav-link {
+                margin-left: auto; margin-right: auto;
+                padding-left: 0; padding-right: 0;
+                justify-content: center;
+            }
+            .sidebar-mini.sidebar-collapse .app-sidebar:not(:hover) .sidebar-menu .nav-icon {
+                width: auto;
+            }
+            /* The active marker is an inset left edge — invisible once the link
+               is centred, so the collapsed state shows it as a filled pill. */
+            .sidebar-mini.sidebar-collapse .app-sidebar:not(:hover) .sidebar-menu .nav-link.active {
+                box-shadow: none; background: #e0eaff;
+            }
+
+            /* 2. Section headers are display:none when collapsed, so seven
+                  groups run together as one undifferentiated strip of icons.
+                  A hairline keeps the grouping readable without the words. */
+            .sidebar-mini.sidebar-collapse .app-sidebar:not(:hover) .sidebar-menu .nav-header {
+                display: block;
+                height: 0; overflow: hidden;
+                padding: .45rem 0 0; margin: .35rem .9rem 0;
+                border-top: 1px solid #eef1f5;
+            }
+
+            /* 3. No room for the collapse button beside a hidden brand.
+                  Hovering the rail expands it and brings the button back, and
+                  the header hamburger works either way. */
+            .sidebar-mini.sidebar-collapse .app-sidebar:not(:hover) .sidebar-toggle { display: none; }
+            .sidebar-mini.sidebar-collapse .app-sidebar:not(:hover) .sidebar-brand {
+                justify-content: center; padding-left: .5rem; padding-right: .5rem;
+            }
+            /* Points the way it will move. */
+            .sidebar-mini.sidebar-collapse .sidebar-toggle i { transform: rotate(180deg); }
+
+            /* Below the expand breakpoint the sidebar is an off-canvas drawer,
+               not a rail: mini mode there would leave a 4.6rem strip of icons
+               permanently covering the content. Restore the full-width hide.
+               Same specificity as AdminLTE's rule, declared later, so it wins. */
+            @media (max-width: 991.98px) {
+                .sidebar-mini.sidebar-collapse .app-sidebar {
+                    min-width: var(--lte-sidebar-width);
+                    max-width: var(--lte-sidebar-width);
+                    margin-left: calc(var(--lte-sidebar-width) * -1);
+                }
             }
 
             /* Scrollbar */
@@ -255,7 +330,33 @@
             }
         </style>
     </head>
-    <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+    {{-- sidebar-mini turns the collapse into a 4.6rem icon rail instead of
+         hiding the sidebar outright, so the menu is still one click away. --}}
+    <body class="layout-fixed sidebar-expand-lg sidebar-mini bg-body-tertiary">
+        <script>
+            /**
+             * Apply the remembered sidebar state before the first paint.
+             *
+             * AdminLTE restores it too, but only on DOMContentLoaded — by then
+             * the expanded sidebar has been painted and the collapse reads as a
+             * flicker on every navigation. This sets the exact class AdminLTE
+             * sets, from the exact key it writes, so the two cannot disagree:
+             * AdminLTE's own restore then finds the work already done.
+             *
+             * Below the expand breakpoint the sidebar is a drawer, not a rail,
+             * and starting it collapsed there is the default anyway.
+             *
+             * Inside <body> rather than <head> because document.body must
+             * exist. Guarded: localStorage throws in Safari private mode.
+             */
+            try {
+                if (localStorage.getItem('lte.sidebar.state') === 'sidebar-collapse'
+                    && window.innerWidth > 991.98) {
+                    document.body.classList.add('sidebar-collapse');
+                }
+            } catch (e) { /* no persistence available — start expanded */ }
+        </script>
+
         <div class="app-wrapper">
             <!-- Header -->
             @include('layouts.header')
@@ -334,6 +435,28 @@
             document.querySelectorAll('.nav-link.soon').forEach(function (link) {
                 link.addEventListener('click', function (e) { e.preventDefault(); });
             });
+
+            // The sidebar's collapse button says what it will do next. It stays
+            // reachable while collapsed (hovering the rail expands it), so a
+            // fixed "Collapse sidebar" would be wrong half the time. AdminLTE
+            // fires these on the sidebar element after it has changed state.
+            var sidebar = document.querySelector('.app-sidebar');
+            var toggle = sidebar?.querySelector('.sidebar-toggle');
+
+            if (sidebar && toggle) {
+                var describe = function () {
+                    var collapsed = document.body.classList.contains('sidebar-collapse');
+                    var label = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+
+                    toggle.title = label;
+                    toggle.setAttribute('aria-label', label);
+                    toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+                };
+
+                sidebar.addEventListener('opened.lte.push-menu', describe);
+                sidebar.addEventListener('collapsed.lte.push-menu', describe);
+                describe();
+            }
         });
         </script>
 

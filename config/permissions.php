@@ -69,61 +69,106 @@ return [
     |           permission so roles can be configured ahead of the build,
     |           and the matrix shows it greyed out.
     */
+    /*
+     * Groups are named for the desk that works them, and they are the same
+     * names, in the same order, as the sidebar sections — so an admin ticking
+     * boxes in the permission matrix sees exactly the sections the user will
+     * get. Changing a group name here means changing the sidebar heading too.
+     *
+     * ## What was removed, and why
+     *
+     * The client's own prototype sidebar runs Inquiries -> Order Confirmations
+     * -> Purchase Orders -> Goods Inward -> Packing -> Export Docs, and nothing
+     * else. Five modules we had declared do not appear anywhere in it:
+     *
+     *   quotation        A quotation is what a costed inquiry prints. Keeping a
+     *                    separate module meant re-entering the same buyer,
+     *                    items and prices on a second screen. Becomes an
+     *                    inquiry.export action.
+     *   quality-check    Accepted and rejected quantity are recorded as the
+     *                    goods are received. A separate screen meant opening
+     *                    the same PO twice. Becomes inward-entry.approve.
+     *   shipment         Booking, container and BL details belong on the
+     *                    document set they print onto. Folded into
+     *                    export-document, which gains create/edit/delete.
+     *   sample-approval  Not in the client's flow. A sample is a status on the
+     *                    PO, not a module — reconfirm on the call.
+     *   material-issue   Only exists if we issue our own fabric and trims to
+     *                    the jobber. Open question on the call.
+     *
+     *   contract         Removed separately: it never had a screen. A contract
+     *                    number is a field on the order for direct-order
+     *                    buyers (see buyers.order_mode).
+     *
+     * None of this is lost work — no screen existed for any of them. Any that
+     * the client asks back for is one entry here plus one sidebar block.
+     */
     'groups' => [
 
+        'Sales' => [
+            'inquiry'            => ['label' => 'Inquiries',           'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => false],
+            'order-confirmation' => ['label' => 'Order Confirmations', 'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => false],
+        ],
+
+        'Procurement' => [
+            'purchase-order' => ['label' => 'Purchase Orders', 'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => false],
+            // "approve" is the QC pass: the receiver records what arrived, the
+            // checker approves what is good. Two people, one screen, one row.
+            'inward-entry'   => ['label' => 'Goods Inward',    'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
+        ],
+
+        'Export' => [
+            'packing'         => ['label' => 'Packing',           'built' => false],
+            'export-document' => ['label' => 'Export Documents',  'actions' => ['view', 'create', 'edit', 'delete', 'generate', 'export'], 'built' => false],
+        ],
+
+        'Finance' => [
+            'purchase-bill'    => ['label' => 'Purchase Bills',    'built' => false],
+            'debit-note'       => ['label' => 'Debit Notes',       'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
+            'payment'          => ['label' => 'Supplier Payments', 'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
+            // Money coming IN from the buyer. "Foreign Payments" read as money
+            // going out; the key stays, the label says which direction.
+            'foreign-payment'  => ['label' => 'Buyer Receipts',    'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
+            'agent-commission' => ['label' => 'Agent Commission',  'built' => false],
+        ],
+
         /*
-         * The eight masters confirmed by the client. Nothing else belongs here —
-         * supporting lookups (units, ports, currencies, HSN codes, sizes,
-         * colours, payment terms, incoterms) are dropdown sources, not business
-         * masters, and live on one Lookups screen under Settings.
+         * Outstanding lives here, not under Finance: it holds view and export
+         * only — nothing is ever created or edited on it. That is a report.
+         */
+        'Reports' => [
+            'outstanding' => ['label' => 'Outstanding', 'actions' => ['view', 'export'], 'built' => false],
+            'report'      => ['label' => 'Reports',     'actions' => ['view', 'export'], 'built' => false],
+        ],
+
+        /*
+         * The seven masters. Nothing else belongs here — supporting lookups
+         * (units, ports, currencies, HSN codes, sizes, colours, payment terms,
+         * incoterms) are dropdown sources, not business masters, and live on
+         * one Lookups screen under Setup.
          */
         'Masters' => [
-            'supplier'  => ['label' => 'Supplier (Jobber)'],
-            'buyer'     => ['label' => 'Buyer'],
-            'agent'     => ['label' => 'Agent',             'built' => false],
-            'product'   => ['label' => 'Product'],
-            'category'  => ['label' => 'Category'],
-            'po-format' => ['label' => 'PO Format',         'built' => false],
-            'contract'  => ['label' => 'Contract',          'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
-            'markup'    => ['label' => 'Markup',            'built' => false],
+            'category'  => ['label' => 'Categories'],
+            'po-format' => ['label' => 'Order Formats', 'built' => false],
+            'product'   => ['label' => 'Products'],
+            'buyer'     => ['label' => 'Buyers'],
+            'supplier'  => ['label' => 'Suppliers'],
+            'agent'     => ['label' => 'Agents'],
+            'markup'    => ['label' => 'Markup', 'built' => false],
         ],
 
-        'Transactions' => [
-            'inquiry'            => ['label' => 'Inquiry',            'actions' => ['view', 'create', 'edit', 'delete', 'export'], 'built' => false],
-            'quotation'          => ['label' => 'Quotation',          'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => false],
-            'order-confirmation' => ['label' => 'Order Confirmation', 'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => false],
-            'sample-approval'    => ['label' => 'Sample Approval',    'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
-            'purchase-order'     => ['label' => 'Purchase Order',     'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => false],
-            'material-issue'     => ['label' => 'Material Issue',     'built' => false],
-            'inward-entry'       => ['label' => 'Inward Entry',       'built' => false],
-            'quality-check'      => ['label' => 'Quality Check',      'actions' => ['view', 'create', 'edit', 'approve'], 'built' => false],
-            'packing'            => ['label' => 'Packing',            'built' => false],
-            'shipment'           => ['label' => 'Shipment',           'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => false],
-            'export-document'    => ['label' => 'Export Documents',   'actions' => ['view', 'generate', 'export'], 'built' => false],
-        ],
-
-        'Accounts' => [
-            'purchase-bill'    => ['label' => 'Purchase Bills',   'built' => false],
-            'payment'          => ['label' => 'Payments',         'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
-            'foreign-payment'  => ['label' => 'Foreign Payments', 'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
-            'debit-note'       => ['label' => 'Debit Notes',      'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
-            'agent-commission' => ['label' => 'Agent Commission', 'built' => false],
-            'outstanding'      => ['label' => 'Outstanding',      'actions' => ['view', 'export'], 'built' => false],
-        ],
-
-        'Reports' => [
-            'report' => ['label' => 'Reports', 'actions' => ['view', 'export'], 'built' => false],
-        ],
-
-        'Administration' => [
-            'user'       => ['label' => 'Users'],
-            'role'       => ['label' => 'Roles'],
-            'permission' => ['label' => 'Permissions', 'actions' => ['view', 'sync']],
-        ],
-
-        'Settings' => [
-            'lookup'        => ['label' => 'Lookups',         'built' => false],
+        /*
+         * Administration and Settings were two headings for one audience: the
+         * person who configures roles is the person who configures number
+         * series. One heading, and it reads correctly for an operator who
+         * holds nothing here but lookup.view.
+         */
+        'Setup' => [
+            'user'          => ['label' => 'Users'],
+            'role'          => ['label' => 'Roles'],
+            'permission'    => ['label' => 'Permissions',     'actions' => ['view', 'sync']],
             'company'       => ['label' => 'Company Profile', 'actions' => ['view', 'edit'], 'built' => false],
+            'lookup'        => ['label' => 'Lookups',         'built' => false],
             'number-series' => ['label' => 'Number Series',   'actions' => ['view', 'edit'], 'built' => false],
             'activity-log'  => ['label' => 'Activity Logs',   'actions' => ['view'], 'built' => false],
         ],
@@ -153,49 +198,53 @@ return [
             'description' => 'Full operational access. Cannot manage permissions.',
             'permissions' => [
                 'user.*', 'role.view',
-                'supplier.*', 'buyer.*', 'agent.*', 'product.*', 'category.*',
-                'po-format.*', 'contract.*', 'markup.*',
-                'inquiry.*', 'quotation.*', 'order-confirmation.*', 'sample-approval.*',
-                'purchase-order.*', 'material-issue.*', 'inward-entry.*', 'quality-check.*',
-                'packing.*', 'shipment.*', 'export-document.*',
-                'purchase-bill.*', 'payment.*', 'foreign-payment.*', 'debit-note.*',
-                'agent-commission.*', 'outstanding.*', 'report.*',
-                'lookup.*', 'company.*', 'number-series.*', 'activity-log.*',
+                'category.*', 'po-format.*', 'product.*', 'buyer.*', 'supplier.*',
+                'agent.*', 'markup.*',
+                'inquiry.*', 'order-confirmation.*',
+                'purchase-order.*', 'inward-entry.*',
+                'packing.*', 'export-document.*',
+                'purchase-bill.*', 'debit-note.*', 'payment.*', 'foreign-payment.*',
+                'agent-commission.*',
+                'outstanding.*', 'report.*',
+                'company.*', 'lookup.*', 'number-series.*', 'activity-log.*',
             ],
         ],
 
         'Merchandising & Manufacturing' => [
             'description' => 'Handles inquiry to purchase order, suppliers and products.',
             'permissions' => [
-                'supplier.*', 'product.*', 'category.view', 'agent.view',
-                'buyer.view', 'contract.view', 'po-format.view', 'lookup.view',
-                'inquiry.*', 'quotation.*', 'order-confirmation.*', 'sample-approval.*',
-                'purchase-order.*', 'material-issue.*',
-                'inward-entry.view', 'shipment.view',
-                'report.view', 'report.export',
+                'category.view', 'po-format.view', 'product.*', 'buyer.view',
+                'supplier.*', 'agent.view', 'lookup.view',
+                'inquiry.*', 'order-confirmation.*',
+                'purchase-order.*', 'inward-entry.view',
+                'export-document.view',
+                'outstanding.view', 'report.view', 'report.export',
             ],
         ],
 
         'Accounts' => [
             'description' => 'Bills, payments, commission and outstanding.',
             'permissions' => [
-                'supplier.view', 'buyer.view', 'agent.view', 'product.view',
-                'markup.view', 'contract.view',
-                'purchase-order.view', 'inward-entry.view', 'shipment.view',
-                'purchase-bill.*', 'payment.*', 'foreign-payment.*', 'debit-note.*',
-                'agent-commission.*', 'outstanding.*',
-                'report.view', 'report.export',
+                'product.view', 'buyer.view', 'supplier.view', 'agent.view', 'markup.view',
+                'purchase-order.view', 'inward-entry.view', 'export-document.view',
+                'purchase-bill.*', 'debit-note.*', 'payment.*', 'foreign-payment.*',
+                'agent-commission.*',
+                'outstanding.*', 'report.view', 'report.export',
             ],
         ],
 
+        /*
+         * Shipment was folded into export-document, so this desk's whole job is
+         * now that one module plus the money coming back in against it.
+         */
         'Export Documentation & Foreign Payment' => [
-            'description' => 'Shipment, export documents and foreign payment realisation.',
+            'description' => 'Shipment, export documents and buyer payment realisation.',
             'permissions' => [
-                'buyer.view', 'product.view', 'category.view', 'contract.view', 'lookup.view',
+                'category.view', 'product.view', 'buyer.view', 'lookup.view',
                 'order-confirmation.view', 'packing.view',
-                'shipment.*', 'export-document.*',
+                'export-document.*',
                 'foreign-payment.*',
-                'report.view', 'report.export',
+                'outstanding.view', 'report.view', 'report.export',
             ],
         ],
 
@@ -209,23 +258,25 @@ return [
             ],
         ],
 
+        /*
+         * The checker now works inside Goods Inward rather than on a screen of
+         * their own: edit records the inspection, approve is the pass.
+         */
         'Quality Checker' => [
-            'description' => 'Inspects inward goods and records pass/reject quantity.',
+            'description' => 'Inspects goods inward and records pass/reject quantity.',
             'permissions' => [
                 'product.view', 'supplier.view',
                 'purchase-order.view',
-                'inward-entry.view', 'inward-entry.edit',
-                'quality-check.*',
+                'inward-entry.view', 'inward-entry.edit', 'inward-entry.approve',
                 'debit-note.view', 'debit-note.create',
                 'report.view',
             ],
         ],
 
         'Jobworker' => [
-            'description' => 'External jobber. Sees only their own purchase orders and samples.',
+            'description' => 'External jobber. Sees only their own purchase orders and deliveries.',
             'permissions' => [
                 'purchase-order.view',
-                'sample-approval.view', 'sample-approval.create',
                 'inward-entry.view', 'inward-entry.create',
             ],
         ],
