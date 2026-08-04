@@ -3,7 +3,9 @@
 use App\Http\Controllers\Masters\BuyerController;
 use App\Http\Controllers\Masters\AgentController;
 use App\Http\Controllers\Masters\CategoryController;
+use App\Http\Controllers\Masters\DocumentFormatController;
 use App\Http\Controllers\Masters\GeoController;
+use App\Http\Controllers\Masters\MarkupController;
 use App\Http\Controllers\Masters\ProductController;
 use App\Http\Controllers\Masters\SupplierController;
 use App\Http\Controllers\ProfileController;
@@ -89,6 +91,23 @@ Route::middleware('auth')->group(function () {
         Route::patch('agents/{agent}/toggle-status', [AgentController::class, 'toggleStatus'])
             ->name('agents.toggle-status');
         Route::resource('agents', AgentController::class);
+
+        /*
+         * Order Formats. Bound as {format} rather than {documentFormat} — the
+         * client calls these order formats, and the URL is the one place that
+         * name is visible to them.
+         */
+        Route::patch('formats/{format}/toggle-status', [DocumentFormatController::class, 'toggleStatus'])
+            ->name('formats.toggle-status');
+        Route::resource('formats', DocumentFormatController::class)
+            ->parameters(['formats' => 'format']);
+
+        // Before the resource, or markups/{markup} matches "supplier-discount".
+        Route::get('markups/supplier-discount', [MarkupController::class, 'supplierDiscount'])
+            ->name('markups.supplier-discount');
+        Route::patch('markups/{markup}/toggle-status', [MarkupController::class, 'toggleStatus'])
+            ->name('markups.toggle-status');
+        Route::resource('markups', MarkupController::class);
     });
 
     /*

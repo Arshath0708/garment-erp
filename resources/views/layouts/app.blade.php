@@ -321,6 +321,71 @@
             }
             .carton-preview-body.is-empty { color: #6b7280; font-style: italic; }
 
+            /* Unit chips on the Order Format master. Editable in place, as the
+               client's prototype draws them — a repeating text row would have
+               been four times the height for six short words. */
+            .unit-chips { display: flex; flex-wrap: wrap; gap: .4rem; min-height: 2rem; }
+            .unit-chip {
+                display: inline-flex; align-items: center; gap: .35rem;
+                padding: .25rem .5rem .25rem .6rem;
+                border: 1px solid #d8def0; border-radius: 999px;
+                background: #f4f6fd; color: #4b5563;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                font-size: .78rem; font-weight: 600; letter-spacing: .03em;
+            }
+            .unit-chip-remove {
+                border: 0; background: transparent; color: #9aa4b2;
+                font-size: 1rem; line-height: 1; padding: 0 .1rem; cursor: pointer;
+            }
+            .unit-chip-remove:hover { color: var(--bs-danger); }
+
+            /* Reference images — thumbnails with a keep/remove tick, so a save
+               that drops one is a deliberate act rather than a side effect. */
+            .reference-image {
+                display: block; width: 8rem;
+                border: 1px solid #e9edf2; border-radius: 8px;
+                overflow: hidden; background: #fff;
+            }
+            .reference-image img {
+                display: block; width: 100%; height: 6rem; object-fit: cover;
+            }
+            .reference-image-keep {
+                display: flex; align-items: center; gap: .35rem;
+                padding: .3rem .5rem;
+                border-top: 1px solid #eef1f5;
+                font-size: .75rem; color: #6b7280;
+            }
+
+            /* The three formula lines on the Markup master, printed under the
+               percentage fields as the prototype prints them. */
+            .formula-strip {
+                display: flex; flex-wrap: wrap; align-items: stretch; gap: 0;
+                border: 1px solid #e9edf2; border-radius: 10px;
+                background: #fafbfd; overflow: hidden;
+            }
+            .formula-cell {
+                flex: 1 1 12rem; min-width: 12rem;
+                padding: .7rem .9rem;
+                border-right: 1px solid #eef1f5;
+            }
+            .formula-cell:last-of-type { border-right: 0; }
+            .formula-head {
+                font-size: .65rem; font-weight: 700; letter-spacing: .08em;
+                text-transform: uppercase; color: #9aa4b2;
+            }
+            .formula-body {
+                font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                font-size: .8rem; color: #4b5563; margin-top: .15rem;
+            }
+            .formula-value { font-size: 1rem; font-weight: 600; color: #111827; margin-top: .3rem; }
+            .formula-note {
+                flex: 1 1 100%;
+                display: flex; align-items: center; gap: .5rem;
+                padding: .55rem .9rem;
+                border-top: 1px solid #eef1f5;
+                font-size: .78rem; color: #8b95a5;
+            }
+
             /* Role picker cards on the user form */
             .role-option { cursor: pointer; transition: border-color .15s, background-color .15s; }
             .role-option:hover { border-color: var(--bs-primary) !important; }
