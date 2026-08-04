@@ -10,18 +10,23 @@
      * the user will get. Renaming a section here means renaming the group
      * there too.
      *
-     *   Sales        the buyer asks, we confirm
-     *   Procurement  we order, the goods arrive
-     *   Export       we pack, we ship the paperwork
-     *   Finance      bills in, money out, money back
-     *   Reports      read-only
-     *   Masters      the data the four above are built from
-     *   Setup        who may do what, and how the system is configured
+     *   Masters         the data everything below is built from
+     *   Sales           the buyer asks, we confirm
+     *   Procurement     we order, the goods arrive
+     *   Export          we pack, we ship the paperwork
+     *   Finance         bills in, money out, money back
+     *   Reports         read-only
+     *   Administration  who may do what
      *
-     * The daily work is on top and the setup is at the bottom, so the screens
-     * someone opens twenty times a day are never below the ones they open
-     * twice a year. Within each section the order is the order the work
-     * actually happens in, never alphabetical.
+     * Masters sits first, directly under Dashboard: nothing downstream can be
+     * raised until the buyer, the product and the format behind it exist, so
+     * that is where a new install starts and where anyone chasing a wrong
+     * price, unit or format ends up. Sales through Reports then run in the
+     * order a job actually moves, and Administration is last because it is
+     * opened twice a year.
+     *
+     * Within each section the order is the order the work happens in, never
+     * alphabetical.
      *
      * ## Rules
      *
@@ -75,6 +80,87 @@
                         <p>Dashboard</p>
                     </a>
                 </li>
+
+                {{-- ============================= MASTERS =============================
+                     First, directly under Dashboard: an inquiry, an OC or a PO
+                     cannot be raised until the buyer, the product and the
+                     format behind it exist.
+
+                     Setup order within the section, so a fresh install fills it
+                     top to bottom and each row only needs what is above it:
+
+                       Categories     nothing points at it; the next five do
+                       Order Formats  linked per category
+                       Products       needs a category
+                       Buyers         need categories
+                       Suppliers      need categories
+                       Agents         attached to a buyer or a supplier
+                       Markup         priced against all of the above
+
+                     Contract is absent: it never had a screen. A contract
+                     number is a field on the order for direct-order buyers.
+                --}}
+                @if($canAny(['category.view', 'po-format.view', 'product.view', 'buyer.view', 'supplier.view', 'agent.view', 'markup.view']))
+                    <li class="nav-header">Masters</li>
+
+                    @can('category.view')
+                        <li class="nav-item">
+                            <a href="{{ route('masters.categories.index') }}"
+                               class="nav-link {{ request()->routeIs('masters.categories.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-tags"></i><p>Categories</p>
+                            </a>
+                        </li>
+                    @endcan
+                    @can('po-format.view')
+                        <li class="nav-item">
+                            <a href="{{ route('masters.formats.index') }}"
+                               class="nav-link {{ request()->routeIs('masters.formats.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-file-earmark-ruled"></i><p>Order Formats</p>
+                            </a>
+                        </li>
+                    @endcan
+                    @can('product.view')
+                        <li class="nav-item">
+                            <a href="{{ route('masters.products.index') }}"
+                               class="nav-link {{ request()->routeIs('masters.products.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-box-seam"></i><p>Products</p>
+                            </a>
+                        </li>
+                    @endcan
+                    @can('buyer.view')
+                        <li class="nav-item">
+                            <a href="{{ route('masters.buyers.index') }}"
+                               class="nav-link {{ request()->routeIs('masters.buyers.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-globe-asia-australia"></i><p>Buyers</p>
+                            </a>
+                        </li>
+                    @endcan
+                    @can('supplier.view')
+                        <li class="nav-item">
+                            <a href="{{ route('masters.suppliers.index') }}"
+                               class="nav-link {{ request()->routeIs('masters.suppliers.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-truck"></i><p>Suppliers</p>
+                            </a>
+                        </li>
+                    @endcan
+                    @can('agent.view')
+                        <li class="nav-item">
+                            <a href="{{ route('masters.agents.index') }}"
+                               class="nav-link {{ request()->routeIs('masters.agents.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-person-badge"></i><p>Agents</p>
+                            </a>
+                        </li>
+                    @endcan
+                    @can('markup.view')
+                        <li class="nav-item">
+                            <a href="{{ route('masters.markups.index') }}"
+                               class="nav-link {{ request()->routeIs('masters.markups.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-percent"></i><p>Markup</p>
+                            </a>
+                        </li>
+                    @endcan
+                @endif
+
 
                 {{-- ============================== SALES ==============================
                      The buyer side. Quotation is not a menu item: it is what a
@@ -167,134 +253,53 @@
                     @endcan
                 @endif
 
-                {{-- ============================= MASTERS =============================
-                     Below the daily work on purpose — a master is opened when a
-                     new buyer or product appears, not every hour.
+                {{-- ========================== ADMINISTRATION =========================
+                     Who may do what, and nothing else. Company Profile,
+                     Lookups, Number Series and Activity Logs used to sit here;
+                     none had a screen, and a menu full of links that go
+                     nowhere is worse than a short menu.
 
-                     Setup order within the section, so a fresh install fills it
-                     top to bottom and each row only needs what is above it:
-
-                       Categories     nothing points at it; the next five do
-                       Order Formats  linked per category
-                       Products       needs a category
-                       Buyers         need categories
-                       Suppliers      need categories
-                       Agents         attached to a buyer or a supplier
-                       Markup         priced against all of the above
-
-                     Contract is absent: it never had a screen. A contract
-                     number is a field on the order for direct-order buyers.
-                --}}
-                @if($canAny(['category.view', 'po-format.view', 'product.view', 'buyer.view', 'supplier.view', 'agent.view', 'markup.view']))
-                    <li class="nav-header">Masters</li>
-
-                    @can('category.view')
-                        <li class="nav-item">
-                            <a href="{{ route('masters.categories.index') }}"
-                               class="nav-link {{ request()->routeIs('masters.categories.*') ? 'active' : '' }}">
-                                <i class="nav-icon bi bi-tags"></i><p>Categories</p>
-                            </a>
-                        </li>
-                    @endcan
-                    @can('po-format.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-file-earmark-ruled"></i><p>Order Formats</p></a></li>
-                    @endcan
-                    @can('product.view')
-                        <li class="nav-item">
-                            <a href="{{ route('masters.products.index') }}"
-                               class="nav-link {{ request()->routeIs('masters.products.*') ? 'active' : '' }}">
-                                <i class="nav-icon bi bi-box-seam"></i><p>Products</p>
-                            </a>
-                        </li>
-                    @endcan
-                    @can('buyer.view')
-                        <li class="nav-item">
-                            <a href="{{ route('masters.buyers.index') }}"
-                               class="nav-link {{ request()->routeIs('masters.buyers.*') ? 'active' : '' }}">
-                                <i class="nav-icon bi bi-globe-asia-australia"></i><p>Buyers</p>
-                            </a>
-                        </li>
-                    @endcan
-                    @can('supplier.view')
-                        <li class="nav-item">
-                            <a href="{{ route('masters.suppliers.index') }}"
-                               class="nav-link {{ request()->routeIs('masters.suppliers.*') ? 'active' : '' }}">
-                                <i class="nav-icon bi bi-truck"></i><p>Suppliers</p>
-                            </a>
-                        </li>
-                    @endcan
-                    @can('agent.view')
-                        <li class="nav-item">
-                            <a href="{{ route('masters.agents.index') }}"
-                               class="nav-link {{ request()->routeIs('masters.agents.*') ? 'active' : '' }}">
-                                <i class="nav-icon bi bi-person-badge"></i><p>Agents</p>
-                            </a>
-                        </li>
-                    @endcan
-                    @can('markup.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-percent"></i><p>Markup</p></a></li>
-                    @endcan
-                @endif
-
-                {{-- ============================== SETUP ==============================
-                     Only User Management is a treeview: its three screens are
-                     one subject and are opened together. The four below are
-                     unrelated to each other, so nesting them would add a click
-                     for nothing.
+                     User Management is a treeview because its three screens are
+                     one subject and are opened together.
 
                      No "My Profile" entry — the header's user dropdown already
                      carries Profile and Logout, top right on every page.
                 --}}
-                @if($canAny(['user.view', 'role.view', 'permission.view', 'company.view', 'lookup.view', 'number-series.view', 'activity-log.view']))
-                    <li class="nav-header">Setup</li>
+                @if($canAny(['user.view', 'role.view', 'permission.view']))
+                    <li class="nav-header">Administration</li>
 
-                    @if($canAny(['user.view', 'role.view', 'permission.view']))
-                        <li class="nav-item {{ request()->routeIs('user-management.*') ? 'menu-open' : '' }}">
-                            <a href="#" class="nav-link {{ request()->routeIs('user-management.*') ? 'active' : '' }}">
-                                <i class="nav-icon bi bi-people"></i>
-                                <p>User Management<i class="nav-arrow bi bi-chevron-right"></i></p>
-                            </a>
-                            <ul class="nav nav-treeview">
-                                @can('user.view')
-                                    <li class="nav-item">
-                                        <a href="{{ route('user-management.users.index') }}"
-                                           class="nav-link {{ request()->routeIs('user-management.users.*') ? 'active' : '' }}">
-                                            <i class="nav-icon bi bi-dot"></i><p>Users</p>
-                                        </a>
-                                    </li>
-                                @endcan
-                                @can('role.view')
-                                    <li class="nav-item">
-                                        <a href="{{ route('user-management.roles.index') }}"
-                                           class="nav-link {{ request()->routeIs('user-management.roles.*') ? 'active' : '' }}">
-                                            <i class="nav-icon bi bi-dot"></i><p>Roles</p>
-                                        </a>
-                                    </li>
-                                @endcan
-                                @can('permission.view')
-                                    <li class="nav-item">
-                                        <a href="{{ route('user-management.permissions.index') }}"
-                                           class="nav-link {{ request()->routeIs('user-management.permissions.*') ? 'active' : '' }}">
-                                            <i class="nav-icon bi bi-dot"></i><p>Permissions</p>
-                                        </a>
-                                    </li>
-                                @endcan
-                            </ul>
-                        </li>
-                    @endif
-
-                    @can('company.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-building"></i><p>Company Profile</p></a></li>
-                    @endcan
-                    @can('lookup.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-sliders2"></i><p>Lookups</p></a></li>
-                    @endcan
-                    @can('number-series.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-123"></i><p>Number Series</p></a></li>
-                    @endcan
-                    @can('activity-log.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-clock-history"></i><p>Activity Logs</p></a></li>
-                    @endcan
+                    <li class="nav-item {{ request()->routeIs('user-management.*') ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ request()->routeIs('user-management.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-people"></i>
+                            <p>User Management<i class="nav-arrow bi bi-chevron-right"></i></p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            @can('user.view')
+                                <li class="nav-item">
+                                    <a href="{{ route('user-management.users.index') }}"
+                                       class="nav-link {{ request()->routeIs('user-management.users.*') ? 'active' : '' }}">
+                                        <i class="nav-icon bi bi-dot"></i><p>Users</p>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('role.view')
+                                <li class="nav-item">
+                                    <a href="{{ route('user-management.roles.index') }}"
+                                       class="nav-link {{ request()->routeIs('user-management.roles.*') ? 'active' : '' }}">
+                                        <i class="nav-icon bi bi-dot"></i><p>Roles</p>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('permission.view')
+                                <li class="nav-item">
+                                    <a href="{{ route('user-management.permissions.index') }}"
+                                       class="nav-link {{ request()->routeIs('user-management.permissions.*') ? 'active' : '' }}">
+                                        <i class="nav-icon bi bi-dot"></i><p>Permissions</p>
+                                    </a>
+                                </li>
+                            @endcan
+                        </ul>
+                    </li>
                 @endif
 
             </ul>

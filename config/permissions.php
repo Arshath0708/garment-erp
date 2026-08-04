@@ -105,6 +105,23 @@ return [
      */
     'groups' => [
 
+        /*
+         * The seven masters. Nothing else belongs here — ports, currencies,
+         * HSN codes, sizes, colours, payment terms and incoterms are dropdown
+         * sources, not business masters. They have no screen and no permission
+         * of their own; LookupSeeder populates them, and a Lookups module can
+         * be declared here the day someone needs to edit them in the UI.
+         */
+        'Masters' => [
+            'category'  => ['label' => 'Categories'],
+            'po-format' => ['label' => 'Order Formats'],
+            'product'   => ['label' => 'Products'],
+            'buyer'     => ['label' => 'Buyers'],
+            'supplier'  => ['label' => 'Suppliers'],
+            'agent'     => ['label' => 'Agents'],
+            'markup'    => ['label' => 'Markup'],
+        ],
+
         'Sales' => [
             'inquiry'            => ['label' => 'Inquiries',           'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => false],
             'order-confirmation' => ['label' => 'Order Confirmations', 'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => false],
@@ -142,35 +159,28 @@ return [
         ],
 
         /*
-         * The seven masters. Nothing else belongs here — supporting lookups
-         * (units, ports, currencies, HSN codes, sizes, colours, payment terms,
-         * incoterms) are dropdown sources, not business masters, and live on
-         * one Lookups screen under Setup.
+         * Who may do what. Nothing else — the four system-settings modules
+         * that used to sit alongside these (Company Profile, Lookups, Number
+         * Series, Activity Logs) were removed: none had a screen, and carrying
+         * permissions for screens nobody has built means every role has to be
+         * re-decided when they finally are.
+         *
+         * Company Profile is the one that will certainly come back. Export
+         * documents print the exporter's name, address, IEC and GST from
+         * somewhere, and that somewhere is this module. Re-adding it is one
+         * entry here, one sidebar block and a `permission:sync`.
+         *
+         * The heading is "Administration" again rather than "Setup" now that
+         * the section holds only user, role and permission management. That
+         * was the accurate name all along; it was only widened to "Setup"
+         * because operational roles held lookup.view and would otherwise have
+         * seen the word ADMINISTRATION above their menu. No operational role
+         * has anything in here now.
          */
-        'Masters' => [
-            'category'  => ['label' => 'Categories'],
-            'po-format' => ['label' => 'Order Formats', 'built' => false],
-            'product'   => ['label' => 'Products'],
-            'buyer'     => ['label' => 'Buyers'],
-            'supplier'  => ['label' => 'Suppliers'],
-            'agent'     => ['label' => 'Agents'],
-            'markup'    => ['label' => 'Markup', 'built' => false],
-        ],
-
-        /*
-         * Administration and Settings were two headings for one audience: the
-         * person who configures roles is the person who configures number
-         * series. One heading, and it reads correctly for an operator who
-         * holds nothing here but lookup.view.
-         */
-        'Setup' => [
-            'user'          => ['label' => 'Users'],
-            'role'          => ['label' => 'Roles'],
-            'permission'    => ['label' => 'Permissions',     'actions' => ['view', 'sync']],
-            'company'       => ['label' => 'Company Profile', 'actions' => ['view', 'edit'], 'built' => false],
-            'lookup'        => ['label' => 'Lookups',         'built' => false],
-            'number-series' => ['label' => 'Number Series',   'actions' => ['view', 'edit'], 'built' => false],
-            'activity-log'  => ['label' => 'Activity Logs',   'actions' => ['view'], 'built' => false],
+        'Administration' => [
+            'user'       => ['label' => 'Users'],
+            'role'       => ['label' => 'Roles'],
+            'permission' => ['label' => 'Permissions', 'actions' => ['view', 'sync']],
         ],
 
     ],
@@ -206,7 +216,6 @@ return [
                 'purchase-bill.*', 'debit-note.*', 'payment.*', 'foreign-payment.*',
                 'agent-commission.*',
                 'outstanding.*', 'report.*',
-                'company.*', 'lookup.*', 'number-series.*', 'activity-log.*',
             ],
         ],
 
@@ -214,7 +223,7 @@ return [
             'description' => 'Handles inquiry to purchase order, suppliers and products.',
             'permissions' => [
                 'category.view', 'po-format.view', 'product.*', 'buyer.view',
-                'supplier.*', 'agent.view', 'lookup.view',
+                'supplier.*', 'agent.view',
                 'inquiry.*', 'order-confirmation.*',
                 'purchase-order.*', 'inward-entry.view',
                 'export-document.view',
@@ -240,7 +249,7 @@ return [
         'Export Documentation & Foreign Payment' => [
             'description' => 'Shipment, export documents and buyer payment realisation.',
             'permissions' => [
-                'category.view', 'product.view', 'buyer.view', 'lookup.view',
+                'category.view', 'product.view', 'buyer.view',
                 'order-confirmation.view', 'packing.view',
                 'export-document.*',
                 'foreign-payment.*',
@@ -251,7 +260,7 @@ return [
         'Packing' => [
             'description' => 'Packing lists, cartons and markings.',
             'permissions' => [
-                'product.view', 'buyer.view', 'lookup.view',
+                'product.view', 'buyer.view',
                 'order-confirmation.view', 'purchase-order.view', 'inward-entry.view',
                 'packing.*',
                 'report.view',
