@@ -33,8 +33,12 @@ return new class extends Migration
         // Carry any existing default across as a starting value, so an
         // existing buyer does not silently lose what was already picked.
         DB::table('buyers')
-            ->join('shipment_methods', 'shipment_methods.id', '=', 'buyers.shipment_method_id')
-            ->update(['buyers.shipment_method' => DB::raw('shipment_methods.name')]);
+            ->whereNotNull('shipment_method_id')
+            ->update([
+                'shipment_method' => DB::table('shipment_methods')
+                    ->whereColumn('shipment_methods.id', 'buyers.shipment_method_id')
+                    ->select('name'),
+            ]);
 
         Schema::dropIfExists('buyer_shipment_method');
 

@@ -190,8 +190,9 @@ abstract class AgentRequest extends FormRequest
                 'nullable', 'string', 'max:255',
             ],
 
-            'status'  => ['required', Rule::in(['active', 'inactive'])],
-            'remarks' => ['nullable', 'string', 'max:1000'],
+            'status'   => ['required', Rule::in(['active', 'inactive'])],
+            'remarks'  => ['nullable', 'string', 'max:1000'],
+            'comments' => ['nullable', 'string', 'max:1000'],
         ];
     }
 

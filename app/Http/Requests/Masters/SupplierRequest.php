@@ -243,8 +243,9 @@ abstract class SupplierRequest extends FormRequest
             'default_delivery_mode'    => ['required', Rule::in(array_keys(Supplier::DELIVERY_MODES))],
 
             // Cols Z, AA
-            'status'  => ['required', Rule::in(['active', 'inactive'])],
-            'remarks' => ['nullable', 'string', 'max:1000'],
+            'status'   => ['required', Rule::in(['active', 'inactive'])],
+            'remarks'  => ['nullable', 'string', 'max:1000'],
+            'comments' => ['nullable', 'string', 'max:1000'],
         ];
     }
 

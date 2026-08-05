@@ -419,6 +419,9 @@
         <x-ui.textarea name="remarks" label="Remarks" :value="$buyer?->remarks"
                        horizontal rows="2" placeholder="Optional notes" />
 
+        <x-ui.textarea name="comments" label="Comments" :value="$buyer?->comments"
+                       horizontal rows="2" placeholder="Optional comments" />
+
     </div>
 </x-ui.form-section>
 

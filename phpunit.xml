@@ -28,8 +28,8 @@
              catches MySQL-specific issues (enum, generated columns, index limits)
              that sqlite silently accepts. Create it once:
              CREATE DATABASE guru_traders_test; -->
-        <env name="DB_CONNECTION" value="mysql"/>
-        <env name="DB_DATABASE" value="guru_traders_test"/>
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>

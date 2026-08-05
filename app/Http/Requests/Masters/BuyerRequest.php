@@ -228,6 +228,7 @@ abstract class BuyerRequest extends FormRequest
             // Cols Y, Z
             'status'                 => ['required', Rule::in(['active', 'inactive'])],
             'remarks'                => ['nullable', 'string', 'max:1000'],
+            'comments'               => ['nullable', 'string', 'max:1000'],
         ];
     }
 

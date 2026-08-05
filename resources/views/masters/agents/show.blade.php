@@ -105,6 +105,9 @@
             <dt class="col-sm-3 text-body-secondary fw-normal">Remarks</dt>
             <dd class="col-sm-9">{{ $agent->remarks ?: '—' }}</dd>
 
+            <dt class="col-sm-3 text-body-secondary fw-normal">Comments</dt>
+            <dd class="col-sm-9">{{ $agent->comments ?: '—' }}</dd>
+
             <dt class="col-sm-3 text-body-secondary fw-normal">Created</dt>
             <dd class="col-sm-9 text-body-secondary small">
                 {{ $agent->created_at?->format('d M Y, H:i') }}

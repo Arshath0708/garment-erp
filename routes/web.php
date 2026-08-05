@@ -4,7 +4,9 @@ use App\Http\Controllers\Masters\BuyerController;
 use App\Http\Controllers\Masters\AgentController;
 use App\Http\Controllers\Masters\CategoryController;
 use App\Http\Controllers\Masters\DocumentFormatController;
+use App\Http\Controllers\Masters\FobValueController;
 use App\Http\Controllers\Masters\GeoController;
+use App\Http\Controllers\Masters\JobberController;
 use App\Http\Controllers\Masters\MarkupController;
 use App\Http\Controllers\Masters\ProductController;
 use App\Http\Controllers\Masters\SupplierController;
@@ -90,11 +92,23 @@ Route::middleware('auth')->group(function () {
             ->name('suppliers.toggle-status');
         Route::resource('suppliers', SupplierController::class);
 
+        Route::get('jobbers/check-code', [JobberController::class, 'checkCode'])
+            ->name('jobbers.check-code');
+        Route::get('jobbers/agents', [JobberController::class, 'agents'])
+            ->name('jobbers.agents');
+        Route::patch('jobbers/{jobber}/toggle-status', [JobberController::class, 'toggleStatus'])
+            ->name('jobbers.toggle-status');
+        Route::resource('jobbers', JobberController::class)->parameters(['jobbers' => 'jobber']);
+
         Route::get('agents/check-code', [AgentController::class, 'checkCode'])
             ->name('agents.check-code');
         Route::patch('agents/{agent}/toggle-status', [AgentController::class, 'toggleStatus'])
             ->name('agents.toggle-status');
         Route::resource('agents', AgentController::class);
+
+        Route::patch('fob-values/{fobValue}/toggle-status', [FobValueController::class, 'toggleStatus'])
+            ->name('fob-values.toggle-status');
+        Route::resource('fob-values', FobValueController::class);
 
         /*
          * Order Formats. Bound as {format} rather than {documentFormat} — the

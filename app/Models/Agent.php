@@ -84,6 +84,7 @@ class Agent extends Model
         'payment_term_custom',
         'status',
         'remarks',
+        'comments',
     ];
 
     /*

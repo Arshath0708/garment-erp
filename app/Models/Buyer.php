@@ -71,6 +71,7 @@ class Buyer extends Model
         'swift_code',
         'status',
         'remarks',
+        'comments',
     ];
 
     protected function casts(): array

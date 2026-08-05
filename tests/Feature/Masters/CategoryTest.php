@@ -103,16 +103,16 @@ class CategoryTest extends TestCase
         $user   = $this->actingAsRole('Super Admin');
 
         $this->actingAs($user)->post(route('masters.categories.store'), [
-            'name'         => "Men's Shirts",
-            'po_format_id' => $format->id,
-            'status'       => 'active',
-            'remarks'      => 'All shirt products',
+            'name'       => "Men's Shirts",
+            'format_ids' => [$format->id],
+            'status'     => 'active',
+            'remarks'    => 'All shirt products',
         ])->assertRedirect();
 
         $category = Category::first();
 
         $this->assertSame("Men's Shirts", $category->name);
-        $this->assertSame($format->id, $category->po_format_id);
+        $this->assertTrue($category->formats->contains('id', $format->id));
         $this->assertSame('active', $category->status);
         $this->assertSame('All shirt products', $category->remarks);
 

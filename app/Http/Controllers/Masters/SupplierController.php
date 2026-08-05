@@ -60,7 +60,7 @@ class SupplierController extends Controller implements HasMiddleware
                 'primaryContact.designation:id,name',
             ])
             ->withCount('categories')
-            ->ofParty($request->string('party_type')->toString())
+            ->ofParty($request->string('party_type', 'supplier')->toString())
             ->when(
                 $request->filled('category_id'),
                 fn ($q) => $q->whereHas('categories', fn ($c) => $c->whereKey($request->integer('category_id')))
