@@ -43,7 +43,7 @@ class ProductTest extends TestCase
     {
         return array_merge([
             'category_id'     => $this->category->id,
-            'item_group_code' => 'PRD001',
+            'item_group_code' => 'PRD01',
             'name'            => 'Cotton Casual Shirt',
             'status'          => 'active',
         ], $overrides);
@@ -78,7 +78,7 @@ class ProductTest extends TestCase
 
         $product = Product::first();
 
-        $this->assertSame('PRD001', $product->item_group_code);
+        $this->assertSame('PRD01', $product->item_group_code);
         $this->assertSame('MENS COTTON SHIRT', $product->name_on_export_document);
         $this->assertSame('620520', $product->hsn_code);
         // Unit is typed, not an FK — the client cancelled the Unit Master.
@@ -243,7 +243,7 @@ class ProductTest extends TestCase
         $this->actingAs($user)->post(route('masters.products.store'), $this->payload());
 
         $this->actingAs($user)
-            ->post(route('masters.products.store'), $this->payload(['item_group_code' => 'PRD002']))
+            ->post(route('masters.products.store'), $this->payload(['item_group_code' => 'PRD02']))
             ->assertSessionHasErrors('name');
     }
 
@@ -269,17 +269,17 @@ class ProductTest extends TestCase
         $product = Product::first();
 
         $this->actingAs($user)
-            ->getJson(route('masters.products.check-code', ['field' => 'item_group_code', 'value' => 'PRD001']))
+            ->getJson(route('masters.products.check-code', ['field' => 'item_group_code', 'value' => 'PRD01']))
             ->assertOk()->assertJson(['available' => false]);
 
         $this->actingAs($user)
-            ->getJson(route('masters.products.check-code', ['field' => 'item_group_code', 'value' => 'PRD999']))
+            ->getJson(route('masters.products.check-code', ['field' => 'item_group_code', 'value' => 'PRD99']))
             ->assertOk()->assertJson(['available' => true]);
 
         // Editing a product must not report its own code as taken.
         $this->actingAs($user)
             ->getJson(route('masters.products.check-code', [
-                'field' => 'item_group_code', 'value' => 'PRD001', 'ignore' => $product->id,
+                'field' => 'item_group_code', 'value' => 'PRD01', 'ignore' => $product->id,
             ]))
             ->assertOk()->assertJson(['available' => true]);
     }
@@ -291,7 +291,7 @@ class ProductTest extends TestCase
         $product->delete();
 
         $this->actingAs($user)
-            ->getJson(route('masters.products.check-code', ['field' => 'item_group_code', 'value' => 'PRD001']))
+            ->getJson(route('masters.products.check-code', ['field' => 'item_group_code', 'value' => 'PRD01']))
             ->assertOk()->assertJson(['available' => false]);
     }
 
@@ -309,7 +309,7 @@ class ProductTest extends TestCase
         $category = Category::forceCreate(['code' => 'CAT800', 'name' => 'To Be Inactive', 'status' => 'active']);
         $product = Product::create([
             'category_id'     => $category->id,
-            'item_group_code' => 'PRD800',
+            'item_group_code' => 'PRD80',
             'name'            => 'Inactive Cat Product',
             'status'          => 'active',
         ]);
@@ -353,7 +353,7 @@ class ProductTest extends TestCase
 
         Product::create($this->payload());
         Product::create([
-            'category_id' => $other->id, 'item_group_code' => 'PRD002',
+            'category_id' => $other->id, 'item_group_code' => 'PRD02',
             'name' => 'Denim Jeans', 'status' => 'active',
         ]);
 
@@ -362,7 +362,7 @@ class ProductTest extends TestCase
         $this->actingAs($user)->get(route('masters.products.index', ['category_id' => $other->id]))
             ->assertSee('Denim Jeans')->assertDontSee('Cotton Casual Shirt');
 
-        $this->actingAs($user)->get(route('masters.products.index', ['search' => 'PRD001']))
+        $this->actingAs($user)->get(route('masters.products.index', ['search' => 'PRD01']))
             ->assertSee('Cotton Casual Shirt')->assertDontSee('Denim Jeans');
     }
 
@@ -411,7 +411,7 @@ class ProductTest extends TestCase
 
         $this->actingAs($user)->get(route('masters.products.index'))->assertOk();
         $this->actingAs($user)->get(route('masters.products.create'))->assertForbidden();
-        $this->actingAs($user)->post(route('masters.products.store'), $this->payload(['item_group_code' => 'PRD777', 'name' => 'X']))->assertForbidden();
+        $this->actingAs($user)->post(route('masters.products.store'), $this->payload(['item_group_code' => 'PRD77', 'name' => 'X']))->assertForbidden();
         $this->actingAs($user)->get(route('masters.products.edit', $product))->assertForbidden();
         $this->actingAs($user)->delete(route('masters.products.destroy', $product))->assertForbidden();
     }

@@ -7,6 +7,7 @@ use App\Http\Requests\Masters\StoreProductRequest;
 use App\Http\Requests\Masters\UpdateProductRequest;
 use App\Models\CalculationBasis;
 use App\Models\Category;
+use App\Models\DocumentFormatUnit;
 use App\Models\GstRate;
 use App\Models\PriceBand;
 use App\Models\Product;
@@ -183,10 +184,10 @@ class ProductController extends Controller implements HasMiddleware
         return [
             'categories'        => $categoriesQuery->orderBy('name')->pluck('name', 'id'),
 
-            // Unit is typed, not picked. These are only autocomplete hints from
-            // what has already been entered, so "PCS" does not become "Pcs" and
-            // "pcs" across three products and then three export documents.
-            'unitSuggestions'   => $this->unitSuggestions(),
+            // Picked, not typed — synced from the units defined on the Order
+            // Format master, so "PCS" cannot drift into "Pcs" on one product
+            // and "pcs" on the next.
+            'units'             => $this->unitOptions($product),
 
             'priceBands'        => $priceBandsQuery->orderBy('code')->get()->pluck('label', 'id'),
             'gstRates'          => $gstRatesQuery->orderBy('rate')->get()->pluck('label', 'id'),
@@ -195,17 +196,25 @@ class ProductController extends Controller implements HasMiddleware
     }
 
     /**
-     * Distinct units already typed on other products, for the datalist.
+     * The dropdown source for Unit (PO & OC) / Unit (Export Docs) — every
+     * distinct unit defined across all Order Formats, the same list the
+     * Format master's "Units" section edits as chips.
      *
-     * @return \Illuminate\Support\Collection<int, string>
+     * A product's own saved units are folded in too, even if no format
+     * carries them any more — editing an older product must not blank out a
+     * value nobody has touched.
+     *
+     * @return array<string, string>
      */
-    private function unitSuggestions(): \Illuminate\Support\Collection
+    private function unitOptions(?Product $product = null): array
     {
-        return Product::query()->whereNotNull('unit_po')->distinct()->pluck('unit_po')
-            ->merge(Product::query()->whereNotNull('unit_export')->distinct()->pluck('unit_export'))
-            ->filter()
-            ->unique()
-            ->sort()
-            ->values();
+        $units = DocumentFormatUnit::query()->distinct()->pluck('name');
+
+        if ($product) {
+            $units = $units->push($product->unit_po, $product->unit_export);
+        }
+
+        return $units->filter()->unique()->sort()->values()
+            ->mapWithKeys(fn ($unit) => [$unit => $unit])->all();
     }
 }

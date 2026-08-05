@@ -71,6 +71,10 @@ Route::middleware('auth')->group(function () {
             ->name('buyers.check-code');
         Route::patch('buyers/{buyer}/toggle-status', [BuyerController::class, 'toggleStatus'])
             ->name('buyers.toggle-status');
+        // Quick-add from the Payment Terms field on the Buyer form itself —
+        // "add more in the future" on the sheet, without a separate screen.
+        Route::post('buyers/payment-terms', [BuyerController::class, 'storePaymentTerm'])
+            ->name('buyers.payment-terms.store');
         Route::resource('buyers', BuyerController::class);
 
         /*
@@ -102,9 +106,13 @@ Route::middleware('auth')->group(function () {
         Route::resource('formats', DocumentFormatController::class)
             ->parameters(['formats' => 'format']);
 
-        // Before the resource, or markups/{markup} matches "supplier-discount".
+        // Before the resource, or markups/{markup} matches these fixed segments.
         Route::get('markups/supplier-discount', [MarkupController::class, 'supplierDiscount'])
             ->name('markups.supplier-discount');
+        Route::get('markups/supplier-agent-commission', [MarkupController::class, 'supplierAgentCommission'])
+            ->name('markups.supplier-agent-commission');
+        Route::get('markups/buyer-agent-commission', [MarkupController::class, 'buyerAgentCommission'])
+            ->name('markups.buyer-agent-commission');
         Route::patch('markups/{markup}/toggle-status', [MarkupController::class, 'toggleStatus'])
             ->name('markups.toggle-status');
         Route::resource('markups', MarkupController::class);

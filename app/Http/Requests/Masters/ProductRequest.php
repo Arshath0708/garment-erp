@@ -28,6 +28,19 @@ abstract class ProductRequest extends FormRequest
     }
 
     /**
+     * A code is compared case-insensitively by MySQL's default collation, so
+     * "abc" and "ABC" already collide — upper-casing it here means the stored
+     * value matches what the live check showed. Same treatment as Buyer and
+     * Agent display codes.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->filled('item_group_code')) {
+            $this->merge(['item_group_code' => strtoupper(trim($this->string('item_group_code')->toString()))]);
+        }
+    }
+
+    /**
      * Uniqueness does not exclude soft-deleted rows, matching the database
      * index — see StoreCategoryRequest for why.
      *
@@ -39,7 +52,9 @@ abstract class ProductRequest extends FormRequest
 
         $rules = [
             'category_id'             => ['required', 'integer', Rule::exists('categories', 'id')],
-            'item_group_code'         => ['required', 'string', 'max:20', Rule::unique('products', 'item_group_code')->ignore($ignore)],
+            // Max 5 characters, letters and numbers only — same convention as
+            // Buyer and Agent display codes.
+            'item_group_code'         => ['required', 'string', 'max:5', 'regex:/^[A-Z0-9]+$/', Rule::unique('products', 'item_group_code')->ignore($ignore)],
             'name'                    => ['required', 'string', 'max:200', Rule::unique('products', 'name')->ignore($ignore)],
             'name_on_export_document' => ['nullable', 'string', 'max:255'],
 
@@ -124,6 +139,8 @@ abstract class ProductRequest extends FormRequest
     {
         return [
             'item_group_code.unique' => 'This item group code is already taken.',
+            'item_group_code.max'    => 'Item group code may not be longer than 5 characters.',
+            'item_group_code.regex'  => 'Item group code may contain letters and numbers only.',
             'name.unique'            => 'A product with this name already exists.',
             'hsn_code.regex'         => 'HSN code must be 4 to 12 digits.',
         ];

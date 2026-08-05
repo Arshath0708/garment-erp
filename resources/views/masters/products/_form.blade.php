@@ -1,7 +1,7 @@
 @props([
     'product' => null,
     'categories' => [],
-    'unitSuggestions' => [],
+    'units' => [],
     'priceBands' => [],
     'gstRates' => [],
     'calculationBases' => [],
@@ -42,13 +42,13 @@
                 Item Group Code <span class="req">*</span>
             </label>
             <div class="col-sm-8 col-lg-9">
-                <input type="text" id="item_group_code" name="item_group_code" maxlength="20" required
+                <input type="text" id="item_group_code" name="item_group_code" maxlength="5" required
                        value="{{ old('item_group_code', $product?->item_group_code) }}"
-                       class="form-control js-unique-check @error('item_group_code') is-invalid @enderror"
-                       data-field="item_group_code" placeholder="PRD001" autocomplete="off">
+                       class="form-control text-uppercase js-unique-check @error('item_group_code') is-invalid @enderror"
+                       data-field="item_group_code" placeholder="PRD01" autocomplete="off">
                 @error('item_group_code')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                 {{-- Written by JS only once a code has actually been checked. --}}
-                <div class="form-text js-unique-feedback"></div>
+                <div class="form-text js-unique-feedback">Up to 5 characters. Must be unique.</div>
             </div>
         </div>
 
@@ -84,22 +84,19 @@
                    subtitle="Units, HSN, price band and tax rate.">
     <div class="form-stack">
 
-        {{-- Cols F and G — typed, not picked. The Unit Master was cancelled, and
-             the rule is manual entry at master level. The datalist only suggests
-             units already used, so PCS does not drift into Pcs and pcs; anything
-             can still be typed. The unit on a PO is not always the unit declared
-             on the export document, hence two fields. --}}
-        <x-ui.field name="unit_po" label="Unit (PO & OC)" :value="$product?->unit_po"
-                    horizontal placeholder="PCS" list="unit-options" maxlength="20" />
+        {{-- Cols F and G — picked, not typed. Synced from the units defined on
+             the Order Format master, so PCS cannot drift into Pcs and pcs
+             across products and then export documents. The unit on a PO is
+             not always the unit declared on the export document, hence two
+             fields. --}}
+        <x-ui.select name="unit_po" label="Unit (PO & OC)" :options="$units"
+                     :selected="$product?->unit_po" horizontal searchable
+                     placeholder="Search unit…"
+                     hint="From the Units defined on the Order Format master." />
 
-        <x-ui.field name="unit_export" label="Unit (Export Docs)" :value="$product?->unit_export"
-                    horizontal placeholder="PCS" list="unit-options" maxlength="20" />
-
-        <datalist id="unit-options">
-            @foreach($unitSuggestions as $unit)
-                <option value="{{ $unit }}"></option>
-            @endforeach
-        </datalist>
+        <x-ui.select name="unit_export" label="Unit (Export Docs)" :options="$units"
+                     :selected="$product?->unit_export" horizontal searchable
+                     placeholder="Search unit…" />
 
         {{-- Col H — a text box on the sheet, not a dropdown --}}
         <x-ui.field name="hsn_code" label="HSN Code" :value="$product?->hsn_code"
@@ -133,6 +130,7 @@
             <table class="table grid-table align-middle mb-0">
                 <thead>
                     <tr>
+                        <th style="width:90px">Applicable</th>
                         <th style="width:110px">Scheme</th>
                         <th style="width:120px">Rate %</th>
                         <th style="width:120px">Rate % 2</th>
@@ -142,15 +140,34 @@
                 </thead>
                 <tbody>
                     @foreach(ProductIncentive::SCHEMES as $scheme => $schemeLabel)
-                        @php $twoPercent = in_array($scheme, ProductIncentive::TWO_PERCENT_SCHEMES, true); @endphp
+                        @php
+                            $twoPercent = in_array($scheme, ProductIncentive::TWO_PERCENT_SCHEMES, true);
+                            $schemeEnabled = filled($incentive($scheme, 'percent_1'))
+                                || filled($incentive($scheme, 'cap_value'))
+                                || filled($incentive($scheme, 'calculation_basis_id'));
+                        @endphp
 
                         <tr>
+                            <td>
+                                {{-- Off by default — a blank row already means "not applicable"
+                                     (see the section subtitle). The switch just makes that state
+                                     explicit and stops a stray keystroke from applying a scheme
+                                     nobody meant to turn on. --}}
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input js-incentive-toggle" type="checkbox"
+                                           role="switch" id="incentive-toggle-{{ $scheme }}"
+                                           data-scheme="{{ $scheme }}"
+                                           @checked($schemeEnabled)>
+                                </div>
+                            </td>
+
                             <td class="scheme-name">{{ $schemeLabel }}</td>
 
                             <td>
                                 <input type="number" step="0.001" min="0" max="100" placeholder="0.000"
                                        name="incentives[{{ $scheme }}][percent_1]"
                                        value="{{ $incentive($scheme, 'percent_1') }}"
+                                       data-incentive-field="{{ $scheme }}"
                                        class="form-control @error('incentives.'.$scheme.'.percent_1') is-invalid @enderror">
                                 @error('incentives.'.$scheme.'.percent_1')
                                     <div class="cell-error">{{ $message }}</div>
@@ -163,6 +180,7 @@
                                     <input type="number" step="0.001" min="0" max="100" placeholder="0.000"
                                            name="incentives[{{ $scheme }}][percent_2]"
                                            value="{{ $incentive($scheme, 'percent_2') }}"
+                                           data-incentive-field="{{ $scheme }}"
                                            class="form-control @error('incentives.'.$scheme.'.percent_2') is-invalid @enderror">
                                     @error('incentives.'.$scheme.'.percent_2')
                                         <div class="cell-error">{{ $message }}</div>
@@ -176,6 +194,7 @@
                                 <input type="number" step="0.0001" min="0" placeholder="0.0000"
                                        name="incentives[{{ $scheme }}][cap_value]"
                                        value="{{ $incentive($scheme, 'cap_value') }}"
+                                       data-incentive-field="{{ $scheme }}"
                                        class="form-control @error('incentives.'.$scheme.'.cap_value') is-invalid @enderror">
                                 @error('incentives.'.$scheme.'.cap_value')
                                     <div class="cell-error">{{ $message }}</div>
@@ -185,6 +204,7 @@
                             <td>
                                 <select name="incentives[{{ $scheme }}][calculation_basis_id]"
                                         data-searchable data-placeholder="Search basis…"
+                                        data-incentive-field="{{ $scheme }}"
                                         class="form-select @error('incentives.'.$scheme.'.calculation_basis_id') is-invalid @enderror">
                                     <option value="">— Select —</option>
                                     @foreach($calculationBases as $id => $basis)
@@ -284,6 +304,38 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     inputs.forEach(el => el.addEventListener('input', recalcSqm));
+
+    /* ------------------------------------------------------------------ *
+     * Export incentive toggles — Drawback, RoSCTL, RoDTEP each get an
+     * "Applicable" switch. Off disables and clears that row's inputs; a
+     * blank row already means "not applicable" to the server (see the
+     * section subtitle), so switching off is what actually posts nothing
+     * for that scheme.
+     * ------------------------------------------------------------------ */
+    document.querySelectorAll('.js-incentive-toggle').forEach(function (toggle) {
+        const scheme = toggle.dataset.scheme;
+        const fields = document.querySelectorAll('[data-incentive-field="' + scheme + '"]');
+
+        function apply() {
+            fields.forEach(function (field) {
+                field.disabled = ! toggle.checked;
+
+                if (! toggle.checked) {
+                    if (field.tomselect) {
+                        field.tomselect.clear(true);
+                        field.tomselect.disable();
+                    } else {
+                        field.value = '';
+                    }
+                } else if (field.tomselect) {
+                    field.tomselect.enable();
+                }
+            });
+        }
+
+        toggle.addEventListener('change', apply);
+        apply();
+    });
 
     /* ------------------------------------------------------------------ *
      * "Tell me if a code / name is already taken" (sheet cols B and C).

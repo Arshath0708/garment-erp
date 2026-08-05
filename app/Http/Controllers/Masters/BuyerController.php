@@ -14,7 +14,6 @@ use App\Models\Currency;
 use App\Models\Incoterm;
 use App\Models\PaymentTerm;
 use App\Models\Port;
-use App\Models\ShipmentMethod;
 use App\Models\State;
 use App\Services\Masters\BuyerService;
 use Illuminate\Http\JsonResponse;
@@ -43,6 +42,8 @@ class BuyerController extends Controller implements HasMiddleware
             new Middleware('permission:buyer.create', only: ['create', 'store']),
             new Middleware('permission:buyer.edit', only: ['edit', 'update', 'toggleStatus']),
             new Middleware('permission:buyer.delete', only: ['destroy']),
+            // Reachable from either the create or the edit form.
+            new Middleware('permission:buyer.create|buyer.edit', only: ['storePaymentTerm']),
         ];
     }
 
@@ -93,8 +94,8 @@ class BuyerController extends Controller implements HasMiddleware
         return view('masters.buyers.show', [
             'buyer' => $buyer->load([
                 'categories:id,name', 'cartonMarkings', 'country', 'state', 'city', 'port',
-                'agent', 'paymentTerm', 'incoterm', 'shipmentMethod', 'currency',
-                'currencies', 'incoterms', 'shipmentMethods',
+                'agent', 'paymentTerm', 'incoterm', 'currency',
+                'currencies', 'incoterms',
                 'creator', 'updater',
             ]),
         ]);
@@ -108,7 +109,7 @@ class BuyerController extends Controller implements HasMiddleware
         ) + [
             'buyer' => $buyer->load(
                 'categories:id', 'cartonMarkings',
-                'currencies:id', 'incoterms:id', 'shipmentMethods:id',
+                'currencies:id', 'incoterms:id',
             ),
         ]);
     }
@@ -165,6 +166,28 @@ class BuyerController extends Controller implements HasMiddleware
     }
 
     /**
+     * Sheet col Q: "drop down menu, add more in the future". Lets a new term
+     * be typed straight into the Payment Terms field instead of leaving the
+     * form to add one elsewhere — there is no separate Payment Terms screen.
+     *
+     * `firstOrCreate` on name: two users typing the same new term at once end
+     * up pointing at one row rather than a duplicate-name error.
+     */
+    public function storePaymentTerm(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:80'],
+        ]);
+
+        $term = PaymentTerm::firstOrCreate(
+            ['name' => trim($data['name'])],
+            ['applies_to' => 'buyer', 'status' => 'active']
+        );
+
+        return response()->json(['id' => $term->id, 'name' => $term->name]);
+    }
+
+    /**
      * Dropdown sources shared by the create and edit forms.
      *
      * Only active rows: a retired port or incoterm must not be selectable on a
@@ -203,10 +226,7 @@ class BuyerController extends Controller implements HasMiddleware
             'ports'           => Port::active()->with('country:id,iso_code')->orderBy('name')->get()->pluck('label', 'id'),
             'paymentTerms'    => PaymentTerm::active()->forSide('buyer')->orderBy('name')->pluck('name', 'id'),
             'incoterms'       => Incoterm::active()->orderBy('code')->get()->pluck('label', 'id'),
-            'shipmentMethods' => ShipmentMethod::active()->orderBy('name')->pluck('name', 'id'),
             'currencies'      => Currency::active()->orderBy('iso_code')->get()->pluck('label', 'id'),
-
-            'orderModes' => Buyer::ORDER_MODES,
 
             /*
              * Which payment terms open the advance / at-sight boxes. Sent to the

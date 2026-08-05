@@ -28,7 +28,9 @@ class MarkupController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:markup.view', only: ['index', 'show', 'supplierDiscount']),
+            new Middleware('permission:markup.view', only: [
+                'index', 'show', 'supplierDiscount', 'supplierAgentCommission', 'buyerAgentCommission',
+            ]),
             new Middleware('permission:markup.create', only: ['create', 'store']),
             new Middleware('permission:markup.edit', only: ['edit', 'update', 'toggleStatus']),
             new Middleware('permission:markup.delete', only: ['destroy']),
@@ -69,7 +71,7 @@ class MarkupController extends Controller implements HasMiddleware
 
     public function show(Markup $markup): View
     {
-        $markup->load(['supplier', 'buyer', 'creator', 'updater']);
+        $markup->load(['supplier.agent', 'buyer.agent', 'creator', 'updater']);
 
         return view('masters.markups.show', [
             'markup'  => $markup,
@@ -80,7 +82,7 @@ class MarkupController extends Controller implements HasMiddleware
     public function edit(Markup $markup): View
     {
         return view('masters.markups.edit', array_merge($this->formData($markup), [
-            'markup' => $markup->load(['supplier', 'buyer']),
+            'markup' => $markup->load(['supplier.agent', 'buyer.agent']),
         ]));
     }
 
@@ -137,6 +139,40 @@ class MarkupController extends Controller implements HasMiddleware
     }
 
     /**
+     * The chosen supplier's own agent and their negotiated commission, for
+     * the read-only Agent Commission fields. Same treatment as
+     * supplierDiscount() — filled on load and refreshed on change so the
+     * form never shows a figure that belongs to the previously selected
+     * supplier.
+     */
+    public function supplierAgentCommission(Request $request): JsonResponse
+    {
+        $supplier = Supplier::query()
+            ->select('id', 'agent_id', 'agent_commission_type', 'agent_commission_value')
+            ->with('agent:id,name,display_code')
+            ->find($request->integer('supplier_id'));
+
+        return response()->json([
+            'agent'      => $supplier?->agent?->label,
+            'commission' => $supplier?->agent_commission_label,
+        ]);
+    }
+
+    /** The chosen buyer's own agent and their negotiated commission. */
+    public function buyerAgentCommission(Request $request): JsonResponse
+    {
+        $buyer = Buyer::query()
+            ->select('id', 'agent_id', 'agent_commission_type', 'agent_commission_value')
+            ->with('agent:id,name,display_code')
+            ->find($request->integer('buyer_id'));
+
+        return response()->json([
+            'agent'      => $buyer?->agent?->label,
+            'commission' => $buyer?->agent_commission_label,
+        ]);
+    }
+
+    /**
      * Dropdown sources.
      *
      * Inactive parties are excluded so a retired supplier cannot be given a new
@@ -157,7 +193,29 @@ class MarkupController extends Controller implements HasMiddleware
                 ->pluck('discount_percent', 'id')
                 ->map(fn ($value) => (float) ($value ?? 0))
                 ->all(),
+
+            // Same idea for each party's own agent commission — the form
+            // shows it without a round trip, and supplierAgentCommission() /
+            // buyerAgentCommission() are only the fallback for a party added
+            // since the page was rendered.
+            'supplierAgentCommissions' => $this->agentCommissions(Supplier::query()),
+            'buyerAgentCommissions'    => $this->agentCommissions(Buyer::query()),
         ];
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<\Illuminate\Database\Eloquent\Model>  $query
+     * @return array<int, array{agent: ?string, commission: ?string}>
+     */
+    private function agentCommissions(\Illuminate\Database\Eloquent\Builder $query): array
+    {
+        return $query->with('agent:id,name,display_code')
+            ->get(['id', 'agent_id', 'agent_commission_type', 'agent_commission_value'])
+            ->mapWithKeys(fn ($party) => [$party->id => [
+                'agent'      => $party->agent?->label,
+                'commission' => $party->agent_commission_label,
+            ]])
+            ->all();
     }
 
     /**

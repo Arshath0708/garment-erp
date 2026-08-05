@@ -83,6 +83,41 @@ class Markup extends Model
         return (float) ($this->supplier?->discount_percent ?? 0);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Agent commission — read straight off each party, for visibility
+    |--------------------------------------------------------------------------
+    | Not a column on this table, same reasoning as the discount above: each
+    | party's own agent_commission_type/value on the Agent Master screen is
+    | "this party's negotiated rate with this agent" — the same agent can
+    | carry a different rate for another buyer or supplier — so that is the
+    | one true source, not a figure copied onto the markup rule.
+    */
+
+    /** The supplier's own linked agent, or null if it has none. */
+    public function supplierAgent(): ?Agent
+    {
+        return $this->supplier?->agent;
+    }
+
+    /** The supplier's negotiated commission with that agent — "2.5%" or "1.5 INR". */
+    public function supplierAgentCommissionLabel(): ?string
+    {
+        return $this->supplier?->agent_commission_label;
+    }
+
+    /** The buyer's own linked agent, or null if it has none. */
+    public function buyerAgent(): ?Agent
+    {
+        return $this->buyer?->agent;
+    }
+
+    /** The buyer's negotiated commission with that agent — "2.5%" or "1.5000 USD". */
+    public function buyerAgentCommissionLabel(): ?string
+    {
+        return $this->buyer?->agent_commission_label;
+    }
+
     /** CP + Markup% */
     public function clientPrice(float $costPrice): float
     {

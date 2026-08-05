@@ -43,30 +43,10 @@ class Buyer extends Model
     /**
      * @var list<string>
      */
-    /**
-     * How this buyer's orders are documented — the client's prototype calls it
-     * "Order Mode" and the OC screen branches on it.
-     *
-     * `oc` produces a full order confirmation with item lines, sent to the buyer
-     * to confirm, and POs are raised from those lines. `direct` produces a
-     * contract number only: no OC document, no item lines, and the items are
-     * entered at PO stage instead.
-     *
-     * @var array<string, string>
-     */
-    public const ORDER_MODES = [
-        'oc'     => 'OC Required',
-        'direct' => 'Direct Order',
-    ];
-
-    /**
-     * @var list<string>
-     */
     protected $fillable = [
         'display_code',
         'company_name',
         'name_on_export_invoice',
-        'order_mode',
         'contact_person',
         'email',
         'mobile',
@@ -84,7 +64,7 @@ class Buyer extends Model
         'advance_percent',
         'sight_percent',
         'incoterm_id',
-        'shipment_method_id',
+        'shipment_method',
         'currency_id',
         'bank_name',
         'account_number',
@@ -100,12 +80,6 @@ class Buyer extends Model
             'advance_percent'        => 'decimal:2',
             'sight_percent'          => 'decimal:2',
         ];
-    }
-
-    /** Does this buyer get a full OC document, or only a contract number? */
-    public function requiresOrderConfirmation(): bool
-    {
-        return $this->order_mode !== 'direct';
     }
 
     /*
@@ -162,11 +136,6 @@ class Buyer extends Model
         return $this->belongsTo(Incoterm::class);
     }
 
-    public function shipmentMethod(): BelongsTo
-    {
-        return $this->belongsTo(ShipmentMethod::class);
-    }
-
     /**
      * The default currency — the one pre-selected on a new order and shown on
      * the list screen. `currencies()` is the full set this buyer may be
@@ -181,9 +150,9 @@ class Buyer extends Model
     |--------------------------------------------------------------------------
     | Accepted sets
     |--------------------------------------------------------------------------
-    | A buyer invoiced in USD on one order and AED on the next is one buyer, and
-    | "Air + Sea" is a normal answer to shipment method. The BelongsTo above
-    | each of these is the default within the set, not a competing answer.
+    | A buyer invoiced in USD on one order and AED on the next is one buyer.
+    | The BelongsTo above each of these is the default within the set, not a
+    | competing answer.
     */
 
     public function currencies(): BelongsToMany
@@ -195,11 +164,6 @@ class Buyer extends Model
     public function incoterms(): BelongsToMany
     {
         return $this->belongsToMany(Incoterm::class, 'buyer_incoterm');
-    }
-
-    public function shipmentMethods(): BelongsToMany
-    {
-        return $this->belongsToMany(ShipmentMethod::class, 'buyer_shipment_method');
     }
 
     /*

@@ -10,9 +10,7 @@
     'ports' => [],
     'paymentTerms' => [],
     'incoterms' => [],
-    'shipmentMethods' => [],
     'currencies' => [],
-    'orderModes' => [],
     // Payment term ids that split the payment, so the JS toggle and
     // BuyerRequest read the same `has_split` column rather than two lists.
     'splitTermIds' => [],
@@ -24,9 +22,9 @@
     /**
      * Buyer form — the client's Buyer Master sheet in the sheet's own order,
      * plus the fields their working prototype carries and the sheet did not:
-     * Order Mode, the advance / at-sight split, and the accepted sets beside
-     * the default currency, incoterm and shipment method. See the 000200
-     * expand migration for why each one exists.
+     * the advance / at-sight split, and the accepted sets beside the default
+     * currency and incoterm. See the 000200 expand migration for why each
+     * one exists.
      *
      * Laid out one field per line, label on the left, grouped into sections —
      * same as the Category and Product masters. 26 columns in a flat grid is
@@ -51,9 +49,6 @@
 
     $selectedIncoterms = $buyer?->incoterms->pluck('id')->all()
         ?: array_filter([$buyer?->incoterm_id]);
-
-    $selectedShipmentMethods = $buyer?->shipmentMethods->pluck('id')->all()
-        ?: array_filter([$buyer?->shipment_method_id]);
 
     /*
      * Whether the advance / at-sight boxes start open. Resolved server-side so
@@ -124,15 +119,6 @@
                     :value="$buyer?->name_on_export_invoice" horizontal maxlength="200"
                     placeholder="Exactly as it must print on the invoice"
                     hint="Leave blank to use the company name." />
-
-        {{-- Not on the sheet. From the client's prototype — the Order
-             Confirmation screen branches on it, so it is a property of the
-             buyer rather than a question asked on every order. --}}
-        <x-ui.select name="order_mode" label="Order Mode" required horizontal
-                     :options="$orderModes"
-                     :selected="$buyer?->order_mode ?? 'oc'"
-                     :placeholder="false"
-                     hint="OC Required — a full order confirmation with item lines, sent to the buyer, and POs raised from those lines. Direct Order — a contract number only; items are entered at PO stage." />
 
         {{-- Col D — "allow multiple selection in a drop down menu which is
              connected from the category master" --}}
@@ -270,10 +256,13 @@
                    subtitle="Defaults copied onto this buyer's quotations and order confirmations.">
     <div class="form-stack">
 
-        {{-- Col Q --}}
+        {{-- Col Q — "drop down menu, add more in the future". Typing a name
+             that is not in the list yet adds it, rather than sending the user
+             off to a separate screen to create one first. --}}
         <x-ui.select name="payment_term_id" label="Payment Terms" :options="$paymentTerms"
                      :selected="$buyer?->payment_term_id" horizontal searchable
-                     placeholder="Search terms…" />
+                     placeholder="Search terms…"
+                     data-create-url="{{ route('masters.buyers.payment-terms.store') }}" />
 
         {{-- Opens only on a term that splits the payment. The two halves must
              total 100 — BuyerRequest checks it; this is the affordance. --}}
@@ -326,14 +315,10 @@
                      placeholder="Search incoterms…"
                      hint="The default above is added automatically if you leave it out." />
 
-        {{-- Col S — "Air + Sea" is a normal answer, not a contradiction. --}}
-        <x-ui.select name="shipment_method_id" label="Default Shipment Method" :options="$shipmentMethods"
-                     :selected="$buyer?->shipment_method_id" horizontal searchable
-                     placeholder="Search method…" />
-
-        <x-ui.select name="shipment_method_ids" label="Shipment Methods Used" :options="$shipmentMethods"
-                     :selected="$selectedShipmentMethods" horizontal searchable multiple
-                     placeholder="Search methods…" />
+        {{-- Col S — typed, not picked. "Air + Sea" is a normal answer, not a
+             contradiction, so it is free text rather than a single choice. --}}
+        <x-ui.field name="shipment_method" label="Shipment Method" :value="$buyer?->shipment_method"
+                    horizontal maxlength="120" placeholder="e.g. Air + Sea" />
 
         {{-- Col T — a buyer invoiced in USD on one order and AED on the next is
              one buyer, so the accepted set is separate from the default. --}}

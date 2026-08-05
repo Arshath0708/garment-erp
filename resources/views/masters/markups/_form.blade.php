@@ -3,6 +3,8 @@
     'suppliers' => [],
     'buyers'    => [],
     'discounts' => [],
+    'supplierAgentCommissions' => [],
+    'buyerAgentCommissions'    => [],
 ])
 
 {{--
@@ -23,6 +25,52 @@
         <x-ui.select name="buyer_id" label="Buyer Name" required searchable
                      :options="$buyers" :selected="$markup?->buyer_id"
                      placeholder="— Select Buyer —" />
+    </div>
+</x-ui.form-section>
+
+@php
+    // Same "auto-filled, edit there to change" treatment as the discount
+    // below — read straight off the party's own agent link, not typed here.
+    $describeAgent = fn (?\App\Models\Markup $m, string $agentMethod, string $labelMethod) => $m
+        ? trim((($m->{$agentMethod}()?->label ?? 'No agent linked')).
+            ($m->{$labelMethod}() ? ' — '.$m->{$labelMethod}() : ''))
+        : '';
+@endphp
+
+<x-ui.form-section title="Agent Commission" icon="bi-person-badge"
+                   subtitle="Each party's own agent and negotiated rate, from the Agent Master — for visibility only, not part of the pricing formula below.">
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="supplier_agent_commission_display" class="form-label fw-semibold">Supplier's Agent Commission</label>
+            <input type="text" id="supplier_agent_commission_display" class="form-control" readonly
+                   value="{{ $describeAgent($markup, 'supplierAgent', 'supplierAgentCommissionLabel') }}"
+                   placeholder="— select a supplier —"
+                   data-url="{{ route('masters.markups.supplier-agent-commission') }}">
+            <div class="form-text">
+                Auto-filled from the Supplier Master &middot;
+                @can('supplier.view')
+                    <a href="{{ route('masters.suppliers.index') }}">edit there to change</a>.
+                @else
+                    edit there to change.
+                @endcan
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label for="buyer_agent_commission_display" class="form-label fw-semibold">Buyer's Agent Commission</label>
+            <input type="text" id="buyer_agent_commission_display" class="form-control" readonly
+                   value="{{ $describeAgent($markup, 'buyerAgent', 'buyerAgentCommissionLabel') }}"
+                   placeholder="— select a buyer —"
+                   data-url="{{ route('masters.markups.buyer-agent-commission') }}">
+            <div class="form-text">
+                Auto-filled from the Buyer Master &middot;
+                @can('buyer.view')
+                    <a href="{{ route('masters.buyers.index') }}">edit there to change</a>.
+                @else
+                    edit there to change.
+                @endcan
+            </div>
+        </div>
     </div>
 </x-ui.form-section>
 
@@ -213,6 +261,58 @@ document.addEventListener('DOMContentLoaded', function () {
 
     [markup, sample].forEach((el) => el.addEventListener('input', recalc));
     recalc();
+
+    /* ------------------------------------------------------------------ *
+     * Agent Commission — each party's own agent, synced the same way as
+     * the Discount % field above: preloaded dict first, the endpoint only
+     * for a party added since the page was rendered.
+     * ------------------------------------------------------------------ */
+    function wireAgentCommission(partySelect, display, known, paramName) {
+        if (! partySelect || ! display) return;
+
+        function apply(row) {
+            if (! row || (! row.agent && ! row.commission)) {
+                display.value = row === null ? '' : 'No agent linked';
+                return;
+            }
+
+            display.value = row.commission ? `${row.agent} — ${row.commission}` : row.agent;
+        }
+
+        partySelect.addEventListener('change', function () {
+            const id = partySelect.value;
+
+            if (! id) return apply(null);
+
+            if (Object.prototype.hasOwnProperty.call(known, id)) {
+                return apply(known[id]);
+            }
+
+            const url = new URL(display.dataset.url, window.location.origin);
+            url.searchParams.set(paramName, id);
+
+            fetch(url, { headers: { Accept: 'application/json' } })
+                .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+                // A failed lookup must not leave a stale agent sitting under a
+                // new party — same reasoning as the discount fallback above.
+                .catch(() => null)
+                .then(apply);
+        });
+    }
+
+    wireAgentCommission(
+        supplier,
+        document.getElementById('supplier_agent_commission_display'),
+        @json($supplierAgentCommissions),
+        'supplier_id',
+    );
+
+    wireAgentCommission(
+        document.getElementById('buyer_id'),
+        document.getElementById('buyer_agent_commission_display'),
+        @json($buyerAgentCommissions),
+        'buyer_id',
+    );
 });
 </script>
 @endpush

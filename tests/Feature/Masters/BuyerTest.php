@@ -11,7 +11,6 @@ use App\Models\Currency;
 use App\Models\Incoterm;
 use App\Models\PaymentTerm;
 use App\Models\Port;
-use App\Models\ShipmentMethod;
 use App\Models\State;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -88,7 +87,7 @@ class BuyerTest extends TestCase
             'agent_commission_value' => null,
             'payment_term_id'        => PaymentTerm::where('name', '30 Days')->value('id'),
             'incoterm_id'            => Incoterm::where('code', 'FOB')->value('id'),
-            'shipment_method_id'     => ShipmentMethod::where('name', 'Sea')->value('id'),
+            'shipment_method'        => 'Sea',
             'currency_id'            => Currency::where('iso_code', 'GBP')->value('id'),
             'bank_name'              => 'HSBC UK',
             'account_number'         => '12345678',

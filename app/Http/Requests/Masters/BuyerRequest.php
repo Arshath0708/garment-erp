@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Masters;
 
-use App\Models\Buyer;
 use App\Models\PaymentTerm;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -79,9 +78,8 @@ abstract class BuyerRequest extends FormRequest
          * form builds from the same two widgets.
          */
         foreach ([
-            'currency_id'        => 'currency_ids',
-            'incoterm_id'        => 'incoterm_ids',
-            'shipment_method_id' => 'shipment_method_ids',
+            'currency_id' => 'currency_ids',
+            'incoterm_id' => 'incoterm_ids',
         ] as $default => $set) {
             $value = $this->input($default);
 
@@ -188,13 +186,6 @@ abstract class BuyerRequest extends FormRequest
             'agent_commission_type'  => ['nullable', 'required_with:agent_commission_value', Rule::in(['percent', 'amount'])],
             'agent_commission_value' => ['nullable', 'numeric', 'min:0', 'max:99999999.9999'],
 
-            /*
-             * How this buyer's orders are documented. Required — the OC module
-             * branches on it, and a null would leave that branch undecided at
-             * the point an order is being raised.
-             */
-            'order_mode'             => ['required', Rule::in(array_keys(Buyer::ORDER_MODES))],
-
             // Cols Q–T
             'payment_term_id'        => ['nullable', 'integer', Rule::exists('payment_terms', 'id')],
 
@@ -214,15 +205,15 @@ abstract class BuyerRequest extends FormRequest
              * array is not expressible here.
              */
             'incoterm_id'            => ['nullable', 'integer', Rule::exists('incoterms', 'id')],
-            'shipment_method_id'     => ['nullable', 'integer', Rule::exists('shipment_methods', 'id')],
             'currency_id'            => ['nullable', 'integer', Rule::exists('currencies', 'id')],
 
             'currency_ids'           => ['nullable', 'array'],
             'currency_ids.*'         => ['integer', Rule::exists('currencies', 'id')],
             'incoterm_ids'           => ['nullable', 'array'],
             'incoterm_ids.*'         => ['integer', Rule::exists('incoterms', 'id')],
-            'shipment_method_ids'    => ['nullable', 'array'],
-            'shipment_method_ids.*'  => ['integer', Rule::exists('shipment_methods', 'id')],
+
+            // Typed, not picked — same treatment as Product's unit fields.
+            'shipment_method'        => ['nullable', 'string', 'max:120'],
 
             // Cols U–W
             'bank_name'              => ['nullable', 'string', 'max:120'],
@@ -303,17 +294,15 @@ abstract class BuyerRequest extends FormRequest
             'city_id'                => 'city',
             'port_id'                => 'port',
             'agent_id'               => 'agent',
-            'order_mode'             => 'order mode',
             'advance_percent'        => 'advance percentage',
             'sight_percent'          => 'at-sight percentage',
             'currency_ids'           => 'accepted currencies',
             'incoterm_ids'           => 'accepted incoterms',
-            'shipment_method_ids'    => 'shipment methods',
             'agent_commission_type'  => 'commission type',
             'agent_commission_value' => 'agent commission',
             'payment_term_id'        => 'payment terms',
             'incoterm_id'            => 'inco terms',
-            'shipment_method_id'     => 'shipment method',
+            'shipment_method'        => 'shipment method',
             'currency_id'            => 'currency of payment',
             'swift_code'             => 'swift code',
         ];

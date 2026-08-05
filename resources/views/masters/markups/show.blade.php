@@ -33,6 +33,32 @@
 
                     <dt class="col-sm-12 pt-3"><hr class="my-2"></dt>
 
+                    <dt class="col-sm-5 text-body-secondary fw-normal">Supplier's Agent Commission</dt>
+                    <dd class="col-sm-7">
+                        @if($markup->supplierAgent())
+                            {{ $markup->supplierAgent()->label }}
+                            @if($markup->supplierAgentCommissionLabel())
+                                — {{ $markup->supplierAgentCommissionLabel() }}
+                            @endif
+                        @else
+                            No agent linked
+                        @endif
+                    </dd>
+
+                    <dt class="col-sm-5 text-body-secondary fw-normal">Buyer's Agent Commission</dt>
+                    <dd class="col-sm-7">
+                        @if($markup->buyerAgent())
+                            {{ $markup->buyerAgent()->label }}
+                            @if($markup->buyerAgentCommissionLabel())
+                                — {{ $markup->buyerAgentCommissionLabel() }}
+                            @endif
+                        @else
+                            No agent linked
+                        @endif
+                    </dd>
+
+                    <dt class="col-sm-12 pt-3"><hr class="my-2"></dt>
+
                     <dt class="col-sm-5 text-body-secondary fw-normal">Markup %</dt>
                     <dd class="col-sm-7 fw-semibold">
                         {{ rtrim(rtrim(number_format((float) $markup->markup_percent, 2), '0'), '.') }}%

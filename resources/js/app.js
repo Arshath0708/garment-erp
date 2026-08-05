@@ -31,6 +31,31 @@ document.addEventListener('DOMContentLoaded', () => {
             settings.plugins = ['remove_button'];
         }
 
+        // "Drop down, add more in the future" (Buyer sheet col Q, Payment
+        // Terms): typing a name not already in the list posts it to
+        // data-create-url and adds the row it comes back with.
+        if (el.dataset.createUrl) {
+            settings.create = function (input, callback) {
+                const token = document.querySelector('meta[name="csrf-token"]')?.content;
+
+                fetch(el.dataset.createUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN': token || '',
+                    },
+                    body: JSON.stringify({ name: input }),
+                })
+                    .then((r) => (r.ok ? r.json() : Promise.reject()))
+                    .then((row) => callback({ value: String(row.id), text: row.name }))
+                    // A failed create must not leave TomSelect thinking one
+                    // happened — no option is added if the request failed.
+                    .catch(() => callback());
+            };
+            settings.createOnBlur = true;
+        }
+
         new TomSelect(el, settings);
     });
 

@@ -67,17 +67,16 @@ class BuyerService
             'carton_markings',
             'currency_ids',
             'incoterm_ids',
-            'shipment_method_ids',
         ]));
     }
 
     /**
-     * The currencies, incoterms and shipment methods this buyer accepts.
+     * The currencies and incoterms this buyer accepts.
      *
-     * The single `currency_id` / `incoterm_id` / `shipment_method_id` columns
-     * survive as the default within each set — see the 000200 expand migration.
-     * The request has already made sure each default is inside its own set, so
-     * a plain sync here cannot orphan one.
+     * The single `currency_id` / `incoterm_id` columns survive as the default
+     * within each set — see the 000200 expand migration. The request has
+     * already made sure each default is inside its own set, so a plain sync
+     * here cannot orphan one.
      *
      * @param  array<string, mixed>  $data
      */
@@ -85,7 +84,6 @@ class BuyerService
     {
         $buyer->currencies()->sync($data['currency_ids'] ?? []);
         $buyer->incoterms()->sync($data['incoterm_ids'] ?? []);
-        $buyer->shipmentMethods()->sync($data['shipment_method_ids'] ?? []);
     }
 
     /**

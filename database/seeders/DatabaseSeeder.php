@@ -23,6 +23,10 @@ class DatabaseSeeder extends Seeder
             NumberSeriesSeeder::class,
             LookupSeeder::class,
 
+            // A sample Order Format, so the Category master's format picker
+            // and the Product master's unit dropdowns are not empty.
+            DocumentFormatSeeder::class,
+
             // Supplier sheet cols D and I — the two lookups that sheet asks to
             // be extensible. Separate from LookupSeeder so the Supplier master
             // can be reseeded without touching the buyer and product lists.
