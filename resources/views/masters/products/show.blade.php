@@ -112,6 +112,9 @@
                     <dt class="col-sm-5 text-body-secondary fw-normal">Remarks</dt>
                     <dd class="col-sm-7">{{ $product->remarks ?: '—' }}</dd>
 
+                    <dt class="col-sm-5 text-body-secondary fw-normal">Comments</dt>
+                    <dd class="col-sm-7">{{ $product->comments ?: '—' }}</dd>
+
                     <dt class="col-sm-5 text-body-secondary fw-normal">Created</dt>
                     <dd class="col-sm-7 text-body-secondary small">
                         {{ $product->created_at?->format('d M Y, H:i') }}

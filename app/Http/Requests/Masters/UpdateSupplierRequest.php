@@ -11,6 +11,8 @@ class UpdateSupplierRequest extends SupplierRequest
 
     protected function ignoreId(): ?int
     {
-        return $this->route('supplier')->id;
+        $supplier = $this->route('supplier') ?? $this->route('jobber');
+
+        return $supplier instanceof \App\Models\Supplier ? $supplier->id : (int) $supplier;
     }
 }

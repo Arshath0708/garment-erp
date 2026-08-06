@@ -298,6 +298,9 @@
 
         <x-ui.textarea name="remarks" label="Remarks" :value="$agent?->remarks"
                        horizontal rows="2" placeholder="Internal notes — not printed anywhere" />
+
+        <x-ui.textarea name="comments" label="Comments" :value="$agent?->comments"
+                       horizontal rows="2" placeholder="Optional comments" />
     </div>
 </x-ui.form-section>
 

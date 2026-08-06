@@ -94,6 +94,7 @@ class Supplier extends Model
         'default_delivery_mode',
         'status',
         'remarks',
+        'comments',
     ];
 
     /**

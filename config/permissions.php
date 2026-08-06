@@ -118,7 +118,9 @@ return [
             'product'   => ['label' => 'Products'],
             'buyer'     => ['label' => 'Buyers'],
             'supplier'  => ['label' => 'Suppliers'],
+            'jobber'    => ['label' => 'Jobbers'],
             'agent'     => ['label' => 'Agents'],
+            'fob-value' => ['label' => 'FOB Values'],
             'markup'    => ['label' => 'Markup'],
         ],
 
@@ -208,8 +210,8 @@ return [
             'description' => 'Full operational access. Cannot manage permissions.',
             'permissions' => [
                 'user.*', 'role.view',
-                'category.*', 'po-format.*', 'product.*', 'buyer.*', 'supplier.*',
-                'agent.*', 'markup.*',
+                'category.*', 'po-format.*', 'product.*', 'buyer.*', 'supplier.*', 'jobber.*',
+                'agent.*', 'fob-value.*', 'markup.*',
                 'inquiry.*', 'order-confirmation.*',
                 'purchase-order.*', 'inward-entry.*',
                 'packing.*', 'export-document.*',

@@ -3,16 +3,16 @@
 @endphp
 
 <x-app-layout>
-    <x-slot name="header">Supplier Details</x-slot>
+    <x-slot name="header">Jobber Details</x-slot>
 
-    <x-ui.card title="{{ $supplier->display_code }} — {{ $supplier->company_name }}" variant="primary">
+    <x-ui.card title="{{ $jobber->display_code }} — {{ $jobber->company_name }}" variant="primary">
         <x-slot name="actions">
-            @can('supplier.edit')
-                <a href="{{ route('masters.suppliers.edit', $supplier) }}" class="btn btn-sm btn-primary">
+            @if(auth()->user()?->can('jobber.edit') || auth()->user()?->can('supplier.edit'))
+                <a href="{{ route('masters.jobbers.edit', $jobber) }}" class="btn btn-sm btn-primary">
                     <i class="bi bi-pencil me-1"></i> Edit
                 </a>
-            @endcan
-            <a href="{{ route('masters.suppliers.index') }}" class="btn btn-sm btn-outline-secondary">
+            @endif
+            <a href="{{ route('masters.jobbers.index') }}" class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-arrow-left me-1"></i> Back
             </a>
         </x-slot>
@@ -21,20 +21,20 @@
             <div class="col-lg-7">
                 <dl class="row mb-0">
                     <dt class="col-sm-5 text-body-secondary fw-normal">Display Code</dt>
-                    <dd class="col-sm-7"><span class="badge text-bg-light border font-monospace">{{ $supplier->display_code }}</span></dd>
+                    <dd class="col-sm-7"><span class="badge text-bg-light border font-monospace">{{ $jobber->display_code }}</span></dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Party Type</dt>
-                    <dd class="col-sm-7">{{ Supplier::PARTY_TYPES[$supplier->party_type] }}</dd>
+                    <dd class="col-sm-7">{{ Supplier::PARTY_TYPES[$jobber->party_type] }}</dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Company Name</dt>
-                    <dd class="col-sm-7 fw-semibold">{{ $supplier->company_name }}</dd>
+                    <dd class="col-sm-7 fw-semibold">{{ $jobber->company_name }}</dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Name on Bill</dt>
-                    <dd class="col-sm-7">{{ $supplier->name_on_bill ?: '—' }}</dd>
+                    <dd class="col-sm-7">{{ $jobber->name_on_bill ?: '—' }}</dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Product Category</dt>
                     <dd class="col-sm-7">
-                        @forelse($supplier->categories as $category)
+                        @forelse($jobber->categories as $category)
                             <span class="badge text-bg-light border me-1 mb-1">{{ $category->name }}</span>
                         @empty
                             —
@@ -42,23 +42,23 @@
                     </dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Status</dt>
-                    <dd class="col-sm-7"><x-ui.status-badge :status="$supplier->status === 'active'" /></dd>
+                    <dd class="col-sm-7"><x-ui.status-badge :status="$jobber->status === 'active'" /></dd>
 
                     <dt class="col-sm-12 pt-3"><hr class="my-2"></dt>
 
-                    <dt class="col-sm-5 text-body-secondary fw-normal">Supplier Type</dt>
-                    <dd class="col-sm-7">{{ $supplier->supplierType?->name ?: '—' }}</dd>
+                    <dt class="col-sm-5 text-body-secondary fw-normal">Jobber Type</dt>
+                    <dd class="col-sm-7">{{ $jobber->supplierType?->name ?: '—' }}</dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">GST Number</dt>
-                    <dd class="col-sm-7 font-monospace">{{ $supplier->gst_number ?: '—' }}</dd>
+                    <dd class="col-sm-7 font-monospace">{{ $jobber->gst_number ?: '—' }}</dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">PAN Number</dt>
-                    <dd class="col-sm-7 font-monospace">{{ $supplier->pan_number ?: '—' }}</dd>
+                    <dd class="col-sm-7 font-monospace">{{ $jobber->pan_number ?: '—' }}</dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">MSME</dt>
                     <dd class="col-sm-7">
-                        @if($supplier->is_msme)
-                            <span class="font-monospace">{{ $supplier->msme_registration_no ?: 'Registered' }}</span>
+                        @if($jobber->is_msme)
+                            <span class="font-monospace">{{ $jobber->msme_registration_no ?: 'Registered' }}</span>
                         @else
                             Not registered
                         @endif
@@ -67,89 +67,82 @@
                     <dt class="col-sm-12 pt-3"><hr class="my-2"></dt>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Address</dt>
-                    <dd class="col-sm-7">{{ $supplier->address ?: '—' }}</dd>
+                    <dd class="col-sm-7">{{ $jobber->address ?: '—' }}</dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">City / State</dt>
-                    <dd class="col-sm-7">{{ collect([$supplier->city?->name, $supplier->state?->name])->filter()->implode(', ') ?: '—' }}</dd>
+                    <dd class="col-sm-7">{{ collect([$jobber->city?->name, $jobber->state?->name])->filter()->implode(', ') ?: '—' }}</dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Country</dt>
-                    <dd class="col-sm-7">{{ $supplier->country?->name ?: '—' }}</dd>
+                    <dd class="col-sm-7">{{ $jobber->country?->name ?: '—' }}</dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">PIN Code</dt>
-                    <dd class="col-sm-7">{{ $supplier->pincode ?: '—' }}</dd>
+                    <dd class="col-sm-7">{{ $jobber->pincode ?: '—' }}</dd>
 
                     <dt class="col-sm-12 pt-3"><hr class="my-2"></dt>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Discount %</dt>
-                    <dd class="col-sm-7">{{ $supplier->discount_percent !== null ? $supplier->discount_percent.'%' : '—' }}</dd>
+                    <dd class="col-sm-7">{{ $jobber->discount_percent !== null ? $jobber->discount_percent.'%' : '—' }}</dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Credit Terms</dt>
-                    <dd class="col-sm-7">{{ $supplier->credit_terms_label ?: '—' }}</dd>
+                    <dd class="col-sm-7">{{ $jobber->credit_terms_label ?: '—' }}</dd>
 
-                    {{-- Jobwork-only, so shown only where it means something.
-                         Printing "We supply material: No" against a trading
-                         supplier states a fact that was never in question. --}}
-                    @if($supplier->does_jobwork)
-                        <dt class="col-sm-5 text-body-secondary fw-normal">We Supply Material</dt>
-                        <dd class="col-sm-7">{{ $supplier->we_supply_material ? 'Yes' : 'No' }}</dd>
+                    <dt class="col-sm-5 text-body-secondary fw-normal">We Supply Material</dt>
+                    <dd class="col-sm-7">{{ $jobber->we_supply_material ? 'Yes' : 'No' }}</dd>
 
-                        <dt class="col-sm-5 text-body-secondary fw-normal">Sample Approval</dt>
-                        <dd class="col-sm-7">{{ $supplier->requires_sample_approval ? 'Required before PO' : 'Not required' }}</dd>
-                    @endif
+                    <dt class="col-sm-5 text-body-secondary fw-normal">Sample Approval</dt>
+                    <dd class="col-sm-7">{{ $jobber->requires_sample_approval ? 'Required before PO' : 'Not required' }}</dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Delivery Mode</dt>
-                    <dd class="col-sm-7">{{ Supplier::DELIVERY_MODES[$supplier->default_delivery_mode] }}</dd>
+                    <dd class="col-sm-7">{{ Supplier::DELIVERY_MODES[$jobber->default_delivery_mode] ?? '—' }}</dd>
 
                     <dt class="col-sm-12 pt-3"><hr class="my-2"></dt>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Bank Name</dt>
-                    <dd class="col-sm-7">{{ $supplier->bank_name ?: '—' }}</dd>
+                    <dd class="col-sm-7">{{ $jobber->bank_name ?: '—' }}</dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Account Number</dt>
-                    <dd class="col-sm-7 font-monospace">{{ $supplier->account_number ?: '—' }}</dd>
+                    <dd class="col-sm-7 font-monospace">{{ $jobber->account_number ?: '—' }}</dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">IFSC Code</dt>
-                    <dd class="col-sm-7 font-monospace">{{ $supplier->ifsc_code ?: '—' }}</dd>
+                    <dd class="col-sm-7 font-monospace">{{ $jobber->ifsc_code ?: '—' }}</dd>
 
                     <dt class="col-sm-12 pt-3"><hr class="my-2"></dt>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Agent</dt>
-                    <dd class="col-sm-7">{{ $supplier->agent?->label ?: '—' }}</dd>
+                    <dd class="col-sm-7">{{ $jobber->agent?->label ?: '—' }}</dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Agent Commission</dt>
-                    <dd class="col-sm-7">{{ $supplier->agent_commission_label ?: '—' }}</dd>
+                    <dd class="col-sm-7">{{ $jobber->agent_commission_label ?: '—' }}</dd>
 
                     <dt class="col-sm-12 pt-3"><hr class="my-2"></dt>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Remarks</dt>
-                    <dd class="col-sm-7">{{ $supplier->remarks ?: '—' }}</dd>
+                    <dd class="col-sm-7">{{ $jobber->remarks ?: '—' }}</dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Comments</dt>
-                    <dd class="col-sm-7">{{ $supplier->comments ?: '—' }}</dd>
+                    <dd class="col-sm-7">{{ $jobber->comments ?: '—' }}</dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Created</dt>
                     <dd class="col-sm-7 text-body-secondary small">
-                        {{ $supplier->created_at?->format('d M Y, H:i') }}
-                        @if($supplier->creator) by {{ $supplier->creator->name }} @endif
+                        {{ $jobber->created_at?->format('d M Y, H:i') }}
+                        @if($jobber->creator) by {{ $jobber->creator->name }} @endif
                     </dd>
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Last updated</dt>
                     <dd class="col-sm-7 text-body-secondary small">
-                        {{ $supplier->updated_at?->format('d M Y, H:i') }}
-                        @if($supplier->updater) by {{ $supplier->updater->name }} @endif
+                        {{ $jobber->updated_at?->format('d M Y, H:i') }}
+                        @if($jobber->updater) by {{ $jobber->updater->name }} @endif
                     </dd>
                 </dl>
             </div>
 
-            {{-- Sheet cols H–K and L. One list, primary first — which is how the
-                 rows are stored, so this is not a merge done for display. --}}
             <div class="col-lg-5">
                 <div class="card border">
                     <div class="card-header bg-body-tertiary py-2">
                         <span class="small fw-semibold text-body-secondary text-uppercase">Contacts</span>
                     </div>
                     <div class="list-group list-group-flush">
-                        @forelse($supplier->contacts as $contact)
+                        @forelse($jobber->contacts as $contact)
                             <div class="list-group-item">
                                 <div class="d-flex justify-content-between align-items-start gap-2">
                                     <div>

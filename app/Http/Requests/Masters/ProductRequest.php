@@ -79,6 +79,7 @@ abstract class ProductRequest extends FormRequest
             'description'             => ['nullable', 'string', 'max:1000'],
             'status'                  => ['required', Rule::in(['active', 'inactive'])],
             'remarks'                 => ['nullable', 'string', 'max:1000'],
+            'comments'                => ['nullable', 'string', 'max:1000'],
 
             'incentives'              => ['nullable', 'array'],
         ];

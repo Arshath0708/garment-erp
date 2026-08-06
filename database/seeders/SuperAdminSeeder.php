@@ -12,7 +12,7 @@ class SuperAdminSeeder extends Seeder
     {
         $email = config('permissions.super_admin.email', 'admin@gurutraders.com');
 
-        $superAdmin = User::firstOrCreate(
+        $superAdmin = User::updateOrCreate(
             ['email' => $email],
             [
                 'name'              => 'Super Admin',

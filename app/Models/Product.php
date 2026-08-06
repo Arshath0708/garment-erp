@@ -40,6 +40,7 @@ class Product extends Model
         'description',
         'status',
         'remarks',
+        'comments',
     ];
 
     /**

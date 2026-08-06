@@ -100,7 +100,7 @@
                      Contract is absent: it never had a screen. A contract
                      number is a field on the order for direct-order buyers.
                 --}}
-                @if($canAny(['category.view', 'po-format.view', 'product.view', 'buyer.view', 'supplier.view', 'agent.view', 'markup.view']))
+                @if($canAny(['category.view', 'po-format.view', 'product.view', 'buyer.view', 'supplier.view', 'jobber.view', 'agent.view', 'fob-value.view', 'markup.view']))
                     <li class="nav-header">Masters</li>
 
                     @can('category.view')
@@ -143,11 +143,27 @@
                             </a>
                         </li>
                     @endcan
+                    @if($can('jobber.view') || $can('supplier.view'))
+                        <li class="nav-item">
+                            <a href="{{ route('masters.jobbers.index') }}"
+                               class="nav-link {{ request()->routeIs('masters.jobbers.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-tools"></i><p>Jobbers</p>
+                            </a>
+                        </li>
+                    @endif
                     @can('agent.view')
                         <li class="nav-item">
                             <a href="{{ route('masters.agents.index') }}"
                                class="nav-link {{ request()->routeIs('masters.agents.*') ? 'active' : '' }}">
                                 <i class="nav-icon bi bi-person-badge"></i><p>Agents</p>
+                            </a>
+                        </li>
+                    @endcan
+                    @can('fob-value.view')
+                        <li class="nav-item">
+                            <a href="{{ route('masters.fob-values.index') }}"
+                               class="nav-link {{ request()->routeIs('masters.fob-values.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-currency-dollar"></i><p>FOB Values</p>
                             </a>
                         </li>
                     @endcan
