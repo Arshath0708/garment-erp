@@ -186,6 +186,9 @@
         <div class="auth-card">
             
             <div class="auth-image">
+                <div class="auth-logo" style="z-index:2;margin-bottom:1.25rem;">
+                    <x-brand-logo :size="56" />
+                </div>
                 <h1>Guru Traders ERP</h1>
                 <p>Enterprise Resource Planning made simple. Manage your sales, products, and customers effortlessly.</p>
             </div>

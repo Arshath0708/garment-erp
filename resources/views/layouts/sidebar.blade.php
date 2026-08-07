@@ -51,7 +51,7 @@
 
     <div class="sidebar-brand">
         <a href="{{ route('dashboard') }}" class="brand-link">
-            <span class="brand-mark">GT</span>
+            <span class="brand-mark"><x-brand-logo :size="38" /></span>
             <span class="brand-text">
                 Guru Traders
                 <small>Export ERP</small>
@@ -188,10 +188,20 @@
                     <li class="nav-header">Sales</li>
 
                     @can('inquiry.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-chat-square-text"></i><p>Inquiries</p></a></li>
+                        <li class="nav-item">
+                            <a href="{{ route('sales.inquiries.index') }}"
+                               class="nav-link {{ request()->routeIs('sales.inquiries.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-chat-square-text"></i><p>Inquiries</p>
+                            </a>
+                        </li>
                     @endcan
                     @can('order-confirmation.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-check2-square"></i><p>Order Confirmations</p></a></li>
+                        <li class="nav-item">
+                            <a href="{{ route('sales.order-confirmations.index') }}"
+                               class="nav-link {{ request()->routeIs('sales.order-confirmations.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-check2-square"></i><p>Order Confirmations</p>
+                            </a>
+                        </li>
                     @endcan
                 @endif
 
@@ -206,7 +216,12 @@
                     <li class="nav-header">Procurement</li>
 
                     @can('purchase-order.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-cart-check"></i><p>Purchase Orders</p></a></li>
+                        <li class="nav-item">
+                            <a href="{{ route('procurement.purchase-orders.index') }}"
+                               class="nav-link {{ request()->routeIs('procurement.purchase-orders.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-cart-check"></i><p>Purchase Orders</p>
+                            </a>
+                        </li>
                     @endcan
                     @can('inward-entry.view')
                         <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-box-arrow-in-down"></i><p>Goods Inward</p></a></li>

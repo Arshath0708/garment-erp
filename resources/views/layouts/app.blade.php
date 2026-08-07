@@ -54,8 +54,6 @@
                 width: 38px; height: 38px; flex-shrink: 0;
                 display: grid; place-items: center;
                 border-radius: 10px;
-                background: linear-gradient(135deg, #2563eb, #1d4ed8);
-                color: #fff; font-weight: 700; font-size: .95rem; letter-spacing: .5px;
                 box-shadow: 0 2px 6px rgba(37, 99, 235, .28);
             }
             .app-sidebar .brand-text {
@@ -255,6 +253,27 @@
             .grid-table .scheme-name { font-weight: 600; color: #374151; padding-top: .5rem; }
             .grid-table .cell-error { font-size: .78rem; color: var(--bs-danger); margin-top: .2rem; }
             .grid-table .na { color: #c2c9d4; padding-top: .5rem; }
+
+            /* Order Format column builder — draggable rows, reordered by drag
+               handle same as the client's prototype ("Drag rows to reorder"). */
+            .column-row { cursor: default; }
+            .column-row.is-dragging { opacity: .4; }
+            .column-row.drag-over-top td { box-shadow: inset 0 2px 0 var(--bs-primary); }
+            .column-row.drag-over-bottom td { box-shadow: inset 0 -2px 0 var(--bs-primary); }
+            .column-drag-handle {
+                cursor: grab; color: #b7bfcb; padding-top: .55rem !important;
+                touch-action: none;
+            }
+            .column-drag-handle:hover { color: #6b7280; }
+            .subcol-chip { font-size: .72rem; padding: .2rem .45rem .2rem .55rem; }
+
+            /* A colour row's size grid, once the Order Format gives Size
+               fixed sub-column tags (S/M/L/XL…) — the tag itself becomes
+               read-only, so only the qty box next to it takes input. */
+            .inquiry-size.is-grid .js-size-label {
+                background: #f4f6fd; border-color: #d8def0; color: #4b5563;
+                font-weight: 600; text-align: center; pointer-events: none;
+            }
 
             /* One field per line, label on the left. Capped width — a text
                input stretched across a 1900px monitor is harder to read, not

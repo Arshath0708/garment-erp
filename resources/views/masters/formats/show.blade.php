@@ -56,9 +56,15 @@
 
         {{-- Shown as the table it produces, not as a list of column rows. The
              point of a format is the shape it comes out in. --}}
+        @php
+            $sizeColumn = $format->columns->firstWhere('key', 'size');
+            $sizeTags   = $sizeColumn->sub_columns ?? [];
+        @endphp
+
         <h6 class="fw-semibold mb-2">Item table</h6>
         <p class="text-body-secondary small">
-            Sr. No., Qty and Amount are always drawn. Print-only columns are marked.
+            Sr. No., Qty and Amount are always drawn. Print-only columns are marked; a red
+            <span class="text-danger">*</span> marks a mandatory column.
         </p>
         <div class="table-responsive mb-4">
             <table class="table table-sm table-bordered align-middle mb-0">
@@ -66,13 +72,23 @@
                     <tr>
                         <th>Sr. No.</th>
                         @foreach($format->printColumns() as $column)
-                            <th @class(['text-body-secondary fst-italic' => $column->print_only])>
-                                {{ $column->key === 'price' ? $format->priceLabel() : $column->label }}
-                                @if($column->print_only)
-                                    <span class="badge text-bg-light border fw-normal ms-1">print only</span>
-                                @endif
-                            </th>
-                            @if($column->key === 'unit')
+                            @if($column->key === 'size' && filled($sizeTags))
+                                @foreach($sizeTags as $tag)
+                                    <th class="text-center font-monospace">{{ $tag }}</th>
+                                @endforeach
+                                <th class="text-center fw-semibold">Total</th>
+                            @else
+                                <th @class(['text-body-secondary fst-italic' => $column->print_only])>
+                                    {{ $column->key === 'price' ? $format->priceLabel() : $column->label }}
+                                    @if($column->is_mandatory)
+                                        <span class="text-danger">*</span>
+                                    @endif
+                                    @if($column->print_only)
+                                        <span class="badge text-bg-light border fw-normal ms-1">print only</span>
+                                    @endif
+                                </th>
+                            @endif
+                            @if($column->key === 'unit' && blank($sizeTags))
                                 <th>Qty</th>
                             @endif
                         @endforeach
@@ -81,6 +97,13 @@
                 </thead>
             </table>
         </div>
+
+        @if(filled($sizeTags))
+            <p class="small text-body-secondary">
+                Size sub-columns: {{ implode(', ', $sizeTags) }} — every item row gets a fixed qty box per tag
+                instead of free-form size entry.
+            </p>
+        @endif
 
         @if($format->columns->where('is_enabled', false)->isNotEmpty())
             <p class="small text-body-secondary">

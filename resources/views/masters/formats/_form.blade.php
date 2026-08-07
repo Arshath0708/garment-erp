@@ -7,17 +7,54 @@
 @php
     use App\Models\DocumentFormatColumn;
 
-    // old() wins so a failed validation round-trip keeps what the user had.
-    $columnState = old('columns', collect($columns)->map(fn ($c) => [
-        'label'   => $c['label'],
-        'enabled' => $c['enabled'] ? '1' : null,
-    ])->all());
+    // old() wins so a failed validation round-trip keeps what the user had —
+    // including the order they'd dragged rows into and any custom columns
+    // they'd added, not just the standard ones.
+    $postedOrder = old('column_order');
+
+    if ($postedOrder) {
+        $rows = collect($postedOrder)->map(function ($key) {
+            $isStandard = array_key_exists($key, DocumentFormatColumn::STANDARD);
+            $posted = (array) old("columns.{$key}", []);
+
+            return [
+                'key'         => $key,
+                'label'       => $posted['label'] ?? ($isStandard ? DocumentFormatColumn::STANDARD[$key]['label'] : ''),
+                'enabled'     => filled($posted['enabled'] ?? null),
+                'mandatory'   => filled($posted['mandatory'] ?? null),
+                'is_custom'   => ! $isStandard,
+                'print_only'  => $isStandard ? DocumentFormatColumn::STANDARD[$key]['print_only'] : false,
+                'sub_columns' => collect(explode(',', (string) ($posted['sub_columns'] ?? '')))
+                    ->map(fn ($tag) => trim($tag))->filter()->values()->all(),
+            ];
+        })->values();
+    } else {
+        $rows = collect($columns)->map(fn ($state, $key) => [
+            'key'         => $key,
+            'label'       => $state['label'],
+            'enabled'     => (bool) $state['enabled'],
+            'mandatory'   => (bool) ($state['mandatory'] ?? false),
+            'is_custom'   => false,
+            'print_only'  => $state['print_only'],
+            'sub_columns' => $state['sub_columns'] ?? [],
+        ])->values();
+
+        if ($format) {
+            $rows = $rows->concat(
+                $format->columns->where('is_custom', true)->sortBy('sort_order')->map(fn ($c) => [
+                    'key'         => $c->key,
+                    'label'       => $c->label,
+                    'enabled'     => $c->is_enabled,
+                    'mandatory'   => $c->is_mandatory,
+                    'is_custom'   => true,
+                    'print_only'  => false,
+                    'sub_columns' => $c->sub_columns ?? [],
+                ])->values()
+            );
+        }
+    }
 
     $unitList = old('units', $units);
-
-    $customList = old('custom_columns', $format
-        ? $format->columns->where('is_custom', true)->pluck('label')->values()->all()
-        : []);
 @endphp
 
 {{--
@@ -102,86 +139,53 @@
 </x-ui.form-section>
 
 <x-ui.form-section title="Item Table Columns" icon="bi-layout-three-columns"
-                   subtitle="Untick a column to drop it from this format. Rename any of them.">
+                   subtitle="Untick a column to drop it, mark it mandatory, or drag rows to reorder the item table.">
     <p class="text-body-secondary small">
         Sr. No., Qty and Amount are always drawn — a row without them is not an order line.
+        Give <strong>Size</strong> sub-columns (e.g. S, M, L, XL) to turn every item row's size entry into a
+        fixed qty-per-size grid instead of free-form colour/size rows.
     </p>
 
     <div class="table-responsive">
-        <table class="table table-sm align-middle grid-table mb-0">
+        <table class="table table-sm align-middle grid-table mb-0" id="column-table">
             <thead>
                 <tr>
-                    <th style="width:90px">Include</th>
-                    <th style="width:200px">Column</th>
-                    <th>Label on the document</th>
+                    <th style="width:28px"></th>
+                    <th style="width:80px">Include</th>
+                    <th style="width:90px">Mandatory</th>
+                    <th style="width:220px">Column</th>
+                    <th style="width:260px">Sub-columns</th>
                     <th style="width:110px">Visibility</th>
+                    <th style="width:40px"></th>
                 </tr>
             </thead>
-            <tbody>
-                @foreach(DocumentFormatColumn::STANDARD as $key => $meta)
-                    <tr>
-                        <td>
-                            <input type="hidden" name="columns[{{ $key }}][enabled]" value="">
-                            <input class="form-check-input js-column-toggle" type="checkbox"
-                                   id="col-{{ $key }}"
-                                   name="columns[{{ $key }}][enabled]" value="1"
-                                   data-key="{{ $key }}"
-                                   @checked(filled($columnState[$key]['enabled'] ?? null))>
-                        </td>
-                        <td><label for="col-{{ $key }}" class="scheme-name mb-0">{{ $meta['label'] }}</label></td>
-                        <td>
-                            <input type="text" class="form-control form-control-sm js-column-label"
-                                   name="columns[{{ $key }}][label]"
-                                   data-key="{{ $key }}"
-                                   value="{{ $columnState[$key]['label'] ?? $meta['label'] }}"
-                                   maxlength="60">
-                            @error("columns.{$key}.label")
-                                <div class="cell-error">{{ $message }}</div>
-                            @enderror
-                        </td>
-                        <td class="small text-body-secondary">
-                            {{ $meta['print_only'] ? 'Print / PDF only' : 'Screen + print' }}
-                        </td>
-                    </tr>
+            <tbody id="column-rows">
+                @foreach($rows as $row)
+                    @include('masters.formats._column-row', ['row' => $row])
                 @endforeach
             </tbody>
         </table>
     </div>
 
+    <template id="column-row-template">
+        @include('masters.formats._column-row', ['row' => [
+            'key' => '__KEY__', 'label' => '', 'enabled' => true, 'mandatory' => false,
+            'is_custom' => true, 'print_only' => false, 'sub_columns' => [],
+        ]])
+    </template>
+
     @error('columns')
+        <div class="invalid-feedback d-block mt-2">{{ $message }}</div>
+    @enderror
+    @error('column_order')
         <div class="invalid-feedback d-block mt-2">{{ $message }}</div>
     @enderror
 
     <div class="mt-3">
-        <label class="form-label fw-semibold small text-uppercase text-body-secondary"
-               style="letter-spacing:.05em">Custom columns</label>
-
-        <div id="custom-columns">
-            @foreach($customList as $index => $label)
-                <div class="input-group input-group-sm mb-2 custom-column-row" style="max-width:32rem">
-                    <input type="text" class="form-control js-custom-label"
-                           name="custom_columns[{{ $index }}]" value="{{ $label }}"
-                           maxlength="60" placeholder="Column name">
-                    <button type="button" class="btn btn-outline-danger js-remove-custom">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            @endforeach
-        </div>
-
-        <template id="custom-column-template">
-            <div class="input-group input-group-sm mb-2 custom-column-row" style="max-width:32rem">
-                <input type="text" class="form-control js-custom-label"
-                       name="custom_columns[__INDEX__]" maxlength="60" placeholder="Column name">
-                <button type="button" class="btn btn-outline-danger js-remove-custom">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-        </template>
-
         <button type="button" id="add-custom-column" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-plus-lg me-1"></i>Add custom column
         </button>
+        <span class="text-body-secondary small ms-2">⟵ Drag the handle to reorder · standard columns can't be removed, only hidden</span>
     </div>
 </x-ui.form-section>
 
@@ -189,6 +193,7 @@
                    subtitle="The exact table structure as it appears in Inquiry → OC → PO.">
     <p class="text-body-secondary small">
         Sample data. The image column is hidden on screen and visible on print / PDF only.
+        A red <span class="text-danger">*</span> marks a mandatory column.
     </p>
 
     <div class="table-responsive">
@@ -279,6 +284,8 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('form[action*="formats"]') || document.querySelector('form');
+
     /* ------------------------------ Units ------------------------------ */
 
     const chips = document.getElementById('unit-chips');
@@ -334,38 +341,6 @@ document.addEventListener('DOMContentLoaded', function () {
         renderPreview();
     });
 
-    /* -------------------------- Custom columns -------------------------- */
-
-    const customWrap = document.getElementById('custom-columns');
-    const customTemplate = document.getElementById('custom-column-template');
-
-    document.getElementById('add-custom-column').addEventListener('click', function () {
-        const html = customTemplate.innerHTML.replace(/__INDEX__/g, String(customWrap.children.length));
-        customWrap.insertAdjacentHTML('beforeend', html);
-        renderPreview();
-    });
-
-    customWrap.addEventListener('click', function (e) {
-        if (! e.target.closest('.js-remove-custom')) return;
-        e.target.closest('.custom-column-row').remove();
-        reindexCustom();
-        renderPreview();
-    });
-
-    customWrap.addEventListener('input', renderPreview);
-
-    /**
-     * Names must stay a dense 0..n-1 sequence: removing a middle row otherwise
-     * leaves a gap, and the validator reports errors against indexes the form
-     * no longer has.
-     */
-    function reindexCustom() {
-        Array.from(customWrap.children).forEach(function (row, index) {
-            const input = row.querySelector('.js-custom-label');
-            if (input) input.name = 'custom_columns[' + index + ']';
-        });
-    }
-
     /* --------------------------- Colour switch --------------------------- */
 
     const colourSwitch = document.getElementById('allow_multiple_colours');
@@ -380,12 +355,183 @@ document.addEventListener('DOMContentLoaded', function () {
     colourSwitch.addEventListener('change', describeColour);
     describeColour();
 
+    /* --------------------------- Column rows --------------------------- */
+
+    const columnRows = document.getElementById('column-rows');
+    const columnTemplate = document.getElementById('column-row-template');
+    let customColumnSeq = 0;
+
+    document.getElementById('add-custom-column').addEventListener('click', function () {
+        const key = 'new_' + (++customColumnSeq) + '_' + Date.now();
+        const html = columnTemplate.innerHTML.replace(/__KEY__/g, key);
+        columnRows.insertAdjacentHTML('beforeend', html);
+        renderPreview();
+    });
+
+    columnRows.addEventListener('click', function (e) {
+        if (e.target.closest('.js-remove-column')) {
+            e.target.closest('.column-row').remove();
+            renderPreview();
+            return;
+        }
+
+        const preset = e.target.closest('.js-subcol-preset');
+        if (preset) {
+            addSubcolTags(e.target.closest('.column-row'), preset.dataset.preset.split(','));
+            return;
+        }
+
+        if (e.target.closest('.js-subcol-remove')) {
+            const row = e.target.closest('.column-row');
+            e.target.closest('.subcol-chip').remove();
+            syncSubcolValue(row);
+            renderPreview();
+            return;
+        }
+
+        if (e.target.closest('.js-subcol-add')) {
+            const row = e.target.closest('.column-row');
+            const input = row.querySelector('.js-subcol-input');
+            addSubcolTags(row, input.value.split(/[,-]/));
+            input.value = '';
+            return;
+        }
+    });
+
+    columnRows.addEventListener('keydown', function (e) {
+        if (e.target.classList.contains('js-subcol-input') && e.key === 'Enter') {
+            e.preventDefault();
+            const row = e.target.closest('.column-row');
+            addSubcolTags(row, e.target.value.split(/[,-]/));
+            e.target.value = '';
+        }
+    });
+
+    columnRows.addEventListener('input', function (e) {
+        if (e.target.classList.contains('js-column-label') || e.target.classList.contains('js-column-mandatory')) {
+            renderPreview();
+        }
+    });
+
+    columnRows.addEventListener('change', function (e) {
+        if (e.target.classList.contains('js-column-toggle') || e.target.classList.contains('js-column-mandatory')) {
+            renderPreview();
+        }
+    });
+
+    function addSubcolTags(row, rawTags) {
+        const chipsWrap = row.querySelector('.subcol-chips');
+        if (! chipsWrap) return;
+
+        const existing = Array.from(chipsWrap.querySelectorAll('.subcol-chip')).map(function (c) {
+            return c.dataset.tag;
+        });
+
+        rawTags.map((t) => t.trim().toUpperCase()).filter(Boolean).forEach(function (tag) {
+            if (existing.includes(tag)) return;
+            existing.push(tag);
+
+            const chip = document.createElement('span');
+            chip.className = 'unit-chip subcol-chip';
+            chip.dataset.tag = tag;
+            chip.textContent = tag;
+
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'unit-chip-remove js-subcol-remove';
+            remove.setAttribute('aria-label', 'Remove ' + tag);
+            remove.innerHTML = '&times;';
+
+            chip.append(remove);
+            chipsWrap.append(chip);
+        });
+
+        syncSubcolValue(row);
+        renderPreview();
+    }
+
+    function syncSubcolValue(row) {
+        const chipsWrap = row.querySelector('.subcol-chips');
+        const hidden = row.querySelector('.js-subcol-value');
+        if (! chipsWrap || ! hidden) return;
+
+        hidden.value = Array.from(chipsWrap.querySelectorAll('.subcol-chip'))
+            .map((c) => c.dataset.tag).join(',');
+    }
+
+    /* Drag to reorder — native HTML5 drag/drop on the row's handle cell. */
+    let dragged = null;
+
+    columnRows.addEventListener('dragstart', function (e) {
+        const row = e.target.closest('.column-row');
+        if (! row || ! e.target.closest('.column-drag-handle')) { e.preventDefault(); return; }
+        dragged = row;
+        row.classList.add('is-dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    });
+
+    columnRows.addEventListener('dragend', function () {
+        if (dragged) dragged.classList.remove('is-dragging');
+        columnRows.querySelectorAll('.drag-over-top, .drag-over-bottom').forEach(function (el) {
+            el.classList.remove('drag-over-top', 'drag-over-bottom');
+        });
+        dragged = null;
+    });
+
+    columnRows.addEventListener('dragover', function (e) {
+        if (! dragged) return;
+        e.preventDefault();
+
+        const row = e.target.closest('.column-row');
+        if (! row || row === dragged) return;
+
+        columnRows.querySelectorAll('.drag-over-top, .drag-over-bottom').forEach(function (el) {
+            el.classList.remove('drag-over-top', 'drag-over-bottom');
+        });
+
+        const before = e.clientY < row.getBoundingClientRect().top + row.offsetHeight / 2;
+        row.classList.add(before ? 'drag-over-top' : 'drag-over-bottom');
+    });
+
+    columnRows.addEventListener('drop', function (e) {
+        if (! dragged) return;
+        e.preventDefault();
+
+        const row = e.target.closest('.column-row');
+        if (! row || row === dragged) return;
+
+        const before = e.clientY < row.getBoundingClientRect().top + row.offsetHeight / 2;
+        row.insertAdjacentElement(before ? 'beforebegin' : 'afterend', dragged);
+
+        columnRows.querySelectorAll('.drag-over-top, .drag-over-bottom').forEach(function (el) {
+            el.classList.remove('drag-over-top', 'drag-over-bottom');
+        });
+        renderPreview();
+    });
+
+    /* Build column_order[] fresh from DOM order right before submit — the
+       simplest way to keep the posted order in sync with drag/add/remove
+       without maintaining a parallel list through every one of those events. */
+    form.addEventListener('submit', function () {
+        form.querySelectorAll('input[data-generated-order]').forEach(function (el) { el.remove(); });
+
+        columnRows.querySelectorAll(':scope > .column-row').forEach(function (row) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'column_order[]';
+            input.value = row.dataset.key;
+            input.dataset.generatedOrder = '1';
+            form.appendChild(input);
+        });
+    });
+
     /* ---------------------------- Live preview ----------------------------
 
        Rebuilt from the form's own state rather than from a saved format, so
        the preview answers "what will this look like" while it is being
        decided, not after. Mirrors DocumentFormat::priceLabel() for the Price
-       header. */
+       header, and the Size sub-column grid every item row will show once
+       tags are added to the Size row here. */
 
     const preview = document.getElementById('format-preview');
     const headRow = preview.querySelector('thead tr');
@@ -402,28 +548,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderPreview() {
         const unit = currentUnits()[0] || null;
-
         const cols = [{ key: 'sr_no', label: 'Sr. No.', printOnly: false }];
+        let sizeTags = [];
 
-        document.querySelectorAll('.js-column-toggle').forEach(function (toggle) {
-            if (! toggle.checked) return;
+        columnRows.querySelectorAll(':scope > .column-row').forEach(function (row) {
+            const toggle = row.querySelector('.js-column-toggle');
+            if (! toggle || ! toggle.checked) return;
 
-            const key = toggle.dataset.key;
-            const labelInput = document.querySelector('.js-column-label[data-key="' + key + '"]');
-            let label = (labelInput.value || '').trim() || key;
+            const key = row.dataset.key;
+            const labelInput = row.querySelector('.js-column-label');
+            const mandatory = row.querySelector('.js-column-mandatory');
+            let label = (labelInput ? labelInput.value : '').trim() || key;
 
             if (key === 'price' && unit) label += ' / ' + unit;
+            if (mandatory && mandatory.checked) label += ' *';
+
+            if (key === 'size') {
+                sizeTags = Array.from(row.querySelectorAll('.subcol-chip')).map((c) => c.dataset.tag);
+                if (sizeTags.length) {
+                    sizeTags.forEach((tag) => cols.push({ key: 'size_tag', tag: tag, label: tag, printOnly: false }));
+                    cols.push({ key: 'size_total', label: (mandatory && mandatory.checked) ? 'Total *' : 'Total', printOnly: false });
+                    return;
+                }
+            }
 
             cols.push({ key: key, label: label, printOnly: key === 'image' });
 
             // Qty always sits immediately before Price, as the prototype draws
-            // it — it is not switchable, so it has no toggle of its own.
-            if (key === 'unit') cols.push({ key: 'qty', label: 'Qty', printOnly: false });
-        });
-
-        Array.from(customWrap.querySelectorAll('.js-custom-label')).forEach(function (input) {
-            const label = input.value.trim();
-            if (label) cols.push({ key: 'custom', label: label, printOnly: false });
+            // it — it is not switchable, so it has no toggle of its own. When
+            // Size has sub-columns, the per-tag qty cells above already cover
+            // this, so the plain Qty column is skipped.
+            if (key === 'unit' && ! sizeTags.length) cols.push({ key: 'qty', label: 'Qty', printOnly: false });
         });
 
         cols.push({ key: 'amount', label: 'Amount', printOnly: false });
@@ -440,8 +595,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         body.replaceChildren(...SAMPLE.map(function (row, i) {
             const tr = document.createElement('tr');
+            let qtyLeft = row.qty;
 
-            cols.forEach(function (col) {
+            cols.forEach(function (col, ci) {
                 const td = document.createElement('td');
 
                 switch (col.key) {
@@ -453,6 +609,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     case 'price':     td.textContent = money(row.price); break;
                     case 'amount':    td.textContent = money(row.qty * row.price); break;
                     case 'image':     td.innerHTML = '<i class="bi bi-image text-body-secondary"></i>'; break;
+                    case 'size_tag': {
+                        // Sample split evenly across tags so the preview shows
+                        // plausible numbers, same idea as the real grid summing
+                        // per-tag inputs into a total.
+                        const share = Math.round(row.qty / (sizeTags.length || 1));
+                        const value = ci === cols.length - 2 ? qtyLeft : share;
+                        qtyLeft -= value;
+                        td.textContent = String(value);
+                        td.className = 'text-center';
+                        break;
+                    }
+                    case 'size_total': td.textContent = String(row.qty); td.className = 'text-center fw-semibold'; break;
                     default:          td.textContent = '—';
                 }
 
@@ -463,10 +631,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return tr;
         }));
     }
-
-    document.querySelectorAll('.js-column-toggle, .js-column-label').forEach(function (el) {
-        el.addEventListener(el.type === 'checkbox' ? 'change' : 'input', renderPreview);
-    });
 
     renderPreview();
 });

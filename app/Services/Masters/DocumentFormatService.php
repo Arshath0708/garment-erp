@@ -93,7 +93,7 @@ class DocumentFormatService
     private function columns(array $data): array
     {
         return array_diff_key($data, array_flip([
-            'units', 'columns', 'custom_columns', 'images', 'keep_images',
+            'units', 'columns', 'column_order', 'images', 'keep_images',
         ]));
     }
 
@@ -122,10 +122,14 @@ class DocumentFormatService
     /**
      * Rewrite the column list.
      *
-     * Standard columns keep their key and their position in
-     * DocumentFormatColumn::STANDARD, so the preview and the real item table
-     * always draw them in the same order regardless of what the form posted.
-     * Custom columns follow, in the order they were typed.
+     * Order now comes from the posted `column_order` — the list of column
+     * keys in the sequence the user last dropped them into by dragging rows
+     * in the builder — rather than always following
+     * DocumentFormatColumn::STANDARD's fixed order. Each entry is either a
+     * standard key (kept as-is, `print_only` still wins from STANDARD
+     * regardless of what was posted) or a custom row (its real key is always
+     * re-derived from its current label — the temporary id the browser gave
+     * it while it was being built client-side is never trusted as storage).
      *
      * A disabled standard column is still written, with is_enabled false — the
      * label the user typed against it survives being switched off and back on.
@@ -137,44 +141,96 @@ class DocumentFormatService
         $format->columns()->delete();
 
         $posted = (array) ($data['columns'] ?? []);
-        $order  = 0;
+        $order  = (array) ($data['column_order'] ?? array_keys($posted));
 
-        foreach (DocumentFormatColumn::STANDARD as $key => $defaults) {
-            $row = (array) ($posted[$key] ?? []);
+        $used      = [];
+        $sortOrder = 0;
 
-            $format->columns()->create([
-                'key'        => $key,
-                'label'      => filled($row['label'] ?? null) ? trim($row['label']) : $defaults['label'],
-                'is_enabled' => filled($row['enabled'] ?? null),
-                'is_custom'  => false,
-                // Print-only is a property of the column, not a per-format
-                // choice, so the standard value wins over anything posted.
-                'print_only' => $defaults['print_only'],
-                'sort_order' => $order++,
-            ]);
-        }
+        foreach ($order as $clientKey) {
+            $row = (array) ($posted[$clientKey] ?? []);
+            $isStandard = array_key_exists($clientKey, DocumentFormatColumn::STANDARD);
 
-        $used = array_keys(DocumentFormatColumn::STANDARD);
+            if ($isStandard) {
+                $defaults = DocumentFormatColumn::STANDARD[$clientKey];
+                $key        = $clientKey;
+                $label      = filled($row['label'] ?? null) ? trim($row['label']) : $defaults['label'];
+                $printOnly  = $defaults['print_only'];
+                $isCustom   = false;
+            } elseif (filled($row['is_custom'] ?? null)) {
+                $label = trim((string) ($row['label'] ?? ''));
 
-        foreach ((array) ($data['custom_columns'] ?? []) as $label) {
-            $label = trim((string) $label);
+                if ($label === '') {
+                    continue;
+                }
 
-            if ($label === '') {
+                $key       = $this->uniqueKey($label, $used);
+                $printOnly = false;
+                $isCustom  = true;
+            } else {
+                // Neither a recognized standard key nor flagged as custom —
+                // not something our own form posts; the request already
+                // rejects this, this is just a second line of defence.
                 continue;
             }
 
-            $key = $this->uniqueKey($label, $used);
             $used[] = $key;
 
             $format->columns()->create([
-                'key'        => $key,
-                'label'      => $label,
-                'is_enabled' => true,
-                'is_custom'  => true,
-                'print_only' => false,
-                'sort_order' => $order++,
+                'key'          => $key,
+                'label'        => $label,
+                'is_enabled'   => filled($row['enabled'] ?? null),
+                'is_mandatory' => filled($row['mandatory'] ?? null),
+                'is_custom'    => $isCustom,
+                'print_only'   => $printOnly,
+                // Only meaningful on the `size` key — every renderer keys off
+                // that column specifically, same as the prototype it mirrors.
+                'sub_columns'  => $this->parseSubColumns($row['sub_columns'] ?? null),
+                'sort_order'   => $sortOrder++,
             ]);
         }
+
+        // A standard column the posted order somehow left out (a stale cached
+        // form, mainly) still gets written — disabled — so a format can never
+        // silently lose a standard column just because the page didn't know
+        // about it.
+        foreach (DocumentFormatColumn::STANDARD as $key => $defaults) {
+            if (in_array($key, $used, true)) {
+                continue;
+            }
+
+            $format->columns()->create([
+                'key'          => $key,
+                'label'        => $defaults['label'],
+                'is_enabled'   => false,
+                'is_mandatory' => false,
+                'is_custom'    => false,
+                'print_only'   => $defaults['print_only'],
+                'sub_columns'  => null,
+                'sort_order'   => $sortOrder++,
+            ]);
+        }
+    }
+
+    /**
+     * The Size row's sub-columns arrive as one comma-separated string built
+     * client-side from its chip list. Split, trim, de-duplicate, drop empties
+     * — a blank chip list posts as an empty string, which becomes null so a
+     * format with no size breakdown stores nothing rather than `[]` noise.
+     */
+    private function parseSubColumns(?string $raw): ?array
+    {
+        if (blank($raw)) {
+            return null;
+        }
+
+        $tags = collect(explode(',', $raw))
+            ->map(fn ($tag) => trim($tag))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        return $tags ?: null;
     }
 
     /**
@@ -245,7 +301,7 @@ class DocumentFormatService
      * grid the user has to fill in from nothing. Matches the prototype: every
      * standard column on, and the six default unit chips.
      *
-     * @return array{columns: array<string, array{label: string, enabled: bool, print_only: bool}>, units: array<int, string>}
+     * @return array{columns: array<string, array{label: string, enabled: bool, mandatory: bool, print_only: bool, sub_columns: array}>, units: array<int, string>}
      */
     public function defaults(): array
     {
@@ -253,9 +309,11 @@ class DocumentFormatService
 
         foreach (DocumentFormatColumn::STANDARD as $key => $meta) {
             $columns[$key] = [
-                'label'      => $meta['label'],
-                'enabled'    => true,
-                'print_only' => $meta['print_only'],
+                'label'       => $meta['label'],
+                'enabled'     => true,
+                'mandatory'   => false,
+                'print_only'  => $meta['print_only'],
+                'sub_columns' => [],
             ];
         }
 

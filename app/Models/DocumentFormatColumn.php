@@ -19,8 +19,10 @@ class DocumentFormatColumn extends Model
         'key',
         'label',
         'is_enabled',
+        'is_mandatory',
         'is_custom',
         'print_only',
+        'sub_columns',
         'sort_order',
     ];
 
@@ -51,10 +53,12 @@ class DocumentFormatColumn extends Model
     protected function casts(): array
     {
         return [
-            'is_enabled' => 'boolean',
-            'is_custom'  => 'boolean',
-            'print_only' => 'boolean',
-            'sort_order' => 'integer',
+            'is_enabled'   => 'boolean',
+            'is_mandatory' => 'boolean',
+            'is_custom'    => 'boolean',
+            'print_only'   => 'boolean',
+            'sub_columns'  => 'array',
+            'sort_order'   => 'integer',
         ];
     }
 

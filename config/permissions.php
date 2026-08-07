@@ -125,12 +125,12 @@ return [
         ],
 
         'Sales' => [
-            'inquiry'            => ['label' => 'Inquiries',           'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => false],
-            'order-confirmation' => ['label' => 'Order Confirmations', 'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => false],
+            'inquiry'            => ['label' => 'Inquiries',           'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => true],
+            'order-confirmation' => ['label' => 'Order Confirmations', 'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => true],
         ],
 
         'Procurement' => [
-            'purchase-order' => ['label' => 'Purchase Orders', 'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => false],
+            'purchase-order' => ['label' => 'Purchase Orders', 'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => true],
             // "approve" is the QC pass: the receiver records what arrived, the
             // checker approves what is good. Two people, one screen, one row.
             'inward-entry'   => ['label' => 'Goods Inward',    'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],

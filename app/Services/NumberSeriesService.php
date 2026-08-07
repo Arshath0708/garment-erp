@@ -78,4 +78,35 @@ class NumberSeriesService
             ? "{$series->prefix}{$series->financial_year}/{$number}"
             : "{$series->prefix}{$number}";
     }
+
+    /**
+     * The raw next number, padded but with none of format()'s fixed
+     * "{prefix}{fy}/{number}" shape spliced in.
+     *
+     * Some documents don't fit that shape — an OC's `GT/{buyerCode}/{seq}/{FY}`
+     * needs a value only known at call time spliced into the middle, and a
+     * PO's `GT/PO/{seq}/{FY}` puts the number before the year instead of
+     * after. Both compose their own final string from this rather than
+     * fighting format()'s layout.
+     */
+    public function nextNumber(string $module, ?string $financialYear = null): string
+    {
+        return DB::transaction(function () use ($module, $financialYear) {
+            $series = NumberSeries::query()
+                ->where('module', $module)
+                ->where('financial_year', $financialYear)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $series) {
+                throw new RuntimeException(
+                    "No number series configured for module [{$module}]. Run NumberSeriesSeeder."
+                );
+            }
+
+            $series->increment('current_number');
+
+            return str_pad((string) $series->current_number, $series->padding, '0', STR_PAD_LEFT);
+        });
+    }
 }

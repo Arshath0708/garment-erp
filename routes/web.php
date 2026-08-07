@@ -10,7 +10,10 @@ use App\Http\Controllers\Masters\JobberController;
 use App\Http\Controllers\Masters\MarkupController;
 use App\Http\Controllers\Masters\ProductController;
 use App\Http\Controllers\Masters\SupplierController;
+use App\Http\Controllers\Procurement\PurchaseOrderController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Sales\InquiryController;
+use App\Http\Controllers\Sales\OrderConfirmationController;
 use App\Http\Controllers\UserManagement\PermissionController;
 use App\Http\Controllers\UserManagement\RoleController;
 use App\Http\Controllers\UserManagement\UserController;
@@ -130,6 +133,60 @@ Route::middleware('auth')->group(function () {
         Route::patch('markups/{markup}/toggle-status', [MarkupController::class, 'toggleStatus'])
             ->name('markups.toggle-status');
         Route::resource('markups', MarkupController::class);
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sales
+    |--------------------------------------------------------------------------
+    | The buyer side: an inquiry is costed against an Order Format (Masters),
+    | confirmed lines convert to an Order Confirmation, and confirmed OC
+    | lines are raised onto a Purchase Order (Procurement, below) — one PO
+    | per supplier.
+    */
+    Route::prefix('sales')->name('sales.')->group(function () {
+
+        // Cascade endpoints for the item-row dropdowns, narrowed by category.
+        // Guarded by auth alone, same call already made for GeoController and
+        // SupplierController::agents() — shared reference data, not a module
+        // permission of its own. Shared by the Inquiry, OC and PO forms —
+        // one source, so a form doesn't have to guess which module's route
+        // to call.
+        Route::get('inquiries/products', [InquiryController::class, 'products'])
+            ->name('inquiries.products');
+        Route::get('inquiries/suppliers', [InquiryController::class, 'suppliers'])
+            ->name('inquiries.suppliers');
+
+        // Points at OrderConfirmationController, not InquiryController — the
+        // route name stays sales.inquiries.convert-to-oc because it's reached
+        // from the Inquiry screen, but converting an inquiry now creates a
+        // real OC rather than only flipping item status.
+        Route::post('inquiries/{inquiry}/convert-to-oc', [OrderConfirmationController::class, 'convertFromInquiry'])
+            ->name('inquiries.convert-to-oc');
+
+        Route::get('inquiries/{inquiry}/pdf', [InquiryController::class, 'pdf'])
+            ->name('inquiries.pdf');
+        Route::get('inquiries/{inquiry}/xlsx', [InquiryController::class, 'xlsx'])
+            ->name('inquiries.xlsx');
+
+        Route::resource('inquiries', InquiryController::class);
+
+        Route::post('order-confirmations/{orderConfirmation}/raise-purchase-orders', [OrderConfirmationController::class, 'raisePurchaseOrders'])
+            ->name('order-confirmations.raise-purchase-orders');
+        Route::resource('order-confirmations', OrderConfirmationController::class)
+            ->parameters(['order-confirmations' => 'orderConfirmation']);
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Procurement
+    |--------------------------------------------------------------------------
+    | The supplier side: a Purchase Order is raised against a confirmed OC's
+    | items, one PO per supplier.
+    */
+    Route::prefix('procurement')->name('procurement.')->group(function () {
+        Route::resource('purchase-orders', PurchaseOrderController::class)
+            ->parameters(['purchase-orders' => 'purchaseOrder']);
     });
 
     /*

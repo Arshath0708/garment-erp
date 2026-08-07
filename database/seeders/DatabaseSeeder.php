@@ -39,6 +39,15 @@ class DatabaseSeeder extends Seeder
             // Gives the Buyer master's agent dropdown something to show until
             // the Agent screen is built.
             AgentSeeder::class,
+
+            // Enough Products/Suppliers/FOB Values to actually build an
+            // Inquiry end to end, plus Size sub-column tags on the sample
+            // format. Runs last — depends on categories and the format above.
+            SalesDemoSeeder::class,
+
+            // Two more Order Formats besides "Standard Format", so the
+            // Inquiry / OC format picker has real choices to demo.
+            OrderFormatDemoSeeder::class,
         ]);
     }
 }

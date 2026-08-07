@@ -136,7 +136,7 @@ class DocumentFormatController extends Controller implements HasMiddleware
      * so a format saved before a new standard column was introduced still
      * renders a complete grid rather than a gap.
      *
-     * @return array<string, array{label: string, enabled: bool, print_only: bool}>
+     * @return array<string, array{label: string, enabled: bool, mandatory: bool, print_only: bool, sub_columns: array}>
      */
     private function columnState(DocumentFormat $format): array
     {
@@ -148,9 +148,11 @@ class DocumentFormatController extends Controller implements HasMiddleware
             }
 
             $state[$column->key] = [
-                'label'      => $column->label,
-                'enabled'    => $column->is_enabled,
-                'print_only' => $column->print_only,
+                'label'       => $column->label,
+                'enabled'     => $column->is_enabled,
+                'mandatory'   => $column->is_mandatory,
+                'print_only'  => $column->print_only,
+                'sub_columns' => $column->sub_columns ?? [],
             ];
         }
 
