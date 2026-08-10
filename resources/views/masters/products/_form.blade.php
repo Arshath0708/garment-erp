@@ -107,10 +107,13 @@
                      :options="$priceBands" :selected="$product?->price_band_id"
                      placeholder="Search band…" />
 
-        {{-- Col K --}}
+        {{-- Col K — "different rates with option to add in the future". Typing
+             a rate not already in the list adds it, same as Payment Terms and
+             Designation on the Buyer form — see ProductController::storeGstRate(). --}}
         <x-ui.select name="gst_rate_id" label="GST %" horizontal searchable
                      :options="$gstRates" :selected="$product?->gst_rate_id"
-                     placeholder="Search rate…" />
+                     placeholder="Search or type a new rate…"
+                     data-create-url="{{ route('masters.products.gst-rates.store') }}" />
 
         {{-- Col I --}}
         <x-ui.field name="drawback_sr_no" label="Drawback Sr. No." :value="$product?->drawback_sr_no"

@@ -8,9 +8,4 @@ class StoreBuyerRequest extends BuyerRequest
     {
         return 'buyer.create';
     }
-
-    protected function ignoreId(): ?int
-    {
-        return null;
-    }
 }

@@ -69,18 +69,23 @@ Route::middleware('auth')->group(function () {
             ->name('products.check-code');
         Route::patch('products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])
             ->name('products.toggle-status');
+        // Quick-add from the GST % field on the Product form itself — sheet
+        // col K: "different rates with option to add in the future".
+        Route::post('products/gst-rates', [ProductController::class, 'storeGstRate'])
+            ->name('products.gst-rates.store');
         Route::resource('products', ProductController::class);
 
         // Same ordering rule as products — before the resource, or
-        // buyers/{buyer} matches "check-code" first.
-        Route::get('buyers/check-code', [BuyerController::class, 'checkCode'])
-            ->name('buyers.check-code');
+        // buyers/{buyer} matches these fixed segments first.
         Route::patch('buyers/{buyer}/toggle-status', [BuyerController::class, 'toggleStatus'])
             ->name('buyers.toggle-status');
         // Quick-add from the Payment Terms field on the Buyer form itself —
         // "add more in the future" on the sheet, without a separate screen.
         Route::post('buyers/payment-terms', [BuyerController::class, 'storePaymentTerm'])
             ->name('buyers.payment-terms.store');
+        // Same quick-add, for the contact's Designation field.
+        Route::post('buyers/designations', [BuyerController::class, 'storeDesignation'])
+            ->name('buyers.designations.store');
         Route::resource('buyers', BuyerController::class);
 
         /*

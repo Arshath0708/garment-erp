@@ -11,11 +11,13 @@ use App\Models\Category;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\Currency;
+use App\Models\Designation;
 use App\Models\Incoterm;
 use App\Models\PaymentTerm;
 use App\Models\Port;
 use App\Models\State;
 use App\Services\Masters\BuyerService;
+use App\Services\NumberSeriesService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,8 +27,10 @@ use Illuminate\View\View;
 
 class BuyerController extends Controller implements HasMiddleware
 {
-    public function __construct(private readonly BuyerService $buyers)
-    {
+    public function __construct(
+        private readonly BuyerService $buyers,
+        private readonly NumberSeriesService $numbers,
+    ) {
     }
 
     /**
@@ -38,12 +42,12 @@ class BuyerController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:buyer.view', only: ['index', 'show', 'checkCode']),
+            new Middleware('permission:buyer.view', only: ['index', 'show']),
             new Middleware('permission:buyer.create', only: ['create', 'store']),
             new Middleware('permission:buyer.edit', only: ['edit', 'update', 'toggleStatus']),
             new Middleware('permission:buyer.delete', only: ['destroy']),
             // Reachable from either the create or the edit form.
-            new Middleware('permission:buyer.create|buyer.edit', only: ['storePaymentTerm']),
+            new Middleware('permission:buyer.create|buyer.edit', only: ['storePaymentTerm', 'storeDesignation']),
         ];
     }
 
@@ -77,7 +81,11 @@ class BuyerController extends Controller implements HasMiddleware
         return view('masters.buyers.create', $this->formData(
             old('country_id') ? (int) old('country_id') : null,
             old('state_id') ? (int) old('state_id') : null,
-        ));
+        ) + [
+            // Shown read-only so the user knows what they are about to get.
+            // Not reserved — the real code is assigned at insert time.
+            'nextCode' => $this->numbers->preview('buyer'),
+        ]);
     }
 
     public function store(StoreBuyerRequest $request): RedirectResponse
@@ -94,7 +102,7 @@ class BuyerController extends Controller implements HasMiddleware
         return view('masters.buyers.show', [
             'buyer' => $buyer->load([
                 'categories:id,name', 'cartonMarkings', 'country', 'state', 'city', 'port',
-                'agent', 'paymentTerm', 'incoterm', 'currency',
+                'agent', 'contactDesignation', 'paymentTerm', 'incoterm', 'currency',
                 'currencies', 'incoterms',
                 'creator', 'updater',
             ]),
@@ -148,24 +156,6 @@ class BuyerController extends Controller implements HasMiddleware
     }
 
     /**
-     * Sheet col A: "it should tell me if a certain code is used already".
-     * Called from the form as the user types.
-     *
-     * A convenience only. The unique index is what actually enforces it — two
-     * users typing BUY01 at the same moment both get "available" here, and the
-     * second insert is the one that fails.
-     */
-    public function checkCode(Request $request): JsonResponse
-    {
-        $taken = Buyer::query()
-            ->where('display_code', strtoupper(trim($request->string('value')->toString())))
-            ->when($request->filled('ignore'), fn ($q) => $q->whereKeyNot($request->integer('ignore')))
-            ->exists();
-
-        return response()->json(['available' => ! $taken]);
-    }
-
-    /**
      * Sheet col Q: "drop down menu, add more in the future". Lets a new term
      * be typed straight into the Payment Terms field instead of leaving the
      * form to add one elsewhere — there is no separate Payment Terms screen.
@@ -185,6 +175,25 @@ class BuyerController extends Controller implements HasMiddleware
         );
 
         return response()->json(['id' => $term->id, 'name' => $term->name]);
+    }
+
+    /**
+     * Quick-add for the contact's Designation field, same shape as
+     * storePaymentTerm(). `firstOrCreate` on name: two users typing
+     * "Merchandiser" at once end up pointing at one row, not a duplicate.
+     */
+    public function storeDesignation(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:80'],
+        ]);
+
+        $designation = Designation::firstOrCreate(
+            ['name' => trim($data['name'])],
+            ['status' => 'active']
+        );
+
+        return response()->json(['id' => $designation->id, 'name' => $designation->name]);
     }
 
     /**
@@ -224,6 +233,7 @@ class BuyerController extends Controller implements HasMiddleware
                 : collect(),
 
             'ports'           => Port::active()->with('country:id,iso_code')->orderBy('name')->get()->pluck('label', 'id'),
+            'designations'    => Designation::active()->orderBy('name')->pluck('name', 'id'),
             'paymentTerms'    => PaymentTerm::active()->forSide('buyer')->orderBy('name')->pluck('name', 'id'),
             'incoterms'       => Incoterm::active()->orderBy('code')->get()->pluck('label', 'id'),
             'currencies'      => Currency::active()->orderBy('iso_code')->get()->pluck('label', 'id'),

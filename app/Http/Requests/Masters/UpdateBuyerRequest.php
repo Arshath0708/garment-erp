@@ -8,9 +8,4 @@ class UpdateBuyerRequest extends BuyerRequest
     {
         return 'buyer.edit';
     }
-
-    protected function ignoreId(): ?int
-    {
-        return $this->route('buyer')->id;
-    }
 }

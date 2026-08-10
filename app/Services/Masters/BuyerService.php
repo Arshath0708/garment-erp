@@ -3,10 +3,15 @@
 namespace App\Services\Masters;
 
 use App\Models\Buyer;
+use App\Services\NumberSeriesService;
 use Illuminate\Support\Facades\DB;
 
 class BuyerService
 {
+    public function __construct(private readonly NumberSeriesService $numbers)
+    {
+    }
+
     /**
      * @param  array<string, mixed>  $data
      */
@@ -15,7 +20,14 @@ class BuyerService
         // One transaction: a buyer whose categories or carton marks failed to
         // write is a half-saved master the user would have to spot themselves.
         return DB::transaction(function () use ($data) {
-            $buyer = Buyer::create($this->columns($data));
+            // display_code is not fillable (see Buyer's docblock), so it is
+            // never in $this->columns($data) — assigned as a property instead.
+            // Inside the transaction on purpose: next() holds a row lock on the
+            // counter until this insert commits, so two people saving at the
+            // same moment cannot both be handed BUY05.
+            $buyer = new Buyer($this->columns($data));
+            $buyer->display_code = $this->numbers->next('buyer');
+            $buyer->save();
 
             $buyer->categories()->sync($data['category_ids'] ?? []);
             $this->syncAcceptedSets($buyer, $data);

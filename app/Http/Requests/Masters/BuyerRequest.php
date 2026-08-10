@@ -18,26 +18,17 @@ abstract class BuyerRequest extends FormRequest
 {
     abstract protected function permission(): string;
 
-    /**
-     * Primary key to exclude from the unique check; null when creating.
-     */
-    abstract protected function ignoreId(): ?int;
-
     public function authorize(): bool
     {
         return $this->user()->can($this->permission());
     }
 
-    /**
-     * A display code is compared case-insensitively by MySQL's default
-     * collation, so "abc" and "ABC" already collide. Upper-casing it here means
-     * the stored value matches what the user was shown on the duplicate check
-     * rather than whichever case they happened to type.
-     */
     protected function prepareForValidation(): void
     {
-        if ($this->filled('display_code')) {
-            $this->merge(['display_code' => strtoupper(trim($this->string('display_code')->toString()))]);
+        // Same treatment as Supplier's gst_number — a GSTIN is fixed by law,
+        // not house style, so the case is normalised before the format check.
+        if ($this->filled('gst_vat_no')) {
+            $this->merge(['gst_vat_no' => strtoupper(trim($this->string('gst_vat_no')->toString()))]);
         }
 
         // An empty commission value with a type selected is not a commission.
@@ -111,20 +102,15 @@ abstract class BuyerRequest extends FormRequest
     }
 
     /**
-     * Uniqueness deliberately does NOT exclude soft-deleted rows — the database
-     * index does not either, so excluding them here would let validation pass
-     * and the insert then fail with a duplicate-key error. See
-     * StoreCategoryRequest for the same reasoning.
-     *
      * @return array<string, mixed>
      */
     public function rules(): array
     {
-        $ignore = $this->ignoreId();
-
         return [
-            // Col A — "max 5 characters, tell me if a certain code is used already"
-            'display_code'           => ['required', 'string', 'max:5', 'regex:/^[A-Z0-9-]+$/', Rule::unique('buyers', 'display_code')->ignore($ignore)],
+            // Col A is not here — display_code is server-assigned (see
+            // BuyerService::create()), same reasoning as StoreCategoryRequest
+            // omitting `code`: accepting one from the request would let a
+            // crafted POST choose its own.
 
             // Cols B, C
             'company_name'           => ['required', 'string', 'max:200'],
@@ -136,8 +122,17 @@ abstract class BuyerRequest extends FormRequest
 
             // Cols E, F, G
             'contact_person'         => ['nullable', 'string', 'max:120'],
+            'contact_designation_id' => ['nullable', 'integer', Rule::exists('designations', 'id')],
             'email'                  => ['nullable', 'email', 'max:150'],
             'mobile'                 => ['nullable', 'string', 'max:30'],
+
+            /*
+             * Col H — still "not required" on the sheet, but no longer kept off
+             * the form; the client asked for it alongside the contact's
+             * designation. Format checked only when filled, same GSTIN pattern
+             * SupplierRequest uses.
+             */
+            'gst_vat_no'             => ['nullable', 'string', 'size:15', 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z]Z[0-9A-Z]$/'],
 
             // Cols I–N
             'address'                => ['nullable', 'string', 'max:255'],
@@ -286,10 +281,11 @@ abstract class BuyerRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'display_code'           => 'display code',
             'company_name'           => 'company name',
             'name_on_export_invoice' => 'company name on export invoice',
             'category_ids'           => 'category of items',
+            'contact_designation_id' => 'designation',
+            'gst_vat_no'             => 'GST/VAT number',
             'country_id'             => 'country',
             'state_id'               => 'state',
             'city_id'                => 'city',
@@ -315,12 +311,11 @@ abstract class BuyerRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'display_code.unique' => 'This display code is already used by another buyer.',
-            'display_code.regex'  => 'Display code may contain letters, numbers and hyphens only.',
-            'display_code.max'    => 'Display code may not be longer than 5 characters.',
             'agent_id.exists'     => 'That agent is not marked as a buyer-side agent.',
             'state_id.exists'     => 'That state does not belong to the selected country.',
             'city_id.exists'      => 'That city does not belong to the selected state.',
+            'gst_vat_no.regex'    => 'That is not a valid GSTIN — expected 15 characters, e.g. 33ABCDE1234F1Z5.',
+            'gst_vat_no.size'     => 'A GSTIN is exactly 15 characters.',
             'agent_commission_type.required_with' => 'Choose whether the commission is a percentage or an amount.',
         ];
     }

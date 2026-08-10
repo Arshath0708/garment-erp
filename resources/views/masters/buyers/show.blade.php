@@ -42,6 +42,9 @@
                     <dt class="col-sm-5 text-body-secondary fw-normal">Contact Person</dt>
                     <dd class="col-sm-7">{{ $buyer->contact_person ?: '—' }}</dd>
 
+                    <dt class="col-sm-5 text-body-secondary fw-normal">Designation</dt>
+                    <dd class="col-sm-7">{{ $buyer->contactDesignation?->name ?: '—' }}</dd>
+
                     <dt class="col-sm-5 text-body-secondary fw-normal">Email</dt>
                     <dd class="col-sm-7">
                         @if($buyer->email)
@@ -53,6 +56,9 @@
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Mobile</dt>
                     <dd class="col-sm-7">{{ $buyer->mobile ?: '—' }}</dd>
+
+                    <dt class="col-sm-5 text-body-secondary fw-normal">GST / VAT No.</dt>
+                    <dd class="col-sm-7 font-monospace">{{ $buyer->gst_vat_no ?: '—' }}</dd>
 
                     <dt class="col-sm-12 pt-3"><hr class="my-2"></dt>
 

@@ -35,6 +35,8 @@ class ProductController extends Controller implements HasMiddleware
             new Middleware('permission:product.create', only: ['create', 'store']),
             new Middleware('permission:product.edit', only: ['edit', 'update', 'toggleStatus']),
             new Middleware('permission:product.delete', only: ['destroy']),
+            // Reachable from either the create or the edit form.
+            new Middleware('permission:product.create|product.edit', only: ['storeGstRate']),
         ];
     }
 
@@ -142,6 +144,40 @@ class ProductController extends Controller implements HasMiddleware
             ->exists();
 
         return response()->json(['available' => ! $taken]);
+    }
+
+    /**
+     * Quick-add for the GST % field, same shape as BuyerController's
+     * storePaymentTerm()/storeDesignation(). Sheet col K: "different rates
+     * with option to add in the future".
+     *
+     * TomSelect always posts whatever the user typed as `name` — accepted as
+     * "12", "12%" or "12.5" alike, since the field is really a percentage,
+     * not a label. `firstOrCreate` on the numeric rate: two users typing "12"
+     * at once end up pointing at one row, not a duplicate.
+     */
+    public function storeGstRate(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:20'],
+        ]);
+
+        $rate = (float) preg_replace('/[^0-9.]/', '', $data['name']);
+
+        $validated = validator(['rate' => $rate], [
+            'rate' => ['required', 'numeric', 'min:0', 'max:100'],
+        ]);
+
+        if ($validated->fails()) {
+            return response()->json(['message' => 'Enter a GST rate between 0 and 100.'], 422);
+        }
+
+        $gstRate = GstRate::firstOrCreate(
+            ['rate' => $rate],
+            ['status' => 'active']
+        );
+
+        return response()->json(['id' => $gstRate->id, 'name' => $gstRate->label]);
     }
 
     /**
