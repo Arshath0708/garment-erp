@@ -134,6 +134,19 @@ abstract class BuyerRequest extends FormRequest
              */
             'gst_vat_no'             => ['nullable', 'string', 'size:15', 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z]Z[0-9A-Z]$/'],
 
+            /*
+             * Change request #3 — "up to 3 additional contacts per record".
+             * Same shape as SupplierRequest's `contacts`: a row with details
+             * but no name is the one combination worth rejecting; a wholly
+             * blank row is dropped by the service, not reported.
+             */
+            // Change request #3 (revised — CEO approved "no limit"). No cap.
+            'contacts'                  => ['nullable', 'array'],
+            'contacts.*.name'           => ['required_with:contacts.*.mobile,contacts.*.email,contacts.*.designation_id', 'nullable', 'string', 'max:120'],
+            'contacts.*.designation_id' => ['nullable', 'integer', Rule::exists('designations', 'id')->where('status', 'active')],
+            'contacts.*.mobile'         => ['nullable', 'string', 'max:30'],
+            'contacts.*.email'          => ['nullable', 'email', 'max:150'],
+
             // Cols I–N
             'address'                => ['nullable', 'string', 'max:255'],
             'country_id'             => ['nullable', 'integer', Rule::exists('countries', 'id')],
@@ -228,13 +241,37 @@ abstract class BuyerRequest extends FormRequest
     }
 
     /**
-     * Two cross-field rules that no single-field rule can express.
+     * Cross-field rules that no single-field rule can express.
      */
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
             $this->validateAdvanceSplit($validator);
+            $this->validateContactsReachable($validator);
         });
+    }
+
+    /**
+     * A secondary contact with a name but neither a mobile nor an email is
+     * not reachable — the row required_with rule below only catches the
+     * opposite gap (details with no name), so this is the other half.
+     */
+    private function validateContactsReachable(Validator $validator): void
+    {
+        foreach ((array) $this->input('contacts', []) as $index => $row) {
+            $name = trim((string) ($row['name'] ?? ''));
+
+            if ($name === '') {
+                continue;
+            }
+
+            if (blank($row['mobile'] ?? null) && blank($row['email'] ?? null)) {
+                $validator->errors()->add(
+                    "contacts.{$index}.mobile",
+                    'Add a mobile number or email so this contact can be reached.'
+                );
+            }
+        }
     }
 
     /**
@@ -317,6 +354,7 @@ abstract class BuyerRequest extends FormRequest
             'gst_vat_no.regex'    => 'That is not a valid GSTIN — expected 15 characters, e.g. 33ABCDE1234F1Z5.',
             'gst_vat_no.size'     => 'A GSTIN is exactly 15 characters.',
             'agent_commission_type.required_with' => 'Choose whether the commission is a percentage or an amount.',
+            'contacts.*.name.required_with'       => 'Enter a name for this contact, or clear the row.',
         ];
     }
 }

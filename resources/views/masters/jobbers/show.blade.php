@@ -41,6 +41,15 @@
                         @endforelse
                     </dd>
 
+                    <dt class="col-sm-5 text-body-secondary fw-normal">Product</dt>
+                    <dd class="col-sm-7">
+                        @forelse($jobber->products as $product)
+                            <span class="badge text-bg-light border me-1 mb-1">{{ $product->name }}</span>
+                        @empty
+                            —
+                        @endforelse
+                    </dd>
+
                     <dt class="col-sm-5 text-body-secondary fw-normal">Status</dt>
                     <dd class="col-sm-7"><x-ui.status-badge :status="$jobber->status === 'active'" /></dd>
 
@@ -94,6 +103,12 @@
 
                     <dt class="col-sm-5 text-body-secondary fw-normal">Delivery Mode</dt>
                     <dd class="col-sm-7">{{ Supplier::DELIVERY_MODES[$jobber->default_delivery_mode] ?? '—' }}</dd>
+
+                    <dt class="col-sm-5 text-body-secondary fw-normal">Client Name</dt>
+                    <dd class="col-sm-7">{{ $jobber->client_name ?: '—' }}</dd>
+
+                    <dt class="col-sm-5 text-body-secondary fw-normal">Client Details</dt>
+                    <dd class="col-sm-7" style="white-space: pre-line;">{{ $jobber->client_details ?: '—' }}</dd>
 
                     <dt class="col-sm-12 pt-3"><hr class="my-2"></dt>
 

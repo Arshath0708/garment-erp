@@ -78,8 +78,13 @@ class BuyerController extends Controller implements HasMiddleware
         // old() rather than null: a failed validation round-trip must come back
         // with the state and city lists still populated for the country the
         // user had picked, or their choices appear to have been thrown away.
+        //
+        // Change request #4 — "Default the Country to India". Falling back to
+        // it here too, not just in the select's own default, so the State list
+        // is pre-loaded for India rather than sitting empty until the user
+        // touches the Country field.
         return view('masters.buyers.create', $this->formData(
-            old('country_id') ? (int) old('country_id') : null,
+            old('country_id') ? (int) old('country_id') : $this->indiaCountryId(),
             old('state_id') ? (int) old('state_id') : null,
         ) + [
             // Shown read-only so the user knows what they are about to get.
@@ -103,7 +108,7 @@ class BuyerController extends Controller implements HasMiddleware
             'buyer' => $buyer->load([
                 'categories:id,name', 'cartonMarkings', 'country', 'state', 'city', 'port',
                 'agent', 'contactDesignation', 'paymentTerm', 'incoterm', 'currency',
-                'currencies', 'incoterms',
+                'currencies', 'incoterms', 'contacts.designation',
                 'creator', 'updater',
             ]),
         ]);
@@ -116,7 +121,7 @@ class BuyerController extends Controller implements HasMiddleware
             old('state_id', $buyer->state_id) ? (int) old('state_id', $buyer->state_id) : null,
         ) + [
             'buyer' => $buyer->load(
-                'categories:id', 'cartonMarkings',
+                'categories:id', 'cartonMarkings', 'contacts',
                 'currencies:id', 'incoterms:id',
             ),
         ]);
@@ -222,7 +227,32 @@ class BuyerController extends Controller implements HasMiddleware
              */
             'agents' => Agent::active()->ofType('buyer')->orderBy('name')->get()->pluck('label', 'id'),
 
+            /*
+             * Change request #9 — "selecting an Agent should auto-fill the
+             * Commission value onto the record". The agent's first commission
+             * entry is the one the costing panel treats as the one that
+             * applies (see Agent::commissions()) — mapped onto this form's
+             * type/value pair the same way agent_commission_label() reads it
+             * back. Filled once on selection; the fields stay editable
+             * afterwards, same as every other auto-filled field on this form.
+             */
+            'agentCommissions' => Agent::active()->ofType('buyer')
+                ->with('commissions')
+                ->get()
+                ->mapWithKeys(function (Agent $agent) {
+                    $first = $agent->commissions->first();
+
+                    return [$agent->id => $first ? [
+                        'type'  => $first->commission_type === 'percent' ? 'percent' : 'amount',
+                        'value' => (float) $first->amount,
+                    ] : null];
+                })
+                ->all(),
+
             'countries'       => Country::active()->orderBy('name')->get()->pluck('label', 'id'),
+
+            // Change request #4 — "Default the Country to India".
+            'indiaCountryId'  => $this->indiaCountryId(),
 
             'states' => $countryId
                 ? State::active()->where('country_id', $countryId)->orderBy('name')->pluck('name', 'id')
@@ -248,5 +278,14 @@ class BuyerController extends Controller implements HasMiddleware
             'splitTermIds' => PaymentTerm::active()->forSide('buyer')
                 ->where('has_split', true)->pluck('id')->all(),
         ];
+    }
+
+    /**
+     * Change request #4 — "Default the Country to India". Read by iso code
+     * rather than name, same lookup GeoSeeder uses to seed it.
+     */
+    private function indiaCountryId(): ?int
+    {
+        return Country::where('iso_code', 'IN')->value('id');
     }
 }

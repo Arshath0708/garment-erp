@@ -97,6 +97,12 @@ Route::middleware('auth')->group(function () {
             ->name('suppliers.check-code');
         Route::get('suppliers/agents', [SupplierController::class, 'agents'])
             ->name('suppliers.agents');
+        // Quick-add for the Supplier/Jobber Type field — same shape as the
+        // Buyer form's storePaymentTerm()/storeDesignation(). Shared by both
+        // the Supplier and Jobber screens, which read the same SupplierType
+        // lookup, so there is one route rather than two identical ones.
+        Route::post('suppliers/supplier-types', [SupplierController::class, 'storeSupplierType'])
+            ->name('suppliers.supplier-types.store');
         Route::patch('suppliers/{supplier}/toggle-status', [SupplierController::class, 'toggleStatus'])
             ->name('suppliers.toggle-status');
         Route::resource('suppliers', SupplierController::class);

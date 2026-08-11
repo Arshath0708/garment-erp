@@ -9,6 +9,8 @@
     // Filtered by party type; reloaded from the agents endpoint when it changes.
     'agents' => [],
     'countries' => [],
+    // Change request #4 — "Default the Country to India".
+    'indiaCountryId' => null,
     // Rendered server-side for the country/state already chosen; the cascade
     // reloads them from GeoController once a parent changes.
     'states' => [],
@@ -61,6 +63,13 @@
     if ($extraContacts === []) {
         $extraContacts = [['name' => null, 'designation_id' => null, 'mobile' => null, 'email' => null]];
     }
+
+    /**
+     * Whether the Secondary Contact Person section starts open. Same
+     * reasoning as the Buyer form's $secondaryContactsVisible.
+     */
+    $secondaryContactsVisible = old('contacts') !== null
+        || ($supplier?->contacts->where('is_primary', false)->isNotEmpty() ?? false);
 
     /**
      * Initial visibility of the three conditional blocks, decided here rather
@@ -153,10 +162,13 @@
     <div class="form-stack">
 
         {{-- Col D — "(composition) give option to add more in the future".
-             A lookup table, so a new type does not need a migration. --}}
+             A lookup table, so a new type does not need a migration. Typing a
+             name not already in the list adds it, same quick-add pattern as
+             the Buyer form's Payment Terms / Designation fields. --}}
         <x-ui.select name="supplier_type_id" label="Supplier Type" :options="$supplierTypes"
                      :selected="$supplier?->supplier_type_id" horizontal searchable
-                     placeholder="Search type…"
+                     placeholder="Search or type to add a new type…"
+                     data-create-url="{{ route('masters.suppliers.supplier-types.store') }}"
                      hint="Registered types are asked for a GST number." />
 
         {{-- Col E — "only if the registered option is chosen". Hidden, not
@@ -241,10 +253,17 @@
     </div>
 </x-ui.form-section>
 
-{{-- ================ L · OTHER CONTACT PERSONS ==================== --}}
-<x-ui.form-section title="Other Contact Persons" icon="bi-people"
+{{-- ================ L · SECONDARY CONTACT PERSON ==================== --}}
+<x-ui.form-section title="Secondary Contact Person" icon="bi-people"
                    subtitle="Sheet col L — name, designation and phone number for each additional person.">
 
+    <div class="form-check mb-3">
+        <input type="checkbox" class="form-check-input" id="toggle-secondary-contacts"
+               @checked($secondaryContactsVisible)>
+        <label class="form-check-label" for="toggle-secondary-contacts">Add a secondary contact person</label>
+    </div>
+
+    <div id="secondary-contacts-wrap" class="{{ $secondaryContactsVisible ? '' : 'd-none' }}">
     {{-- One header row rather than the same four labels repeated per person,
          same as the incentives grid on the Product master. --}}
     <div class="table-responsive">
@@ -312,6 +331,7 @@
         <i class="bi bi-plus-lg me-1"></i>Add contact
     </button>
     <div class="form-text">Rows with no name are not saved.</div>
+    </div>{{-- /#secondary-contacts-wrap --}}
 
     {{-- Cloned by the Add button. Inside a template so the searchable select in
          it is not picked up by the page-load TomSelect sweep — a pre-initialised
@@ -368,7 +388,7 @@
              The three cascade, and both children are re-checked against their
              parent on submit — see SupplierRequest. --}}
         <x-ui.select name="country_id" label="Country" :options="$countries"
-                     :selected="$supplier?->country_id" horizontal searchable
+                     :selected="$supplier?->country_id ?? $indiaCountryId" horizontal searchable
                      placeholder="Search country…"
                      data-cascade-child="#state_id" />
 
@@ -665,6 +685,7 @@ document.addEventListener('DOMContentLoaded', function () {
      * ------------------------------------------------------------------ */
     const rows     = document.getElementById('contact-rows');
     const template = document.getElementById('contact-row-template');
+    const addBtn   = document.getElementById('add-contact');
 
     /**
      * Field names carry their row index, so a row added after one was removed
@@ -699,7 +720,7 @@ document.addEventListener('DOMContentLoaded', function () {
         reindex();
     });
 
-    document.getElementById('add-contact').addEventListener('click', function () {
+    addBtn.addEventListener('click', function () {
         const index = rows.querySelectorAll('[data-contact-row]').length;
         const row   = template.content.cloneNode(true).querySelector('tr');
 
@@ -713,16 +734,34 @@ document.addEventListener('DOMContentLoaded', function () {
         // has to be upgraded here or it renders as a bare dropdown next to
         // three searchable ones.
         const select = row.querySelector('select[data-searchable]');
-
-        if (select && window.TomSelect) {
-            new window.TomSelect(select, {
-                allowEmptyOption: true,
-                maxOptions: null,
-                placeholder: select.dataset.placeholder || 'Search…',
-            });
-        }
+        if (select) window.upgradeSearchableSelect(select);
 
         row.querySelector('input')?.focus();
+    });
+
+    /* ------------------------------------------------------------------ *
+     * Secondary Contact Person toggle — hidden until asked for. Unchecking
+     * resets the table to one blank row rather than leaving typed values
+     * sitting in a hidden section that would still post on submit.
+     * ------------------------------------------------------------------ */
+    const secondaryToggle = document.getElementById('toggle-secondary-contacts');
+    const secondaryWrap   = document.getElementById('secondary-contacts-wrap');
+
+    secondaryToggle?.addEventListener('change', function () {
+        secondaryWrap.classList.toggle('d-none', ! secondaryToggle.checked);
+
+        if (secondaryToggle.checked) return;
+
+        rows.querySelectorAll('[data-contact-row]').forEach(function (row, index) {
+            if (index === 0) {
+                row.querySelectorAll('input').forEach(function (field) { field.value = ''; });
+
+                const select = row.querySelector('select');
+                select?.tomselect ? select.tomselect.clear(true) : (select && (select.value = ''));
+            } else {
+                row.remove();
+            }
+        });
     });
 
     /* ------------------------------------------------------------------ *

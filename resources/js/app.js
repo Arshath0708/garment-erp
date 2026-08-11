@@ -1,6 +1,10 @@
 import './bootstrap';
 
-import 'bootstrap';
+// Exposed on window, not just imported for its side effects — the inline
+// tooltip-init script in layouts/app.blade.php calls `new bootstrap.Tooltip()`
+// directly, and a plain `import 'bootstrap'` never creates that global itself.
+import * as bootstrap from 'bootstrap';
+window.bootstrap = bootstrap;
 import 'admin-lte/dist/js/adminlte.js';
 
 import ApexCharts from 'apexcharts';
@@ -10,54 +14,84 @@ import TomSelect from 'tom-select';
 window.TomSelect = TomSelect;
 
 /**
- * Searchable dropdowns.
+ * Upgrades one <select data-searchable> to TomSelect. Exposed on window
+ * rather than kept local to the page-load sweep below, because every
+ * repeatable-row form (Buyer/Supplier/Jobber's secondary-contact tables) adds
+ * a Designation select after the page has already loaded, and needs the exact
+ * same settings and fix — not a second, drifted copy of them. This is the one
+ * place that builds a TomSelect from a `data-searchable` element; nothing
+ * else should call `new TomSelect(...)` directly.
  *
  * The master sheets ask for "drop down with a search bar" on category, unit,
  * price band, GST rate, PO format and calculated-on. A native <select> has
  * type-ahead but no search box, and these lists grow — units and HSN codes in
- * particular. Any <select data-searchable> gets upgraded.
+ * particular.
  */
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('select[data-searchable]').forEach((el) => {
-        const settings = {
-            allowEmptyOption: true,
-            maxOptions: null,
-            placeholder: el.dataset.placeholder || 'Search…',
+window.upgradeSearchableSelect = function (el) {
+    const settings = {
+        allowEmptyOption: true,
+        maxOptions: null,
+        placeholder: el.dataset.placeholder || 'Search…',
+    };
+
+    // Multi-select (Buyer sheet col D, "allow multiple selection") needs
+    // a way to take one back off without reopening the list.
+    if (el.multiple) {
+        settings.plugins = ['remove_button'];
+    }
+
+    // "Drop down, add more in the future" (Buyer sheet col Q, Payment
+    // Terms): typing a name not already in the list posts it to
+    // data-create-url and adds the row it comes back with.
+    if (el.dataset.createUrl) {
+        settings.create = function (input, callback) {
+            const token = document.querySelector('meta[name="csrf-token"]')?.content;
+
+            fetch(el.dataset.createUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': token || '',
+                },
+                body: JSON.stringify({ name: input }),
+            })
+                .then((r) => (r.ok ? r.json() : Promise.reject()))
+                .then((row) => callback({ value: String(row.id), text: row.name }))
+                // A failed create must not leave TomSelect thinking one
+                // happened — no option is added if the request failed.
+                .catch(() => callback());
         };
+        settings.createOnBlur = true;
+    }
 
-        // Multi-select (Buyer sheet col D, "allow multiple selection") needs
-        // a way to take one back off without reopening the list.
-        if (el.multiple) {
-            settings.plugins = ['remove_button'];
-        }
+    /*
+     * A <select> with no option carrying `selected` defaults its FIRST
+     * option to selected — that's the browser's own rule, before any JS
+     * runs. Every unselected searchable single-select's first option is
+     * the blank "— Select —" placeholder row (see x-ui.select), so
+     * TomSelect would otherwise sync that in at construction time as a
+     * real chosen item and print its label as literal text instead of
+     * showing it as a greyed placeholder.
+     *
+     * Cleared here, on the native <select>, before TomSelect ever wraps
+     * it — so it inits having synced nothing, rather than syncing a
+     * blank item in and then being told to drop it afterwards. The
+     * ordering matters: clearing an item via the instance's own API
+     * right after construction runs ahead of TomSelect's own lazy
+     * dropdown-options render, and left the panel opening empty on the
+     * first click. allowEmptyOption above still lets a user pick
+     * "— Select —" back off the list later to clear a value they'd set.
+     */
+    if (! el.multiple && el.selectedIndex === 0 && el.options[0]?.value === '') {
+        el.selectedIndex = -1;
+    }
 
-        // "Drop down, add more in the future" (Buyer sheet col Q, Payment
-        // Terms): typing a name not already in the list posts it to
-        // data-create-url and adds the row it comes back with.
-        if (el.dataset.createUrl) {
-            settings.create = function (input, callback) {
-                const token = document.querySelector('meta[name="csrf-token"]')?.content;
+    return new TomSelect(el, settings);
+};
 
-                fetch(el.dataset.createUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Accept: 'application/json',
-                        'X-CSRF-TOKEN': token || '',
-                    },
-                    body: JSON.stringify({ name: input }),
-                })
-                    .then((r) => (r.ok ? r.json() : Promise.reject()))
-                    .then((row) => callback({ value: String(row.id), text: row.name }))
-                    // A failed create must not leave TomSelect thinking one
-                    // happened — no option is added if the request failed.
-                    .catch(() => callback());
-            };
-            settings.createOnBlur = true;
-        }
-
-        new TomSelect(el, settings);
-    });
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('select[data-searchable]').forEach((el) => window.upgradeSearchableSelect(el));
 
     initCascadingSelects();
 });

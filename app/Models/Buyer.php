@@ -130,6 +130,12 @@ class Buyer extends Model
         return $this->belongsTo(Designation::class, 'contact_designation_id');
     }
 
+    /** Change request #3 — up to 3 additional contacts, beyond cols E–G above. */
+    public function contacts(): HasMany
+    {
+        return $this->hasMany(BuyerContact::class);
+    }
+
     public function agent(): BelongsTo
     {
         return $this->belongsTo(Agent::class);

@@ -40,7 +40,7 @@
             <dd class="col-sm-9">{{ $inquiry->buyer_ref ?: '—' }}</dd>
 
             <dt class="col-sm-3 text-body-secondary fw-normal">Source</dt>
-            <dd class="col-sm-9">{{ \App\Models\Inquiry::SOURCES[$inquiry->source] ?? $inquiry->source }}</dd>
+            <dd class="col-sm-9">{{ $inquiry->sourceLabel() }}</dd>
 
             <dt class="col-sm-3 text-body-secondary fw-normal">Buyer</dt>
             <dd class="col-sm-9">{{ $inquiry->buyer?->company_name }} ({{ $inquiry->buyer?->display_code }})</dd>

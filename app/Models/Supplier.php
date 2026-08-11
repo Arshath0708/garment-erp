@@ -92,6 +92,8 @@ class Supplier extends Model
         'we_supply_material',
         'requires_sample_approval',
         'default_delivery_mode',
+        'client_name',
+        'client_details',
         'status',
         'remarks',
         'comments',
@@ -123,6 +125,12 @@ class Supplier extends Model
     {
         // No withTimestamps() — the pivot has none.
         return $this->belongsToMany(Category::class, 'supplier_category');
+    }
+
+    /** Change request #1 — a jobber can be linked to more than one product, same as categories above. */
+    public function products(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'supplier_product');
     }
 
     /**

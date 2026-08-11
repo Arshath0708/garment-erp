@@ -6,14 +6,19 @@
     'supplierTypeFlags' => [],
     'designations' => [],
     'categories' => [],
+    'products' => [],
     'agents' => [],
     'countries' => [],
+    // Change request #4 — "Default the Country to India".
+    'indiaCountryId' => null,
     'states' => [],
     'cities' => [],
 ])
 
 @php
     $selectedCategories = $supplier?->categories->pluck('id')->all() ?? [];
+    // Change request #1 (revised) — multiple products, same shape as categories.
+    $selectedProducts = $supplier?->products->pluck('id')->all() ?? [];
     $primary = $supplier?->contacts->firstWhere('is_primary', true);
     $extraContacts = old('contacts');
 
@@ -31,6 +36,13 @@
     if ($extraContacts === []) {
         $extraContacts = [['name' => null, 'designation_id' => null, 'mobile' => null, 'email' => null]];
     }
+
+    /**
+     * Whether the Secondary Contact Person section starts open. Same
+     * reasoning as the Buyer/Supplier form's $secondaryContactsVisible.
+     */
+    $secondaryContactsVisible = old('contacts') !== null
+        || ($supplier?->contacts->where('is_primary', false)->isNotEmpty() ?? false);
 
     $selectedType = old('supplier_type_id', $supplier?->supplier_type_id);
 
@@ -72,22 +84,19 @@
                     horizontal maxlength="150" placeholder="Name as it appears on bills"
                     hint="Leave blank if identical to company name." />
 
-        <div class="row form-line">
-            <label for="category_ids" class="col-sm-4 col-lg-3 col-form-label fw-semibold required">
-                Product Category
-            </label>
-            <div class="col-sm-8 col-lg-9">
-                <select name="category_ids[]" id="category_ids" multiple searchable required
-                        data-placeholder="Search and select categories…"
-                        class="form-select @error('category_ids') is-invalid @enderror @error('category_ids.*') is-invalid @enderror">
-                    @foreach($categories as $id => $name)
-                        <option value="{{ $id }}" @selected(in_array($id, old('category_ids', $selectedCategories)))>{{ $name }}</option>
-                    @endforeach
-                </select>
-                @error('category_ids')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-                @error('category_ids.*')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-            </div>
-        </div>
+        {{-- Was a raw multi-select missing the data-searchable attribute the
+             TomSelect init script looks for, so it never upgraded and rendered
+             as a bare listbox. Switched to the same component every other
+             searchable field on this form uses. --}}
+        <x-ui.select name="category_ids" label="Product Category" :options="$categories"
+                     :selected="$selectedCategories" horizontal searchable multiple
+                     required placeholder="Search and select categories…" />
+
+        {{-- Change request #1 (revised) — a jobber can be linked to more than
+             one product, same as the categories above. --}}
+        <x-ui.select name="product_ids" label="Product" :options="$products"
+                     :selected="$selectedProducts" horizontal searchable multiple
+                     placeholder="Search products…" />
 
     </div>
 </x-ui.form-section>
@@ -96,9 +105,12 @@
 <x-ui.form-section title="Registration" icon="bi-card-heading">
     <div class="form-stack">
 
-        <x-ui.select name="supplier_type_id" label="Jobber Type" required horizontal
+        {{-- Typing a name not already in the list adds it — same quick-add
+             pattern as the Buyer form's Payment Terms / Designation fields. --}}
+        <x-ui.select name="supplier_type_id" label="Jobber Type" required horizontal searchable
                      :options="$supplierTypes" :selected="$selectedType"
-                     placeholder="Select type…" />
+                     placeholder="Search or type to add a new type…"
+                     data-create-url="{{ route('masters.suppliers.supplier-types.store') }}" />
 
         <div id="gst-row" class="row form-line {{ $gstVisible ? '' : 'd-none' }}">
             <label for="gst_number" class="col-sm-4 col-lg-3 col-form-label fw-semibold">GST Number</label>
@@ -118,19 +130,29 @@
         <div class="row form-line">
             <label class="col-sm-4 col-lg-3 col-form-label fw-semibold">MSME</label>
             <div class="col-sm-8 col-lg-9 pt-2">
-                <div class="form-check mb-2">
+                <div class="form-check">
                     <input type="hidden" name="is_msme" value="0">
                     <input type="checkbox" class="form-check-input" id="is_msme" name="is_msme" value="1"
                            @checked(old('is_msme', $supplier?->is_msme))>
                     <label class="form-check-label" for="is_msme">Registered under MSME / Udyam</label>
                 </div>
-                <div id="msme-no-wrap" class="{{ $msmeVisible ? '' : 'd-none' }}">
-                    <input type="text" id="msme_registration_no" name="msme_registration_no"
-                           value="{{ old('msme_registration_no', $supplier?->msme_registration_no) }}"
-                           class="form-control font-monospace @error('msme_registration_no') is-invalid @enderror"
-                           style="max-width:260px" placeholder="UDYAM-TN-00-0000000">
-                    @error('msme_registration_no')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-                </div>
+            </div>
+        </div>
+
+        {{-- Mandatory once MSME is ticked — same required treatment as the
+             Supplier form's equivalent field (SupplierRequest validates both
+             the same way: msme_registration_no is required_if is_msme,true). --}}
+        <div class="row form-line @unless($msmeVisible) d-none @endunless" id="msme-row">
+            <label for="msme_registration_no" class="col-sm-4 col-lg-3 col-form-label fw-semibold">
+                MSME Registration No <span class="req">*</span>
+            </label>
+            <div class="col-sm-8 col-lg-9">
+                <input type="text" id="msme_registration_no" name="msme_registration_no"
+                       value="{{ old('msme_registration_no', $supplier?->msme_registration_no) }}"
+                       class="form-control font-monospace text-uppercase @error('msme_registration_no') is-invalid @enderror"
+                       style="max-width:260px" placeholder="UDYAM-TN-33-0001234" autocomplete="off">
+                @error('msme_registration_no')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                <div class="form-text">MSME dues carry a statutory 45-day payment limit — this drives that check later.</div>
             </div>
         </div>
 
@@ -185,6 +207,117 @@
     </div>
 </x-ui.form-section>
 
+{{-- ========= SECONDARY CONTACT PERSON (change request #3) ============ --}}
+<x-ui.form-section title="Secondary Contact Person" icon="bi-people"
+                   subtitle="Optional — add as many as needed, beyond the primary contact above.">
+
+    <div class="form-check mb-3">
+        <input type="checkbox" class="form-check-input" id="toggle-secondary-contacts"
+               @checked($secondaryContactsVisible)>
+        <label class="form-check-label" for="toggle-secondary-contacts">Add a secondary contact person</label>
+    </div>
+
+    <div id="secondary-contacts-wrap" class="{{ $secondaryContactsVisible ? '' : 'd-none' }}">
+    <div class="table-responsive">
+        <table class="table grid-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="min-width:180px">Name</th>
+                    <th style="min-width:180px">Designation</th>
+                    <th style="min-width:150px">Mobile</th>
+                    <th style="min-width:200px">Email</th>
+                    <th style="width:40px"></th>
+                </tr>
+            </thead>
+            <tbody id="contact-rows">
+                @foreach($extraContacts as $index => $row)
+                    <tr data-contact-row>
+                        <td>
+                            <input type="text" maxlength="120"
+                                   name="contacts[{{ $index }}][name]"
+                                   value="{{ $row['name'] ?? '' }}"
+                                   class="form-control form-control-sm @error("contacts.{$index}.name") is-invalid @enderror"
+                                   placeholder="Full name" aria-label="Contact name">
+                            @error("contacts.{$index}.name")<div class="cell-error">{{ $message }}</div>@enderror
+                        </td>
+                        <td>
+                            <select name="contacts[{{ $index }}][designation_id]"
+                                    class="form-select form-select-sm @error("contacts.{$index}.designation_id") is-invalid @enderror"
+                                    data-searchable data-placeholder="Designation…" aria-label="Designation">
+                                <option value="">— Select —</option>
+                                @foreach($designations as $id => $name)
+                                    <option value="{{ $id }}" @selected((string) ($row['designation_id'] ?? '') === (string) $id)>{{ $name }}</option>
+                                @endforeach
+                            </select>
+                            @error("contacts.{$index}.designation_id")<div class="cell-error">{{ $message }}</div>@enderror
+                        </td>
+                        <td>
+                            <input type="text" maxlength="30"
+                                   name="contacts[{{ $index }}][mobile]"
+                                   value="{{ $row['mobile'] ?? '' }}"
+                                   class="form-control form-control-sm @error("contacts.{$index}.mobile") is-invalid @enderror"
+                                   placeholder="9876543210" aria-label="Mobile">
+                            @error("contacts.{$index}.mobile")<div class="cell-error">{{ $message }}</div>@enderror
+                        </td>
+                        <td>
+                            <input type="email" maxlength="150"
+                                   name="contacts[{{ $index }}][email]"
+                                   value="{{ $row['email'] ?? '' }}"
+                                   class="form-control form-control-sm @error("contacts.{$index}.email") is-invalid @enderror"
+                                   placeholder="name@company.com" aria-label="Email">
+                            @error("contacts.{$index}.email")<div class="cell-error">{{ $message }}</div>@enderror
+                        </td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 js-remove-contact"
+                                    aria-label="Remove contact" data-bs-toggle="tooltip" title="Remove contact">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+    <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="add-contact">
+        <i class="bi bi-plus-lg me-1"></i>Add contact
+    </button>
+    <div class="form-text">Rows with no name are not saved.</div>
+    </div>{{-- /#secondary-contacts-wrap --}}
+
+    <template id="contact-row-template">
+        <tr data-contact-row>
+            <td>
+                <input type="text" maxlength="120" name="contacts[__INDEX__][name]"
+                       class="form-control form-control-sm" placeholder="Full name" aria-label="Contact name">
+            </td>
+            <td>
+                <select name="contacts[__INDEX__][designation_id]" class="form-select form-select-sm"
+                        data-searchable data-placeholder="Designation…" aria-label="Designation">
+                    <option value="">— Select —</option>
+                    @foreach($designations as $id => $name)
+                        <option value="{{ $id }}">{{ $name }}</option>
+                    @endforeach
+                </select>
+            </td>
+            <td>
+                <input type="text" maxlength="30" name="contacts[__INDEX__][mobile]"
+                       class="form-control form-control-sm" placeholder="9876543210" aria-label="Mobile">
+            </td>
+            <td>
+                <input type="email" maxlength="150" name="contacts[__INDEX__][email]"
+                       class="form-control form-control-sm" placeholder="name@company.com" aria-label="Email">
+            </td>
+            <td class="text-end">
+                <button type="button" class="btn btn-sm btn-link text-danger p-0 js-remove-contact"
+                        aria-label="Remove contact">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </td>
+        </tr>
+    </template>
+</x-ui.form-section>
+
 {{-- ================== M–P · LOCATION ============================= --}}
 <x-ui.form-section title="Address & Location" icon="bi-geo-alt">
     <div class="form-stack">
@@ -192,7 +325,7 @@
                        horizontal rows="2" placeholder="Factory / Office address" />
 
         <x-ui.select name="country_id" label="Country" :options="$countries"
-                     :selected="$supplier?->country_id" horizontal searchable
+                     :selected="$supplier?->country_id ?? $indiaCountryId" horizontal searchable
                      placeholder="Search country…"
                      data-cascade-child="#state_id" />
 
@@ -286,6 +419,13 @@
                 </div>
             </div>
         </div>
+
+        {{-- Change request #5 — "an option to add client name and details". --}}
+        <x-ui.field name="client_name" label="Client Name" :value="$supplier?->client_name"
+                    horizontal maxlength="200" placeholder="Who this jobwork is ultimately for" />
+
+        <x-ui.textarea name="client_details" label="Client Details" :value="$supplier?->client_details"
+                       horizontal rows="3" placeholder="Optional — address, contact, or anything else worth recording" />
     </div>
 </x-ui.form-section>
 
@@ -348,3 +488,127 @@
     </button>
     <a href="{{ route('masters.jobbers.index') }}" class="btn btn-outline-secondary">Cancel</a>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    /* ------------------------------------------------------------------ *
+     * Jobber Type — reveal the GST Number field live when a registered type
+     * is chosen. This form had no such wiring either; the field only ever
+     * appeared after a full page reload. Same behaviour as the Supplier
+     * form's applyGst(). A type quick-added through the field's create-url
+     * is not in this dict (it does not exist yet when the page rendered) and
+     * so is treated as unregistered, matching the server-side default in
+     * SupplierController::storeSupplierType().
+     * ------------------------------------------------------------------ */
+    const registeredTypes = @json($supplierTypeFlags);
+    const supplierType    = document.getElementById('supplier_type_id');
+    const gstRow          = document.getElementById('gst-row');
+    const gstInput        = document.getElementById('gst_number');
+
+    function applyGst() {
+        const registered = registeredTypes[supplierType.value] === true;
+
+        gstRow.classList.toggle('d-none', ! registered);
+
+        if (! registered && ! gstInput.classList.contains('is-invalid')) {
+            gstInput.value = '';
+        }
+    }
+
+    supplierType?.addEventListener('change', applyGst);
+
+    /* ------------------------------------------------------------------ *
+     * MSME — reveal the Registration No field live when the checkbox is
+     * ticked. This form had no such wiring at all; the field only ever
+     * appeared after a full page reload. Same behaviour as the Supplier
+     * form's applyMsme().
+     * ------------------------------------------------------------------ */
+    const msmeToggle = document.getElementById('is_msme');
+    const msmeRow     = document.getElementById('msme-row');
+
+    function applyMsme() {
+        msmeRow.classList.toggle('d-none', ! msmeToggle.checked);
+    }
+
+    msmeToggle?.addEventListener('change', applyMsme);
+
+    /* ------------------------------------------------------------------ *
+     * Other Contact Persons (change request #3, revised — no limit).
+     * Repeatable rows, same shape as the Supplier form's own.
+     * ------------------------------------------------------------------ */
+    const rows     = document.getElementById('contact-rows');
+    const template = document.getElementById('contact-row-template');
+    const addBtn   = document.getElementById('add-contact');
+
+    if (! rows || ! template || ! addBtn) return;
+
+    function reindex() {
+        rows.querySelectorAll('[data-contact-row]').forEach(function (row, index) {
+            row.querySelectorAll('[name^="contacts"]').forEach(function (field) {
+                field.name = field.name.replace(/contacts\[\d+\]/, 'contacts[' + index + ']');
+            });
+        });
+    }
+
+    rows.addEventListener('click', function (event) {
+        const remove = event.target.closest('.js-remove-contact');
+        if (! remove) return;
+
+        const all = rows.querySelectorAll('[data-contact-row]');
+
+        if (all.length === 1) {
+            all[0].querySelectorAll('input').forEach(function (field) { field.value = ''; });
+
+            const select = all[0].querySelector('select');
+            select?.tomselect ? select.tomselect.clear(true) : (select.value = '');
+        } else {
+            remove.closest('[data-contact-row]').remove();
+        }
+
+        reindex();
+    });
+
+    addBtn.addEventListener('click', function () {
+        const index = rows.querySelectorAll('[data-contact-row]').length;
+        const row = template.content.cloneNode(true).querySelector('tr');
+
+        row.querySelectorAll('[name*="__INDEX__"]').forEach(function (field) {
+            field.name = field.name.replace('__INDEX__', index);
+        });
+
+        rows.appendChild(row);
+
+        const select = row.querySelector('select[data-searchable]');
+        if (select) window.upgradeSearchableSelect(select);
+
+        row.querySelector('input')?.focus();
+    });
+
+    /* ------------------------------------------------------------------ *
+     * Secondary Contact Person toggle — hidden until asked for. Unchecking
+     * resets the table to one blank row rather than leaving typed values
+     * sitting in a hidden section that would still post on submit.
+     * ------------------------------------------------------------------ */
+    const secondaryToggle = document.getElementById('toggle-secondary-contacts');
+    const secondaryWrap   = document.getElementById('secondary-contacts-wrap');
+
+    secondaryToggle?.addEventListener('change', function () {
+        secondaryWrap.classList.toggle('d-none', ! secondaryToggle.checked);
+
+        if (secondaryToggle.checked) return;
+
+        rows.querySelectorAll('[data-contact-row]').forEach(function (row, index) {
+            if (index === 0) {
+                row.querySelectorAll('input').forEach(function (field) { field.value = ''; });
+
+                const select = row.querySelector('select');
+                select?.tomselect ? select.tomselect.clear(true) : (select && (select.value = ''));
+            } else {
+                row.remove();
+            }
+        });
+    });
+});
+</script>
+@endpush

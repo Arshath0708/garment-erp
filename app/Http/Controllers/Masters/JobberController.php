@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\Designation;
+use App\Models\Product;
 use App\Models\State;
 use App\Models\Supplier;
 use App\Models\SupplierType;
@@ -70,9 +71,13 @@ class JobberController extends Controller implements HasMiddleware
 
     public function create(): View
     {
+        // Change request #4 — "Default the Country to India". Falling back to
+        // it here too, not just in the select's own default, so the State
+        // list is pre-loaded for India rather than sitting empty until the
+        // user touches the Country field.
         return view('masters.jobbers.create', $this->formData(
             'jobber',
-            old('country_id') ? (int) old('country_id') : null,
+            old('country_id') ? (int) old('country_id') : $this->indiaCountryId(),
             old('state_id') ? (int) old('state_id') : null,
         ));
     }
@@ -95,7 +100,7 @@ class JobberController extends Controller implements HasMiddleware
     {
         return view('masters.jobbers.show', [
             'jobber' => $jobber->load([
-                'categories:id,name', 'contacts.designation', 'supplierType',
+                'categories:id,name', 'products:id,name', 'contacts.designation', 'supplierType',
                 'country', 'state', 'city', 'agent',
                 'creator', 'updater',
             ]),
@@ -112,7 +117,7 @@ class JobberController extends Controller implements HasMiddleware
             $countryId ? (int) $countryId : null,
             $stateId ? (int) $stateId : null,
         ) + [
-            'jobber' => $jobber->load('categories:id', 'contacts'),
+            'jobber' => $jobber->load('categories:id', 'products:id', 'contacts'),
         ]);
     }
 
@@ -187,8 +192,12 @@ class JobberController extends Controller implements HasMiddleware
 
             'designations' => Designation::active()->orderBy('name')->pluck('name', 'id'),
             'categories'   => Category::active()->orderBy('name')->pluck('name', 'id'),
+            'products'     => Product::active()->orderBy('name')->pluck('name', 'id'),
             'agents'       => $this->agentsFor($partyType)->pluck('label', 'id'),
             'countries'    => Country::active()->orderBy('name')->get()->pluck('label', 'id'),
+
+            // Change request #4 — "Default the Country to India".
+            'indiaCountryId' => $this->indiaCountryId(),
 
             'states' => $countryId
                 ? State::active()->where('country_id', $countryId)->orderBy('name')->pluck('name', 'id')
@@ -198,5 +207,14 @@ class JobberController extends Controller implements HasMiddleware
                 ? City::active()->where('state_id', $stateId)->orderBy('name')->pluck('name', 'id')
                 : collect(),
         ];
+    }
+
+    /**
+     * Change request #4 — "Default the Country to India". Read by iso code
+     * rather than name, same lookup GeoSeeder uses to seed it.
+     */
+    private function indiaCountryId(): ?int
+    {
+        return Country::where('iso_code', 'IN')->value('id');
     }
 }

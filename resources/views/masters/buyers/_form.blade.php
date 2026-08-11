@@ -5,6 +5,8 @@
     'categories' => [],
     'agents' => [],
     'countries' => [],
+    // Change request #4 — "Default the Country to India".
+    'indiaCountryId' => null,
     // Rendered server-side for the country/state already chosen; the cascade
     // reloads them from GeoController once a parent changes.
     'states' => [],
@@ -87,6 +89,40 @@
     }
 
     $cartonPlaceholders = collect(Buyer::DEFAULT_CARTON_LINES)->pluck('placeholder')->all();
+
+    /**
+     * Change request #3 — "up to 3 additional contacts per record", beyond
+     * the single Contact Person above. Same pattern as Supplier/Jobber's
+     * col L "other contact persons".
+     */
+    $extraContacts = old('contacts');
+
+    if ($extraContacts === null) {
+        $extraContacts = $buyer
+            ? $buyer->contacts->map(fn ($c) => [
+                'name'           => $c->name,
+                'designation_id' => $c->designation_id,
+                'mobile'         => $c->mobile,
+                'email'          => $c->email,
+            ])->values()->all()
+            : [];
+    }
+
+    if ($extraContacts === []) {
+        $extraContacts = [['name' => null, 'designation_id' => null, 'mobile' => null, 'email' => null]];
+    }
+
+    /**
+     * Whether the Secondary Contact Person section starts open.
+     *
+     * Open on an edit that already has one saved, or on a round-trip that
+     * failed validation — closing it then would hide the row the error
+     * belongs to. Closed on a brand new buyer: an empty table with one blank
+     * row is clutter nobody asked to see, and the toggle is the "I have one
+     * to add" affordance instead.
+     */
+    $secondaryContactsVisible = old('contacts') !== null
+        || ($buyer?->contacts->isNotEmpty() ?? false);
 @endphp
 
 {{-- ===================== A–D · IDENTIFICATION ===================== --}}
@@ -168,6 +204,117 @@
     </div>
 </x-ui.form-section>
 
+{{-- ============= SECONDARY CONTACT PERSON (change request #3) ============ --}}
+<x-ui.form-section title="Secondary Contact Person" icon="bi-people"
+                   subtitle="Optional — add as many as needed, beyond the contact person above.">
+
+    <div class="form-check mb-3">
+        <input type="checkbox" class="form-check-input" id="toggle-secondary-contacts"
+               @checked($secondaryContactsVisible)>
+        <label class="form-check-label" for="toggle-secondary-contacts">Add a secondary contact person</label>
+    </div>
+
+    <div id="secondary-contacts-wrap" class="{{ $secondaryContactsVisible ? '' : 'd-none' }}">
+    <div class="table-responsive">
+        <table class="table grid-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="min-width:180px">Name</th>
+                    <th style="min-width:180px">Designation</th>
+                    <th style="min-width:150px">Mobile</th>
+                    <th style="min-width:200px">Email</th>
+                    <th style="width:40px"></th>
+                </tr>
+            </thead>
+            <tbody id="contact-rows">
+                @foreach($extraContacts as $index => $row)
+                    <tr data-contact-row>
+                        <td>
+                            <input type="text" maxlength="120"
+                                   name="contacts[{{ $index }}][name]"
+                                   value="{{ $row['name'] ?? '' }}"
+                                   class="form-control form-control-sm @error("contacts.{$index}.name") is-invalid @enderror"
+                                   placeholder="Full name" aria-label="Contact name">
+                            @error("contacts.{$index}.name")<div class="cell-error">{{ $message }}</div>@enderror
+                        </td>
+                        <td>
+                            <select name="contacts[{{ $index }}][designation_id]"
+                                    class="form-select form-select-sm @error("contacts.{$index}.designation_id") is-invalid @enderror"
+                                    data-searchable data-placeholder="Designation…" aria-label="Designation">
+                                <option value="">— Select —</option>
+                                @foreach($designations as $id => $name)
+                                    <option value="{{ $id }}" @selected((string) ($row['designation_id'] ?? '') === (string) $id)>{{ $name }}</option>
+                                @endforeach
+                            </select>
+                            @error("contacts.{$index}.designation_id")<div class="cell-error">{{ $message }}</div>@enderror
+                        </td>
+                        <td>
+                            <input type="text" maxlength="30"
+                                   name="contacts[{{ $index }}][mobile]"
+                                   value="{{ $row['mobile'] ?? '' }}"
+                                   class="form-control form-control-sm @error("contacts.{$index}.mobile") is-invalid @enderror"
+                                   placeholder="9876543210" aria-label="Mobile">
+                            @error("contacts.{$index}.mobile")<div class="cell-error">{{ $message }}</div>@enderror
+                        </td>
+                        <td>
+                            <input type="email" maxlength="150"
+                                   name="contacts[{{ $index }}][email]"
+                                   value="{{ $row['email'] ?? '' }}"
+                                   class="form-control form-control-sm @error("contacts.{$index}.email") is-invalid @enderror"
+                                   placeholder="name@company.com" aria-label="Email">
+                            @error("contacts.{$index}.email")<div class="cell-error">{{ $message }}</div>@enderror
+                        </td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 js-remove-contact"
+                                    aria-label="Remove contact" data-bs-toggle="tooltip" title="Remove contact">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+    <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="add-contact">
+        <i class="bi bi-plus-lg me-1"></i>Add contact
+    </button>
+    <div class="form-text">Rows with no name are not saved.</div>
+    </div>{{-- /#secondary-contacts-wrap --}}
+
+    <template id="contact-row-template">
+        <tr data-contact-row>
+            <td>
+                <input type="text" maxlength="120" name="contacts[__INDEX__][name]"
+                       class="form-control form-control-sm" placeholder="Full name" aria-label="Contact name">
+            </td>
+            <td>
+                <select name="contacts[__INDEX__][designation_id]" class="form-select form-select-sm"
+                        data-searchable data-placeholder="Designation…" aria-label="Designation">
+                    <option value="">— Select —</option>
+                    @foreach($designations as $id => $name)
+                        <option value="{{ $id }}">{{ $name }}</option>
+                    @endforeach
+                </select>
+            </td>
+            <td>
+                <input type="text" maxlength="30" name="contacts[__INDEX__][mobile]"
+                       class="form-control form-control-sm" placeholder="9876543210" aria-label="Mobile">
+            </td>
+            <td>
+                <input type="email" maxlength="150" name="contacts[__INDEX__][email]"
+                       class="form-control form-control-sm" placeholder="name@company.com" aria-label="Email">
+            </td>
+            <td class="text-end">
+                <button type="button" class="btn btn-sm btn-link text-danger p-0 js-remove-contact"
+                        aria-label="Remove contact">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </td>
+        </tr>
+    </template>
+</x-ui.form-section>
+
 {{-- ==================== I–N · ADDRESS & PORT ====================== --}}
 <x-ui.form-section title="Address & Destination" icon="bi-geo-alt"
                    subtitle="Prints on the export invoice and the packing list.">
@@ -188,7 +335,7 @@
              City only cities in the chosen state, and both are re-checked
              against their parent on submit — see BuyerRequest. --}}
         <x-ui.select name="country_id" label="Country" :options="$countries"
-                     :selected="$buyer?->country_id" horizontal searchable
+                     :selected="$buyer?->country_id ?? $indiaCountryId" horizontal searchable
                      placeholder="Search country…"
                      data-cascade-child="#state_id" />
 
@@ -250,7 +397,7 @@
                            value="{{ old('agent_commission_value', $buyer?->agent_commission_value) }}"
                            class="form-control @error('agent_commission_value') is-invalid @enderror"
                            placeholder="0.0000">
-                    <select name="agent_commission_type" style="max-width:140px"
+                    <select name="agent_commission_type" id="agent_commission_type" style="max-width:140px"
                             class="form-select @error('agent_commission_type') is-invalid @enderror">
                         @foreach(['percent' => '% Percent', 'amount' => 'Fixed amount'] as $value => $text)
                             <option value="{{ $value }}"
@@ -260,8 +407,9 @@
                 </div>
                 @error('agent_commission_value')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                 @error('agent_commission_type')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                {{-- Change request #9 — auto-filled from the Agent Master on selection above; stays editable. --}}
                 <div class="form-text">
-                    This buyer's rate for this agent. The same agent can carry a different rate for another buyer.
+                    Auto-filled when you pick an Agent above &middot; edit here to override for this buyer.
                 </div>
             </div>
         </div>
@@ -577,6 +725,101 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     renderPreview();
+
+    /* ------------------------------------------------------------------ *
+     * Additional Contacts (change request #3, revised — no limit).
+     * Same shape as the Supplier/Jobber form's "Other Contact Persons".
+     * ------------------------------------------------------------------ */
+    const contactRows     = document.getElementById('contact-rows');
+    const contactTemplate = document.getElementById('contact-row-template');
+    const addContactBtn   = document.getElementById('add-contact');
+
+    function reindexContacts() {
+        contactRows.querySelectorAll('[data-contact-row]').forEach(function (row, index) {
+            row.querySelectorAll('[name^="contacts"]').forEach(function (field) {
+                field.name = field.name.replace(/contacts\[\d+\]/, 'contacts[' + index + ']');
+            });
+        });
+    }
+
+    contactRows.addEventListener('click', function (event) {
+        const remove = event.target.closest('.js-remove-contact');
+        if (! remove) return;
+
+        const all = contactRows.querySelectorAll('[data-contact-row]');
+
+        if (all.length === 1) {
+            all[0].querySelectorAll('input').forEach(function (field) { field.value = ''; });
+
+            const select = all[0].querySelector('select');
+            select?.tomselect ? select.tomselect.clear(true) : (select.value = '');
+        } else {
+            remove.closest('[data-contact-row]').remove();
+        }
+
+        reindexContacts();
+    });
+
+    addContactBtn.addEventListener('click', function () {
+        const index = contactRows.querySelectorAll('[data-contact-row]').length;
+        const row = contactTemplate.content.cloneNode(true).querySelector('tr');
+
+        row.querySelectorAll('[name*="__INDEX__"]').forEach(function (field) {
+            field.name = field.name.replace('__INDEX__', index);
+        });
+
+        contactRows.appendChild(row);
+
+        const select = row.querySelector('select[data-searchable]');
+        if (select) window.upgradeSearchableSelect(select);
+
+        row.querySelector('input')?.focus();
+    });
+
+    /* ------------------------------------------------------------------ *
+     * Secondary Contact Person toggle — hidden until asked for. Unchecking
+     * resets the table to one blank row rather than leaving typed values
+     * sitting in a hidden section that would still post on submit.
+     * ------------------------------------------------------------------ */
+    const secondaryToggle = document.getElementById('toggle-secondary-contacts');
+    const secondaryWrap   = document.getElementById('secondary-contacts-wrap');
+
+    secondaryToggle?.addEventListener('change', function () {
+        secondaryWrap.classList.toggle('d-none', ! secondaryToggle.checked);
+
+        if (secondaryToggle.checked) return;
+
+        contactRows.querySelectorAll('[data-contact-row]').forEach(function (row, index) {
+            if (index === 0) {
+                row.querySelectorAll('input').forEach(function (field) { field.value = ''; });
+
+                const select = row.querySelector('select');
+                select?.tomselect ? select.tomselect.clear(true) : (select && (select.value = ''));
+            } else {
+                row.remove();
+            }
+        });
+    });
+
+    /* ------------------------------------------------------------------ *
+     * Change request #9 — selecting an Agent fills the Commission fields
+     * from the Agent Master's own first commission entry. Stays editable
+     * afterwards — this only fires on the user changing the Agent field.
+     * ------------------------------------------------------------------ */
+    const agentSelect            = document.getElementById('agent_id');
+    const agentCommissionValue   = document.getElementById('agent_commission_value');
+    const agentCommissionType    = document.getElementById('agent_commission_type');
+    const agentCommissions       = @json($agentCommissions);
+
+    agentSelect?.addEventListener('change', function () {
+        const id  = agentSelect.value;
+        const row = id ? agentCommissions[id] : null;
+
+        if (! row) return;
+
+        agentCommissionValue.value = row.value;
+        agentCommissionType.value  = row.type;
+    });
 });
 </script>
 @endpush

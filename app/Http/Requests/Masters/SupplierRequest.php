@@ -78,6 +78,9 @@ abstract class SupplierRequest extends FormRequest
             $this->merge([
                 'we_supply_material'       => false,
                 'requires_sample_approval' => false,
+                // Change request #5 — jobwork-only, same reasoning as the two above.
+                'client_name'              => null,
+                'client_details'           => null,
             ]);
         }
 
@@ -137,6 +140,14 @@ abstract class SupplierRequest extends FormRequest
             ],
 
             /*
+             * Change request #1 — Jobber form only, but shared here like the
+             * rest of this request; optional so it is a no-op for a Supplier.
+             * Multiple products, same shape as category_ids below.
+             */
+            'product_ids'   => ['nullable', 'array'],
+            'product_ids.*' => ['integer', Rule::exists('products', 'id')],
+
+            /*
              * Col E. Required once a registered type is chosen — that is the
              * whole point of the conditional; a registered supplier without a
              * GSTIN cannot be billed. prepareForValidation() has already nulled
@@ -175,7 +186,8 @@ abstract class SupplierRequest extends FormRequest
              * A wholly blank row is a line the user left alone and is dropped
              * by the service, not reported.
              */
-            'contacts'                   => ['nullable', 'array', 'max:20'],
+            // Change request #3 (revised — CEO approved "no limit"). No cap.
+            'contacts'                   => ['nullable', 'array'],
             'contacts.*.name'            => ['required_with:contacts.*.mobile,contacts.*.email,contacts.*.designation_id', 'nullable', 'string', 'max:120'],
             'contacts.*.designation_id'  => ['nullable', 'integer', Rule::exists('designations', 'id')->where('status', 'active')],
             'contacts.*.mobile'          => ['nullable', 'string', 'max:30'],
@@ -242,6 +254,10 @@ abstract class SupplierRequest extends FormRequest
             'requires_sample_approval' => ['boolean'],
             'default_delivery_mode'    => ['required', Rule::in(array_keys(Supplier::DELIVERY_MODES))],
 
+            // Change request #5 — "an option to add client name and details".
+            'client_name'    => ['nullable', 'string', 'max:200'],
+            'client_details' => ['nullable', 'string', 'max:2000'],
+
             // Cols Z, AA
             'status'   => ['required', Rule::in(['active', 'inactive'])],
             'remarks'  => ['nullable', 'string', 'max:1000'],
@@ -258,20 +274,50 @@ abstract class SupplierRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
-            $gst = $this->input('gst_number');
-            $pan = $this->input('pan_number');
+            $this->validateGstMatchesPan($validator);
+            $this->validateContactsReachable($validator);
+        });
+    }
 
-            if (blank($gst) || blank($pan) || strlen((string) $gst) !== 15) {
-                return;
+    private function validateGstMatchesPan(Validator $validator): void
+    {
+        $gst = $this->input('gst_number');
+        $pan = $this->input('pan_number');
+
+        if (blank($gst) || blank($pan) || strlen((string) $gst) !== 15) {
+            return;
+        }
+
+        if (substr((string) $gst, 2, 10) !== $pan) {
+            $validator->errors()->add(
+                'pan_number',
+                'The PAN does not match the one inside the GST number ('.substr((string) $gst, 2, 10).').'
+            );
+        }
+    }
+
+    /**
+     * A secondary contact with a name but neither a mobile nor an email is
+     * not reachable — the row's required_with rule above only catches the
+     * opposite gap (details with no name), so this is the other half. Same
+     * check as BuyerRequest's.
+     */
+    private function validateContactsReachable(Validator $validator): void
+    {
+        foreach ((array) $this->input('contacts', []) as $index => $row) {
+            $name = trim((string) ($row['name'] ?? ''));
+
+            if ($name === '') {
+                continue;
             }
 
-            if (substr((string) $gst, 2, 10) !== $pan) {
+            if (blank($row['mobile'] ?? null) && blank($row['email'] ?? null)) {
                 $validator->errors()->add(
-                    'pan_number',
-                    'The PAN does not match the one inside the GST number ('.substr((string) $gst, 2, 10).').'
+                    "contacts.{$index}.mobile",
+                    'Add a mobile number or email so this contact can be reached.'
                 );
             }
-        });
+        }
     }
 
     /**

@@ -32,6 +32,7 @@ class BuyerService
             $buyer->categories()->sync($data['category_ids'] ?? []);
             $this->syncAcceptedSets($buyer, $data);
             $this->syncCartonMarkings($buyer, $data['carton_markings'] ?? []);
+            $this->syncContacts($buyer, $data['contacts'] ?? []);
 
             return $buyer;
         });
@@ -48,6 +49,7 @@ class BuyerService
             $buyer->categories()->sync($data['category_ids'] ?? []);
             $this->syncAcceptedSets($buyer, $data);
             $this->syncCartonMarkings($buyer, $data['carton_markings'] ?? []);
+            $this->syncContacts($buyer, $data['contacts'] ?? []);
 
             return $buyer->refresh();
         });
@@ -79,6 +81,7 @@ class BuyerService
             'carton_markings',
             'currency_ids',
             'incoterm_ids',
+            'contacts',
         ]));
     }
 
@@ -132,6 +135,37 @@ class BuyerService
                 // The sheet stars the first three lines. Recorded so the packing
                 // screen can later refuse to print a carton with a blank one.
                 'is_required' => $lineNo <= 3,
+            ]);
+        }
+    }
+
+    /**
+     * Rewrite a buyer's additional contacts (change request #3) from the
+     * submitted rows. Deleted and re-inserted rather than diffed — nothing
+     * references a contact row by id, same call as Supplier's contacts and
+     * this buyer's own carton markings.
+     *
+     * A row with no name is dropped — a line the user left alone, not a
+     * person they meant to record. BuyerRequest already caps this at 3.
+     *
+     * @param  array<int, array{name?: ?string, designation_id?: mixed, mobile?: ?string, email?: ?string}>  $rows
+     */
+    private function syncContacts(Buyer $buyer, array $rows): void
+    {
+        $buyer->contacts()->delete();
+
+        foreach ($rows as $row) {
+            $name = trim((string) ($row['name'] ?? ''));
+
+            if ($name === '') {
+                continue;
+            }
+
+            $buyer->contacts()->create([
+                'name'           => $name,
+                'designation_id' => $row['designation_id'] ?? null,
+                'mobile'         => $row['mobile'] ?? null,
+                'email'          => $row['email'] ?? null,
             ]);
         }
     }

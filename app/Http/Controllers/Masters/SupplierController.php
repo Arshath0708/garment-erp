@@ -20,6 +20,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class SupplierController extends Controller implements HasMiddleware
@@ -45,6 +46,11 @@ class SupplierController extends Controller implements HasMiddleware
             new Middleware('permission:supplier.create', only: ['create', 'store']),
             new Middleware('permission:supplier.edit', only: ['edit', 'update', 'toggleStatus']),
             new Middleware('permission:supplier.delete', only: ['destroy']),
+            // Reachable from the Supplier or the Jobber form, on either create or edit.
+            new Middleware(
+                'permission:supplier.create|supplier.edit|jobber.create|jobber.edit',
+                only: ['storeSupplierType']
+            ),
         ];
     }
 
@@ -83,9 +89,14 @@ class SupplierController extends Controller implements HasMiddleware
         // old() rather than null: a failed validation round-trip must come back
         // with the state, city and agent lists still populated for what the
         // user had picked, or their choices appear to have been thrown away.
+        //
+        // Change request #4 — "Default the Country to India". Falling back to
+        // it here too, not just in the select's own default, so the State list
+        // is pre-loaded for India rather than sitting empty until the user
+        // touches the Country field.
         return view('masters.suppliers.create', $this->formData(
             old('party_type', 'supplier'),
-            old('country_id') ? (int) old('country_id') : null,
+            old('country_id') ? (int) old('country_id') : $this->indiaCountryId(),
             old('state_id') ? (int) old('state_id') : null,
         ));
     }
@@ -176,6 +187,61 @@ class SupplierController extends Controller implements HasMiddleware
     }
 
     /**
+     * Quick-add for the Supplier/Jobber Type field. Same shape as
+     * BuyerController::storeDesignation() — typing a name not already in the
+     * list adds it, rather than sending the user off to a separate screen.
+     *
+     * Found-or-created on name, so two users typing the same new type at once
+     * end up pointing at one row rather than a duplicate-name error. Not
+     * firstOrCreate(): SupplierType also carries a `code` — the stable handle
+     * PARTY_TYPES/seeders reference — which the request never supplies, so it
+     * has to be generated for a genuinely new row only.
+     *
+     * A type added this way is `is_registered = false` by default — the safer
+     * default, since it decides whether col E's GST field is required. Wrong
+     * for a registered type, but "add it, then flip a checkbox on the
+     * Supplier Types screen" is a one-field correction, not a re-entry of the
+     * record that was open when the type was needed.
+     */
+    public function storeSupplierType(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:80'],
+        ]);
+
+        $name = trim($data['name']);
+        $type = SupplierType::where('name', $name)->first();
+
+        $type ??= SupplierType::create([
+            'code'          => $this->uniqueSupplierTypeCode($name),
+            'name'          => $name,
+            'is_registered' => false,
+            'status'        => 'active',
+        ]);
+
+        return response()->json(['id' => $type->id, 'name' => $type->name]);
+    }
+
+    /**
+     * `code` is unique and required, but this endpoint only ever receives a
+     * name — slugified here, with a numeric suffix if that slug is already
+     * taken (two types whose names differ only in punctuation, e.g.).
+     */
+    private function uniqueSupplierTypeCode(string $name): string
+    {
+        $base = Str::slug($name, '_') ?: 'type';
+        $code = substr($base, 0, 30);
+        $suffix = 1;
+
+        while (SupplierType::where('code', $code)->exists()) {
+            $code = substr($base, 0, 30 - strlen((string) $suffix) - 1)."_{$suffix}";
+            $suffix++;
+        }
+
+        return $code;
+    }
+
+    /**
      * Col X, reloaded when the party type changes.
      *
      * The sheet says "of supplier side selected in agent master should show
@@ -243,6 +309,9 @@ class SupplierController extends Controller implements HasMiddleware
 
             'countries' => Country::active()->orderBy('name')->get()->pluck('label', 'id'),
 
+            // Change request #4 — "Default the Country to India".
+            'indiaCountryId' => $this->indiaCountryId(),
+
             'states' => $countryId
                 ? State::active()->where('country_id', $countryId)->orderBy('name')->pluck('name', 'id')
                 : collect(),
@@ -251,5 +320,14 @@ class SupplierController extends Controller implements HasMiddleware
                 ? City::active()->where('state_id', $stateId)->orderBy('name')->pluck('name', 'id')
                 : collect(),
         ];
+    }
+
+    /**
+     * Change request #4 — "Default the Country to India". Read by iso code
+     * rather than name, same lookup GeoSeeder uses to seed it.
+     */
+    private function indiaCountryId(): ?int
+    {
+        return Country::where('iso_code', 'IN')->value('id');
     }
 }

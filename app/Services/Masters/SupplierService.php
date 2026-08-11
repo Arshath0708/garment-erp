@@ -18,6 +18,7 @@ class SupplierService
             $supplier = Supplier::create($this->columns($data));
 
             $supplier->categories()->sync($data['category_ids'] ?? []);
+            $supplier->products()->sync($data['product_ids'] ?? []);
             $this->syncContacts($supplier, $data);
 
             return $supplier;
@@ -33,6 +34,7 @@ class SupplierService
             $supplier->update($this->columns($data));
 
             $supplier->categories()->sync($data['category_ids'] ?? []);
+            $supplier->products()->sync($data['product_ids'] ?? []);
             $this->syncContacts($supplier, $data);
 
             return $supplier->refresh();
@@ -63,6 +65,7 @@ class SupplierService
     {
         return array_diff_key($data, array_flip([
             'category_ids',
+            'product_ids',
             'contacts',
             'contact_name',
             'contact_designation_id',

@@ -77,6 +77,16 @@
 
         <x-ui.select name="source" label="Source" required col="col-md-3"
                      :options="$sources" :selected="$val('source')" />
+
+        {{-- Change request #8 — free text captured only when Source is "Other". --}}
+        <div class="col-md-3 mb-3 {{ $val('source') === 'other' ? '' : 'd-none' }}" id="source-other-row">
+            <label for="source_other" class="form-label fw-semibold">Please specify</label>
+            <input type="text" id="source_other" name="source_other" maxlength="150"
+                   value="{{ $val('source_other') }}"
+                   class="form-control @error('source_other') is-invalid @enderror"
+                   placeholder="e.g. Trade show referral">
+            @error('source_other')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+        </div>
     </div>
 
     <div class="row">
@@ -365,6 +375,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const deliveryEl     = document.getElementById('delivery_details');
     const packingEl      = document.getElementById('packing_details');
     const itemsWrap      = document.getElementById('items-wrap');
+
+    /* ------------------------------------------------------------------ *
+     * Change request #8 — "Please specify" only when Source is "Other".
+     * ------------------------------------------------------------------ */
+    const sourceSelect  = document.getElementById('source');
+    const sourceOtherRow = document.getElementById('source-other-row');
+    const sourceOtherInput = document.getElementById('source_other');
+
+    function applySourceOther() {
+        const visible = sourceSelect.value === 'other';
+        sourceOtherRow.classList.toggle('d-none', ! visible);
+        if (! visible) sourceOtherInput.value = '';
+    }
+
+    sourceSelect?.addEventListener('change', applySourceOther);
 
     /* ------------------------------ Cascades ------------------------------ */
 

@@ -76,6 +76,7 @@ class Inquiry extends Model
         'inquiry_date',
         'buyer_ref',
         'source',
+        'source_other',
         'buyer_id',
         'category_id',
         'document_format_id',
@@ -154,6 +155,16 @@ class Inquiry extends Model
     public function statusLabel(): string
     {
         return self::STATUSES[$this->status] ?? $this->status;
+    }
+
+    /** "Other — Trade Show Referral", or the plain label for any other source. */
+    public function sourceLabel(): string
+    {
+        $label = self::SOURCES[$this->source] ?? $this->source;
+
+        return $this->source === 'other' && filled($this->source_other)
+            ? "{$label} — {$this->source_other}"
+            : $label;
     }
 
     public function statusColor(): string
