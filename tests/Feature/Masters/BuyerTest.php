@@ -98,6 +98,14 @@ class BuyerTest extends TestCase
         ], $overrides);
     }
 
+    private function createBuyer(array $overrides = []): Buyer
+    {
+        $payload = $this->payload($overrides);
+        unset($payload['category_ids'], $payload['carton_markings']);
+
+        return Buyer::forceCreate($payload);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | CRUD — every column on the sheet
@@ -172,7 +180,7 @@ class BuyerTest extends TestCase
     public function test_status_toggles(): void
     {
         $user  = $this->actingAsRole('Super Admin');
-        $buyer = Buyer::create($this->payload(['category_ids' => null, 'carton_markings' => null]));
+        $buyer = $this->createBuyer(['category_ids' => null, 'carton_markings' => null]);
 
         $this->actingAs($user)->patch(route('masters.buyers.toggle-status', $buyer));
         $this->assertSame('inactive', $buyer->refresh()->status);
@@ -183,7 +191,7 @@ class BuyerTest extends TestCase
 
     public function test_a_buyer_is_soft_deleted(): void
     {
-        $buyer = Buyer::create($this->payload());
+        $buyer = $this->createBuyer();
 
         $this->actingAs($this->actingAsRole('Super Admin'))
             ->delete(route('masters.buyers.destroy', $buyer))
@@ -194,63 +202,19 @@ class BuyerTest extends TestCase
 
     /*
     |--------------------------------------------------------------------------
-    | Col A — "max 5 characters, tell me if a certain code is used already"
+    | Col A — Auto-generated display code (BUY01, BUY02, ...)
     |--------------------------------------------------------------------------
     */
 
-    public function test_duplicate_display_codes_are_rejected(): void
+    public function test_display_codes_are_generated_sequentially(): void
     {
         $user = $this->actingAsRole('Super Admin');
 
-        $this->actingAs($user)->post(route('masters.buyers.store'), $this->payload());
-
-        $this->actingAs($user)
-            ->post(route('masters.buyers.store'), $this->payload(['company_name' => 'Another Ltd']))
-            ->assertSessionHasErrors('display_code');
-
-        $this->assertSame(1, Buyer::count());
-    }
-
-    public function test_a_display_code_is_upper_cased_so_case_cannot_duplicate_it(): void
-    {
-        $user = $this->actingAsRole('Super Admin');
-
-        $this->actingAs($user)->post(route('masters.buyers.store'), $this->payload(['display_code' => 'buy01']));
+        $this->actingAs($user)->post(route('masters.buyers.store'), $this->payload(['company_name' => 'First Buyer']));
         $this->assertSame('BUY01', Buyer::first()->display_code);
 
-        $this->actingAs($user)
-            ->post(route('masters.buyers.store'), $this->payload(['display_code' => 'BuY01']))
-            ->assertSessionHasErrors('display_code');
-    }
-
-    public function test_a_display_code_longer_than_five_characters_is_rejected(): void
-    {
-        $this->actingAs($this->actingAsRole('Super Admin'))
-            ->post(route('masters.buyers.store'), $this->payload(['display_code' => 'TOOLONG']))
-            ->assertSessionHasErrors('display_code');
-
-        $this->assertSame(0, Buyer::count());
-    }
-
-    public function test_the_check_code_endpoint_reports_availability(): void
-    {
-        $user = $this->actingAsRole('Super Admin');
-        $this->actingAs($user)->post(route('masters.buyers.store'), $this->payload());
-        $buyer = Buyer::first();
-
-        $this->actingAs($user)->getJson(route('masters.buyers.check-code', ['value' => 'BUY01']))
-            ->assertJson(['available' => false]);
-
-        $this->actingAs($user)->getJson(route('masters.buyers.check-code', ['value' => 'ZZZZZ']))
-            ->assertJson(['available' => true]);
-
-        // Case-folded, matching what the request upper-cases before saving.
-        $this->actingAs($user)->getJson(route('masters.buyers.check-code', ['value' => 'buy01']))
-            ->assertJson(['available' => false]);
-
-        // Its own code is not a clash with itself on the edit form.
-        $this->actingAs($user)->getJson(route('masters.buyers.check-code', ['value' => 'BUY01', 'ignore' => $buyer->id]))
-            ->assertJson(['available' => true]);
+        $this->actingAs($user)->post(route('masters.buyers.store'), $this->payload(['company_name' => 'Second Buyer']));
+        $this->assertSame('BUY02', Buyer::latest('id')->first()->display_code);
     }
 
     /*
@@ -347,7 +311,7 @@ class BuyerTest extends TestCase
     public function test_clearing_the_country_clears_the_state_and_city_rather_than_erroring(): void
     {
         $user  = $this->actingAsRole('Super Admin');
-        $buyer = Buyer::create($this->payload());
+        $buyer = $this->createBuyer();
 
         $this->assertNotNull($buyer->city_id);
 
@@ -365,11 +329,11 @@ class BuyerTest extends TestCase
     {
         // The options are server-rendered, so the saved value is visible before
         // the cascade runs — and readable to a user without JavaScript at all.
-        $buyer = Buyer::create($this->payload([
+        $buyer = $this->createBuyer([
             'country_id' => $this->countryId('IN'),
             'state_id'   => $this->stateId('IN', 'Tamil Nadu'),
             'city_id'    => $this->cityId('IN', 'Tamil Nadu', 'Tirupur'),
-        ]));
+        ]);
 
         $this->actingAs($this->actingAsRole('Super Admin'))
             ->get(route('masters.buyers.edit', $buyer))
@@ -400,13 +364,13 @@ class BuyerTest extends TestCase
         $this->assertStringContainsString(route('masters.geo.cities'), $html);
     }
 
-    public function test_the_create_form_starts_with_empty_state_and_city_lists(): void
+    public function test_the_create_form_defaults_country_to_india_and_starts_with_empty_city_list(): void
     {
         $this->actingAs($this->actingAsRole('Super Admin'))
             ->get(route('masters.buyers.create'))
             ->assertOk()
-            ->assertSee('United Kingdom (GB)')   // countries are populated
-            ->assertDontSee('Tamil Nadu')        // states are not, until one is picked
+            ->assertSee('India (IN)')
+            ->assertSee('Tamil Nadu')
             ->assertDontSee('Tirupur');
     }
 
@@ -481,18 +445,18 @@ class BuyerTest extends TestCase
 
     public function test_the_commission_label_renders_from_type_and_value(): void
     {
-        $percent = Buyer::create($this->payload([
+        $percent = $this->createBuyer([
             'agent_commission_type'  => 'percent',
             'agent_commission_value' => 2.5,
-        ]));
+        ]);
 
         $this->assertSame('2.5%', $percent->agent_commission_label);
 
-        $amount = Buyer::create($this->payload([
+        $amount = $this->createBuyer([
             'display_code'           => 'BUY02',
             'agent_commission_type'  => 'amount',
             'agent_commission_value' => 1.5,
-        ]));
+        ]);
 
         $this->assertSame('1.5 GBP', $amount->load('currency')->agent_commission_label);
     }
@@ -571,7 +535,7 @@ class BuyerTest extends TestCase
 
     public function test_carton_markings_are_removed_with_the_buyer(): void
     {
-        $buyer = Buyer::create($this->payload());
+        $buyer = $this->createBuyer();
         $buyer->cartonMarkings()->create(['line_no' => 1, 'label' => 'BUYER NAME', 'value' => 'ABC']);
 
         $buyer->forceDelete();
@@ -617,7 +581,7 @@ class BuyerTest extends TestCase
     public function test_every_screen_renders(): void
     {
         $user  = $this->actingAsRole('Super Admin');
-        $buyer = Buyer::create($this->payload());
+        $buyer = $this->createBuyer();
         $buyer->cartonMarkings()->create(['line_no' => 1, 'label' => 'BUYER NAME', 'value' => 'ABC CORP']);
 
         $this->actingAs($user)->get(route('masters.buyers.index'))->assertOk()->assertSee('ABC Fashion Ltd');
@@ -631,17 +595,17 @@ class BuyerTest extends TestCase
         $shirts = $this->category('Shirts', 'CAT901');
         $user   = $this->actingAsRole('Super Admin');
 
-        $one = Buyer::create($this->payload([
+        $one = $this->createBuyer([
             'company_name' => 'Cotton Traders Ltd',
             'city_id'      => $this->cityId('GB', 'England', 'Manchester'),
-        ]));
+        ]);
         $one->categories()->attach($shirts);
 
-        Buyer::create($this->payload([
+        $this->createBuyer([
             'display_code' => 'BUY02',
             'company_name' => 'Denim World Inc',
             'status'       => 'inactive',
-        ]));
+        ]);
 
         $this->actingAs($user)->get(route('masters.buyers.index', ['search' => 'Cotton']))
             ->assertSee('Cotton Traders Ltd')->assertDontSee('Denim World Inc');
@@ -659,7 +623,7 @@ class BuyerTest extends TestCase
 
     public function test_sorting_ignores_a_column_that_is_not_whitelisted(): void
     {
-        Buyer::create($this->payload());
+        $this->createBuyer();
 
         $this->actingAs($this->actingAsRole('Super Admin'))
             ->get(route('masters.buyers.index', ['sort' => 'created_by); drop table buyers; --']))
@@ -686,7 +650,7 @@ class BuyerTest extends TestCase
     {
         // Packing has buyer.view only.
         $user  = $this->actingAsRole('Packing');
-        $buyer = Buyer::create($this->payload());
+        $buyer = $this->createBuyer();
 
         $this->actingAs($user)->get(route('masters.buyers.index'))->assertOk();
         $this->actingAs($user)->get(route('masters.buyers.create'))->assertForbidden();
