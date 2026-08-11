@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Sales;
 
+use App\Models\DocumentFormat;
 use App\Models\Inquiry;
+use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -92,6 +94,14 @@ abstract class InquiryRequest extends FormRequest
             'items.*.custom'   => ['nullable', 'array', 'max:20'],
             'items.*.custom.*' => ['nullable', 'string', 'max:255'],
 
+            // Task 12 — BOM snapshot (qty per finished piece), FOB-style costing.
+            'items.*.bom'                     => ['nullable', 'array', 'max:100'],
+            'items.*.bom.*.component_name'    => ['nullable', 'string', 'max:200'],
+            'items.*.bom.*.qty'               => ['nullable', 'numeric', 'min:0', 'max:99999999.9999'],
+            'items.*.bom.*.unit'              => ['nullable', 'string', 'max:20'],
+            'items.*.bom.*.is_custom'         => ['nullable', 'boolean'],
+            'items.*.bom.*.remarks'           => ['nullable', 'string', 'max:500'],
+
             'followups'                => ['nullable', 'array', 'max:100'],
             'followups.*.id'           => ['nullable', 'integer'],
             'followups.*.date'         => ['nullable', 'date', 'required_with:followups.*.comment'],
@@ -110,7 +120,64 @@ abstract class InquiryRequest extends FormRequest
             if ($this->input('mode') === 'submit' && blank(array_filter((array) $this->input('items', [])))) {
                 $validator->errors()->add('items', 'Add at least one item before submitting the inquiry.');
             }
+
+            $this->validateItemUnits($validator);
         });
+    }
+
+    /**
+     * Unit is a dropdown of Order Format chips, not free text — but Product
+     * Master can also supply unit_export / unit_po. Accept either source so
+     * auto-fill from the product does not fail validation when that unit is
+     * missing from the format's chip list.
+     */
+    private function validateItemUnits(Validator $validator): void
+    {
+        $formatId = $this->input('document_format_id');
+        if (blank($formatId)) {
+            return;
+        }
+
+        $formatUnits = DocumentFormat::query()
+            ->whereKey($formatId)
+            ->first()
+            ?->units()
+            ->pluck('name')
+            ->all() ?? [];
+
+        $productIds = collect($this->input('items', []))
+            ->pluck('product_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $products = $productIds->isEmpty()
+            ? collect()
+            : Product::query()->whereIn('id', $productIds)->get(['id', 'unit_po', 'unit_export'])->keyBy('id');
+
+        foreach ((array) $this->input('items', []) as $index => $item) {
+            $unit = $item['unit'] ?? null;
+            if (blank($unit)) {
+                continue;
+            }
+
+            $allowed = $formatUnits;
+            $product = isset($item['product_id']) ? $products->get($item['product_id']) : null;
+            if ($product) {
+                $allowed = array_values(array_unique(array_filter([
+                    ...$allowed,
+                    $product->unit_export,
+                    $product->unit_po,
+                ])));
+            }
+
+            if ($allowed !== [] && ! in_array($unit, $allowed, true)) {
+                $validator->errors()->add(
+                    "items.{$index}.unit",
+                    'The selected unit must match the order format or the product\'s unit.'
+                );
+            }
+        }
     }
 
     public function attributes(): array

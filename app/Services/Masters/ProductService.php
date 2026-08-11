@@ -15,10 +15,12 @@ class ProductService
     {
         return DB::transaction(function () use ($data) {
             $incentives = $data['incentives'] ?? [];
-            unset($data['incentives']);
+            $bomItems = $data['bom'] ?? [];
+            unset($data['incentives'], $data['bom']);
 
             $product = Product::create($data);
             $this->syncIncentives($product, $incentives);
+            $this->syncBomItems($product, $bomItems);
 
             return $product;
         });
@@ -31,10 +33,12 @@ class ProductService
     {
         return DB::transaction(function () use ($product, $data) {
             $incentives = $data['incentives'] ?? [];
-            unset($data['incentives']);
+            $bomItems = $data['bom'] ?? [];
+            unset($data['incentives'], $data['bom']);
 
             $product->update($data);
             $this->syncIncentives($product, $incentives);
+            $this->syncBomItems($product, $bomItems);
 
             return $product->refresh();
         });
@@ -69,6 +73,33 @@ class ProductService
                     'calculation_basis_id' => $row['calculation_basis_id'] ?? null,
                 ]
             );
+        }
+    }
+
+    /**
+     * Rewrite BOM rows from the form. Empty list is allowed — blank
+     * component_name rows are skipped so "Add row then leave empty" does
+     * not create junk.
+     *
+     * @param  array<int, array<string, mixed>>  $bomItems
+     */
+    private function syncBomItems(Product $product, array $bomItems): void
+    {
+        $product->bomItems()->delete();
+
+        foreach (array_values($bomItems) as $index => $row) {
+            if (blank($row['component_name'] ?? null)) {
+                continue;
+            }
+
+            $product->bomItems()->create([
+                'sort_order'     => $index,
+                'component_name' => $row['component_name'],
+                'qty'            => $row['qty'] ?? 1,
+                'unit'           => $row['unit'] ?? null,
+                'is_custom'      => (bool) ($row['is_custom'] ?? true),
+                'remarks'        => $row['remarks'] ?? null,
+            ]);
         }
     }
 

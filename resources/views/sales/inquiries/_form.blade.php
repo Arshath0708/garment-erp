@@ -137,143 +137,12 @@
 </x-ui.form-section>
 
 <x-ui.form-section title="Items, Costing &amp; Follow-ups" icon="bi-table"
-                   subtitle="Select a format above to define the table structure. Expand Costing per item for FOB, colour and size breakdown.">
+                   subtitle="Each item shows Qty / Amount up top. Expand Costing for FOB, colour and size breakdown.">
     <div id="items-wrap">
         @php $existingItems = old('items', $isEdit ? $inquiry->items : []); @endphp
 
         @foreach($existingItems as $item)
-            @php
-                $isArr = is_array($item);
-                $iDesign = $isArr ? ($item['design_no'] ?? '') : $item->design_no;
-                $iDesc = $isArr ? ($item['description'] ?? '') : $item->description;
-                $iProduct = $isArr ? ($item['product_id'] ?? '') : $item->product_id;
-                $iSupplier = $isArr ? ($item['supplier_id'] ?? '') : $item->supplier_id;
-                $iUnit = $isArr ? ($item['unit'] ?? '') : $item->unit;
-                $iFob = $isArr ? ($item['fob_value_id'] ?? '') : $item->fob_value_id;
-                $iPrice = $isArr ? ($item['price'] ?? '') : $item->price;
-                $iCostPrice = $isArr ? ($item['cost_price'] ?? '') : $item->cost_price;
-                $iStatus = $isArr ? ($item['status'] ?? 'draft') : $item->status;
-                $iRemarks = $isArr ? ($item['remarks'] ?? '') : $item->remarks;
-                $iColours = $isArr ? ($item['colours'] ?? []) : $item->colours;
-                $iProductLabel = $isArr ? null : $item->product?->name;
-                $iSupplierLabel = $isArr ? null : $item->supplier?->label;
-                $iCustom = $isArr ? ($item['custom'] ?? []) : ($item->custom_values ?? []);
-            @endphp
-            <div class="inquiry-item border rounded p-3 mb-3" data-item
-                 data-product-id="{{ $iProduct }}" data-product-label="{{ $iProductLabel }}"
-                 data-supplier-id="{{ $iSupplier }}" data-supplier-label="{{ $iSupplierLabel }}"
-                 data-unit="{{ $iUnit }}" data-custom-values="{{ json_encode($iCustom) }}">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="fw-semibold item-index-label">Item</span>
-                    <button type="button" class="btn btn-sm btn-outline-danger js-remove-item"><i class="bi bi-trash"></i></button>
-                </div>
-                <div class="row g-2">
-                    <div class="col-md-3" data-column="design_no">
-                        <label class="form-label small js-column-label">Design No. / Name</label>
-                        <input type="text" class="form-control form-control-sm js-field" data-field="design_no" maxlength="150" value="{{ $iDesign }}">
-                    </div>
-                    <div class="col-md-3" data-column="product">
-                        <label class="form-label small js-column-label">Product</label>
-                        <select class="form-select form-select-sm js-field js-product-select" data-field="product_id"><option value="">— Select —</option></select>
-                    </div>
-                    <div class="col-md-3" data-column="supplier">
-                        <label class="form-label small js-column-label">Supplier</label>
-                        <select class="form-select form-select-sm js-field js-supplier-select" data-field="supplier_id"><option value="">— Select —</option></select>
-                    </div>
-                    <div class="col-md-2" data-column="unit">
-                        <label class="form-label small js-column-label">Unit</label>
-                        <select class="form-select form-select-sm js-field js-unit-select" data-field="unit"><option value="">—</option></select>
-                    </div>
-                    <div class="col-md-1">
-                        <label class="form-label small">Status</label>
-                        <select class="form-select form-select-sm js-field" data-field="status">
-                            @foreach($statuses as $value => $label)
-                                <option value="{{ $value }}" @selected($iStatus === $value)>{{ $label }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-                <div class="row g-2 mt-1">
-                    <div class="col-md-6">
-                        <label class="form-label small">Description</label>
-                        <input type="text" class="form-control form-control-sm js-field" data-field="description" maxlength="500" value="{{ $iDesc }}">
-                    </div>
-                    <div class="col-md-2" data-column="price">
-                        <label class="form-label small js-column-label">Price</label>
-                        <input type="number" step="0.01" min="0" class="form-control form-control-sm js-field js-price" data-field="price" value="{{ $iPrice }}">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small">Qty</label>
-                        <input type="text" class="form-control form-control-sm js-qty-display" readonly value="0">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small">Amount</label>
-                        <input type="text" class="form-control form-control-sm js-amount-display" readonly value="{{ $isArr ? '0.00' : number_format((float) $item->amount, 2) }}">
-                    </div>
-                </div>
-                <div class="row g-2 mt-1 custom-fields-wrap"></div>
-                <button type="button" class="btn btn-sm btn-link px-0 mt-2 js-toggle-costing">
-                    <i class="bi bi-caret-down-fill me-1"></i>Costing
-                </button>
-                <div class="costing-panel d-none mt-2 border-top pt-2">
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-3">
-                            <label class="form-label small">FOB Value</label>
-                            <select class="form-select form-select-sm js-field" data-field="fob_value_id">
-                                <option value="">— Select —</option>
-                                @foreach($fobValues as $id => $name)
-                                    <option value="{{ $id }}" @selected((string) $iFob === (string) $id)>{{ $name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small">Cost Price / Unit (₹)</label>
-                            <input type="number" step="0.01" min="0" class="form-control form-control-sm js-field" data-field="cost_price" value="{{ $iCostPrice }}">
-                            <div class="form-text">Internal — feeds Purchase Order, never shown to buyer</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small">Item Remarks</label>
-                            <input type="text" class="form-control form-control-sm js-field" data-field="remarks" maxlength="500" value="{{ $iRemarks }}">
-                        </div>
-                    </div>
-                    <div class="colours-wrap">
-                        @foreach($iColours as $colour)
-                            @php
-                                $cIsArr = is_array($colour);
-                                $cName = $cIsArr ? ($colour['colour'] ?? '') : $colour->colour;
-                                $cSizes = $cIsArr ? ($colour['sizes'] ?? []) : $colour->sizes;
-                            @endphp
-                            <div class="inquiry-colour border rounded p-2 mb-2 bg-body-tertiary" data-colour>
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <input type="text" class="form-control form-control-sm js-colour-name" placeholder="Colour" maxlength="60" style="max-width:12rem" value="{{ $cName }}">
-                                    <span class="text-body-secondary small js-colour-subtotal ms-auto">Qty: 0</span>
-                                    <button type="button" class="btn btn-sm btn-outline-danger js-remove-colour"><i class="bi bi-trash"></i></button>
-                                </div>
-                                <div class="sizes-wrap d-flex flex-wrap gap-2 mb-2">
-                                    @foreach($cSizes as $size)
-                                        @php
-                                            $sIsArr = is_array($size);
-                                            $sLabel = $sIsArr ? ($size['size'] ?? '') : $size->size;
-                                            $sQty = $sIsArr ? ($size['qty'] ?? 0) : $size->qty;
-                                        @endphp
-                                        <div class="inquiry-size d-flex align-items-center gap-1" data-size style="max-width:11rem">
-                                            <input type="text" class="form-control form-control-sm js-size-label" placeholder="Size" maxlength="20" style="width:5rem" value="{{ $sLabel }}">
-                                            <input type="number" min="0" class="form-control form-control-sm js-size-qty" placeholder="Qty" style="width:5rem" value="{{ $sQty }}">
-                                            <button type="button" class="btn btn-sm btn-outline-danger js-remove-size"><i class="bi bi-x"></i></button>
-                                        </div>
-                                    @endforeach
-                                </div>
-                                <button type="button" class="btn btn-sm btn-outline-secondary js-add-size">
-                                    <i class="bi bi-plus-lg me-1"></i>Add size
-                                </button>
-                            </div>
-                        @endforeach
-                    </div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary js-add-colour mt-1">
-                        <i class="bi bi-plus-lg me-1"></i>Add colour
-                    </button>
-                </div>
-            </div>
+            @include('sales.inquiries._item_card', ['item' => $item])
         @endforeach
     </div>
 
@@ -353,6 +222,13 @@
         <i class="bi bi-check-lg me-1"></i>Submit
     </button>
 </div>
+
+@push('styles')
+<style>
+    .js-toggle-costing .js-costing-chevron { transition: transform .15s ease; }
+    .js-toggle-costing.is-open .js-costing-chevron { transform: rotate(90deg); }
+</style>
+@endpush
 
 @push('scripts')
 <script>
@@ -604,7 +480,68 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (unit === current) opt.selected = true;
                 select.appendChild(opt);
             });
+            // Keep a saved / product-defaulted unit that is not on this format's
+            // chip list so edit screens (and Product Master defaults) do not
+            // silently blank the field when the format changes.
+            ensureUnitOption(select, current);
+            if (current) select.value = current;
         });
+    }
+
+    function ensureUnitOption(select, unit) {
+        if (! unit) return;
+        const exists = Array.from(select.options).some(function (o) { return o.value === unit; });
+        if (exists) return;
+        const opt = document.createElement('option');
+        opt.value = unit;
+        opt.textContent = unit;
+        select.appendChild(opt);
+    }
+
+    /**
+     * Inquiry is buyer/export-facing, so prefer Product.unit_export, then
+     * unit_po. Only runs on user product change — never overwrites a saved
+     * unit during initItem / page load.
+     */
+    function applyProductUnit(itemEl) {
+        const productSelect = itemEl.querySelector('.js-product-select');
+        const unitSelect = itemEl.querySelector('.js-unit-select');
+        const opt = productSelect && productSelect.selectedOptions[0];
+        if (! opt || ! opt.value) return;
+
+        const preferred = opt.dataset.unitExport || opt.dataset.unitPo || '';
+        if (! preferred) return;
+
+        ensureUnitOption(unitSelect, preferred);
+        unitSelect.value = preferred;
+        unitSelect.dataset.selected = preferred;
+        applyColumnsToItem(itemEl, formats[formatSelect.value]);
+    }
+
+    function applyProductBom(itemEl) {
+        const productSelect = itemEl.querySelector('.js-product-select');
+        const opt = productSelect && productSelect.selectedOptions[0];
+        const bomWrap = itemEl.querySelector('.bom-wrap');
+        if (! bomWrap || ! opt) return;
+
+        let rows = [];
+        try { rows = JSON.parse(opt.dataset.bom || '[]') || []; } catch (e) { rows = []; }
+
+        bomWrap.innerHTML = '';
+        rows.forEach(function (row) {
+            bomWrap.appendChild(buildBomRow(row));
+        });
+    }
+
+    function buildBomRow(data) {
+        data = data || {};
+        const node = bomTemplate.content.cloneNode(true);
+        const row = node.querySelector('[data-bom-row]');
+        row.querySelector('.js-bom-name').value = data.component_name || '';
+        row.querySelector('.js-bom-qty').value = data.qty != null ? data.qty : 1;
+        row.querySelector('.js-bom-unit').value = data.unit || '';
+        row.querySelector('.js-bom-remarks').value = data.remarks || '';
+        return node;
     }
 
     function refreshItemProductsAndSuppliers() {
@@ -628,6 +565,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     const opt = document.createElement('option');
                     opt.value = row.id;
                     opt.textContent = row.text;
+                    if (row.unit_export !== undefined) {
+                        opt.dataset.unitExport = row.unit_export || '';
+                        opt.dataset.unitPo = row.unit_po || '';
+                    }
+                    if (row.bom !== undefined) {
+                        opt.dataset.bom = JSON.stringify(row.bom || []);
+                    }
                     if (selected && String(row.id) === String(selected)) { opt.selected = true; found = true; }
                     selectEl.appendChild(opt);
                 });
@@ -679,6 +623,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const itemTemplate = document.getElementById('tpl-item');
     const colourTemplate = document.getElementById('tpl-colour');
     const sizeTemplate = document.getElementById('tpl-size');
+    const bomTemplate = document.getElementById('tpl-bom');
 
     function renumberItems() {
         itemsWrap.querySelectorAll('.inquiry-item').forEach(function (el, index) {
@@ -693,13 +638,21 @@ document.addEventListener('DOMContentLoaded', function () {
             colourEl.querySelectorAll('.js-size-qty').forEach(function (input) {
                 colourQty += parseInt(input.value || '0', 10) || 0;
             });
-            colourEl.querySelector('.js-colour-subtotal').textContent = 'Qty: ' + colourQty;
+            const colourSub = colourEl.querySelector('.js-colour-subtotal');
+            if (colourSub) colourSub.textContent = 'Qty ' + colourQty;
             qty += colourQty;
         });
 
         const price = parseFloat(itemEl.querySelector('.js-price').value || '0') || 0;
+        const amount = (qty * price).toFixed(2);
+
         itemEl.querySelector('.js-qty-display').value = qty;
-        itemEl.querySelector('.js-amount-display').value = (qty * price).toFixed(2);
+        itemEl.querySelector('.js-amount-display').value = amount;
+
+        const qtyBadge = itemEl.querySelector('.js-item-qty-badge');
+        const amountBadge = itemEl.querySelector('.js-item-amount-badge');
+        if (qtyBadge) qtyBadge.textContent = 'Qty ' + qty;
+        if (amountBadge) amountBadge.textContent = 'Amt ' + amount;
     }
 
     function addColour(itemEl) {
@@ -757,8 +710,21 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         if (e.target.closest('.js-toggle-costing')) {
-            const panel = e.target.closest('.inquiry-item').querySelector('.costing-panel');
-            panel.classList.toggle('d-none');
+            const itemEl = e.target.closest('.inquiry-item');
+            const panel = itemEl.querySelector('.costing-panel');
+            const toggle = itemEl.querySelector('.js-toggle-costing');
+            const isHidden = panel.classList.toggle('d-none');
+            toggle.classList.toggle('is-open', ! isHidden);
+            toggle.setAttribute('aria-expanded', isHidden ? 'false' : 'true');
+            return;
+        }
+        if (e.target.closest('.js-add-bom')) {
+            const itemEl = e.target.closest('.inquiry-item');
+            itemEl.querySelector('.bom-wrap').appendChild(buildBomRow({ qty: 1 }));
+            return;
+        }
+        if (e.target.closest('.js-remove-bom')) {
+            e.target.closest('[data-bom-row]')?.remove();
             return;
         }
         if (e.target.closest('.js-add-colour')) {
@@ -792,8 +758,16 @@ document.addEventListener('DOMContentLoaded', function () {
     // Price column header reads "Price / <unit>" — refresh it when the
     // row's own unit changes, same live label DocumentFormat::priceLabel()
     // computes server-side for the format's own preview.
+    // Product change defaults Unit from Product Master (export unit first).
     itemsWrap.addEventListener('change', function (e) {
+        if (e.target.classList.contains('js-product-select')) {
+            const itemEl = e.target.closest('.inquiry-item');
+            applyProductUnit(itemEl);
+            applyProductBom(itemEl);
+            return;
+        }
         if (e.target.classList.contains('js-unit-select')) {
+            e.target.dataset.selected = e.target.value;
             applyColumnsToItem(e.target.closest('.inquiry-item'), formats[formatSelect.value]);
         }
     });
@@ -862,6 +836,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             });
 
+            itemEl.querySelectorAll(':scope .bom-wrap > [data-bom-row]').forEach(function (bomEl, b) {
+                appendHidden('items[' + i + '][bom][' + b + '][component_name]', bomEl.querySelector('.js-bom-name').value);
+                appendHidden('items[' + i + '][bom][' + b + '][qty]', bomEl.querySelector('.js-bom-qty').value || 0);
+                appendHidden('items[' + i + '][bom][' + b + '][unit]', bomEl.querySelector('.js-bom-unit').value);
+                appendHidden('items[' + i + '][bom][' + b + '][remarks]', bomEl.querySelector('.js-bom-remarks').value);
+                appendHidden('items[' + i + '][bom][' + b + '][is_custom]', '1');
+            });
+
             itemEl.querySelectorAll(':scope .custom-fields-wrap [data-custom-key]').forEach(function (fieldEl) {
                 appendHidden('items[' + i + '][custom][' + fieldEl.dataset.customKey + ']', fieldEl.querySelector('input').value);
             });
@@ -882,98 +864,20 @@ document.addEventListener('DOMContentLoaded', function () {
     applyCategoryFormatFilter(false);
     applyFormatMeta();
     itemsWrap.querySelectorAll(':scope > .inquiry-item').forEach(initItem);
+    renumberItems();
 });
 </script>
 @endpush
 
 <template id="tpl-item">
-    <div class="inquiry-item border rounded p-3 mb-3" data-item>
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="fw-semibold item-index-label">Item</span>
-            <button type="button" class="btn btn-sm btn-outline-danger js-remove-item"><i class="bi bi-trash"></i></button>
-        </div>
-        <div class="row g-2">
-            <div class="col-md-3" data-column="design_no">
-                <label class="form-label small js-column-label">Design No. / Name</label>
-                <input type="text" class="form-control form-control-sm js-field" data-field="design_no" maxlength="150">
-            </div>
-            <div class="col-md-3" data-column="product">
-                <label class="form-label small js-column-label">Product</label>
-                <select class="form-select form-select-sm js-field js-product-select" data-field="product_id"><option value="">— Select —</option></select>
-            </div>
-            <div class="col-md-3" data-column="supplier">
-                <label class="form-label small js-column-label">Supplier</label>
-                <select class="form-select form-select-sm js-field js-supplier-select" data-field="supplier_id"><option value="">— Select —</option></select>
-            </div>
-            <div class="col-md-2" data-column="unit">
-                <label class="form-label small js-column-label">Unit</label>
-                <select class="form-select form-select-sm js-field js-unit-select" data-field="unit"><option value="">—</option></select>
-            </div>
-            <div class="col-md-1">
-                <label class="form-label small">Status</label>
-                <select class="form-select form-select-sm js-field" data-field="status">
-                    @foreach($statuses as $value => $label)
-                        <option value="{{ $value }}">{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-        </div>
-        <div class="row g-2 mt-1">
-            <div class="col-md-6">
-                <label class="form-label small">Description</label>
-                <input type="text" class="form-control form-control-sm js-field" data-field="description" maxlength="500">
-            </div>
-            <div class="col-md-2" data-column="price">
-                <label class="form-label small js-column-label">Price</label>
-                <input type="number" step="0.01" min="0" class="form-control form-control-sm js-field js-price" data-field="price">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">Qty</label>
-                <input type="text" class="form-control form-control-sm js-qty-display" readonly value="0">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">Amount</label>
-                <input type="text" class="form-control form-control-sm js-amount-display" readonly value="0.00">
-            </div>
-        </div>
-        <div class="row g-2 mt-1 custom-fields-wrap"></div>
-        <button type="button" class="btn btn-sm btn-link px-0 mt-2 js-toggle-costing">
-            <i class="bi bi-caret-down-fill me-1"></i>Costing
-        </button>
-        <div class="costing-panel d-none mt-2 border-top pt-2">
-            <div class="row g-2 mb-2">
-                <div class="col-md-3">
-                    <label class="form-label small">FOB Value</label>
-                    <select class="form-select form-select-sm js-field" data-field="fob_value_id">
-                        <option value="">— Select —</option>
-                        @foreach($fobValues as $id => $name)
-                            <option value="{{ $id }}">{{ $name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small">Cost Price / Unit (₹)</label>
-                    <input type="number" step="0.01" min="0" class="form-control form-control-sm js-field" data-field="cost_price">
-                    <div class="form-text">Internal — feeds Purchase Order, never shown to buyer</div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label small">Item Remarks</label>
-                    <input type="text" class="form-control form-control-sm js-field" data-field="remarks" maxlength="500">
-                </div>
-            </div>
-            <div class="colours-wrap"></div>
-            <button type="button" class="btn btn-sm btn-outline-secondary js-add-colour mt-1">
-                <i class="bi bi-plus-lg me-1"></i>Add colour
-            </button>
-        </div>
-    </div>
+    @include('sales.inquiries._item_card', ['isTemplate' => true])
 </template>
 
 <template id="tpl-colour">
     <div class="inquiry-colour border rounded p-2 mb-2 bg-body-tertiary" data-colour>
         <div class="d-flex align-items-center gap-2 mb-2">
             <input type="text" class="form-control form-control-sm js-colour-name" placeholder="Colour" maxlength="60" style="max-width:12rem">
-            <span class="text-body-secondary small js-colour-subtotal ms-auto">Qty: 0</span>
+            <span class="badge text-bg-light border js-colour-subtotal ms-auto">Qty 0</span>
             <button type="button" class="btn btn-sm btn-outline-danger js-remove-colour"><i class="bi bi-trash"></i></button>
         </div>
         <div class="sizes-wrap d-flex flex-wrap gap-2 mb-2"></div>
@@ -984,10 +888,30 @@ document.addEventListener('DOMContentLoaded', function () {
 </template>
 
 <template id="tpl-size">
-    <div class="inquiry-size d-flex align-items-center gap-1" data-size style="max-width:11rem">
-        <input type="text" class="form-control form-control-sm js-size-label" placeholder="Size" maxlength="20" style="width:5rem">
-        <input type="number" min="0" class="form-control form-control-sm js-size-qty" placeholder="Qty" style="width:5rem">
+    <div class="inquiry-size d-flex align-items-center gap-1 border rounded px-1 py-1 bg-body" data-size style="max-width:12rem">
+        <input type="text" class="form-control form-control-sm js-size-label border-0" placeholder="Size" maxlength="20" style="width:4.5rem">
+        <input type="number" min="0" class="form-control form-control-sm js-size-qty" placeholder="Qty" style="width:4.5rem">
         <button type="button" class="btn btn-sm btn-outline-danger js-remove-size"><i class="bi bi-x"></i></button>
+    </div>
+</template>
+
+<template id="tpl-bom">
+    <div class="row g-1 align-items-end mb-1 inquiry-bom-row" data-bom-row>
+        <div class="col-md-4">
+            <input type="text" class="form-control form-control-sm js-bom-name" placeholder="Component" maxlength="200">
+        </div>
+        <div class="col-md-2">
+            <input type="number" step="0.0001" min="0" class="form-control form-control-sm js-bom-qty" placeholder="Qty/pc" value="1">
+        </div>
+        <div class="col-md-2">
+            <input type="text" class="form-control form-control-sm js-bom-unit" placeholder="Unit" maxlength="20">
+        </div>
+        <div class="col-md-3">
+            <input type="text" class="form-control form-control-sm js-bom-remarks" placeholder="Remarks" maxlength="500">
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-sm btn-outline-danger w-100 js-remove-bom"><i class="bi bi-x"></i></button>
+        </div>
     </div>
 </template>
 

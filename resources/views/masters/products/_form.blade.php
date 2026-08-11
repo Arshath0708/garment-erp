@@ -227,6 +227,54 @@
     </div>
 </x-ui.form-section>
 
+{{-- ==================== BOM / COMPONENTS (Task 13) ==================== --}}
+<x-ui.form-section title="BOM / Components" icon="bi-diagram-3"
+                   subtitle="Optional. Free-text components per finished piece. Leave empty if this product has no BOM.">
+    @php
+        $bomRows = old('bom', $product?->bomItems?->toArray() ?? []);
+    @endphp
+    <div id="bom-wrap">
+        @forelse($bomRows as $index => $row)
+            <div class="row g-2 align-items-end mb-2 bom-row" data-bom-row>
+                <div class="col-md-4">
+                    <label class="form-label small">Component</label>
+                    <input type="text" name="bom[{{ $index }}][component_name]" class="form-control form-control-sm"
+                           maxlength="200" value="{{ $row['component_name'] ?? '' }}" placeholder="e.g. Lining fabric">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Qty / piece</label>
+                    <input type="number" step="0.0001" min="0" name="bom[{{ $index }}][qty]" class="form-control form-control-sm"
+                           value="{{ $row['qty'] ?? '1' }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Unit</label>
+                    <select name="bom[{{ $index }}][unit]" class="form-select form-select-sm">
+                        <option value="">—</option>
+                        @foreach($units as $unitValue => $unitLabel)
+                            <option value="{{ $unitValue }}" @selected(($row['unit'] ?? '') === $unitValue)>{{ $unitLabel }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Remarks</label>
+                    <input type="text" name="bom[{{ $index }}][remarks]" class="form-control form-control-sm"
+                           maxlength="500" value="{{ $row['remarks'] ?? '' }}">
+                    <input type="hidden" name="bom[{{ $index }}][is_custom]" value="1">
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-sm btn-outline-danger w-100 js-remove-bom" title="Remove">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        @empty
+        @endforelse
+    </div>
+    <button type="button" id="add-bom-row" class="btn btn-sm btn-outline-primary mt-1">
+        <i class="bi bi-plus-lg me-1"></i>Add component
+    </button>
+</x-ui.form-section>
+
 {{-- ==================== V–X · FABRIC MEASUREMENT ==================== --}}
 <x-ui.form-section title="Fabric Measurement" icon="bi-bounding-box"
                    subtitle="For fabrics and sarees. Leave blank for other products.">
@@ -310,6 +358,55 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     inputs.forEach(el => el.addEventListener('input', recalcSqm));
+
+    /* ------------------------------------------------------------------ *
+     * Task 13 — Product BOM rows (free-text, empty allowed).
+     * ------------------------------------------------------------------ */
+    const bomWrap = document.getElementById('bom-wrap');
+    const bomUnitEntries = @json($units);
+
+    function nextBomIndex() {
+        return bomWrap.querySelectorAll('[data-bom-row]').length;
+    }
+
+    document.getElementById('add-bom-row')?.addEventListener('click', function () {
+        const i = nextBomIndex();
+        const unitOpts = Object.entries(bomUnitEntries).map(function (pair) {
+            return '<option value="' + pair[0] + '">' + pair[1] + '</option>';
+        }).join('');
+
+        const row = document.createElement('div');
+        row.className = 'row g-2 align-items-end mb-2 bom-row';
+        row.dataset.bomRow = '1';
+        row.innerHTML =
+            '<div class="col-md-4">' +
+                '<label class="form-label small">Component</label>' +
+                '<input type="text" name="bom[' + i + '][component_name]" class="form-control form-control-sm" maxlength="200" placeholder="e.g. Lining fabric">' +
+            '</div>' +
+            '<div class="col-md-2">' +
+                '<label class="form-label small">Qty / piece</label>' +
+                '<input type="number" step="0.0001" min="0" name="bom[' + i + '][qty]" class="form-control form-control-sm" value="1">' +
+            '</div>' +
+            '<div class="col-md-2">' +
+                '<label class="form-label small">Unit</label>' +
+                '<select name="bom[' + i + '][unit]" class="form-select form-select-sm"><option value="">—</option>' + unitOpts + '</select>' +
+            '</div>' +
+            '<div class="col-md-3">' +
+                '<label class="form-label small">Remarks</label>' +
+                '<input type="text" name="bom[' + i + '][remarks]" class="form-control form-control-sm" maxlength="500">' +
+                '<input type="hidden" name="bom[' + i + '][is_custom]" value="1">' +
+            '</div>' +
+            '<div class="col-md-1">' +
+                '<button type="button" class="btn btn-sm btn-outline-danger w-100 js-remove-bom" title="Remove"><i class="bi bi-trash"></i></button>' +
+            '</div>';
+        bomWrap.appendChild(row);
+    });
+
+    bomWrap?.addEventListener('click', function (e) {
+        if (e.target.closest('.js-remove-bom')) {
+            e.target.closest('[data-bom-row]')?.remove();
+        }
+    });
 
     /* ------------------------------------------------------------------ *
      * Export incentive toggles — Drawback, RoSCTL, RoDTEP each get an

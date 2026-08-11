@@ -82,6 +82,14 @@ abstract class ProductRequest extends FormRequest
             'comments'                => ['nullable', 'string', 'max:1000'],
 
             'incentives'              => ['nullable', 'array'],
+
+            // Task 13 — free-text BOM; empty list allowed.
+            'bom'                     => ['nullable', 'array', 'max:100'],
+            'bom.*.component_name'    => ['nullable', 'string', 'max:200'],
+            'bom.*.qty'               => ['nullable', 'numeric', 'min:0', 'max:99999999.9999'],
+            'bom.*.unit'              => ['nullable', 'string', 'max:20'],
+            'bom.*.is_custom'         => ['nullable', 'boolean'],
+            'bom.*.remarks'           => ['nullable', 'string', 'max:500'],
         ];
 
         foreach (array_keys(ProductIncentive::SCHEMES) as $scheme) {

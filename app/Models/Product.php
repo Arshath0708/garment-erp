@@ -81,6 +81,11 @@ class Product extends Model
         return $this->hasMany(ProductIncentive::class);
     }
 
+    public function bomItems(): HasMany
+    {
+        return $this->hasMany(ProductBomItem::class)->orderBy('sort_order');
+    }
+
     /**
      * The incentive row for one scheme, or null. Lets a Blade form ask for
      * `$product->incentive('rosctl')?->percent_1` without three eager loads

@@ -143,11 +143,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(res => res.json())
                 .then(data => {
                     if (!data.items || data.items.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-warning py-4">No items found for this Purchase Order.</td></tr>`;
+                        const hint = data.excluded_count
+                            ? ` No PO lines matched the OC category / Order Format (${data.format_name || 'format'}).`
+                            : '';
+                        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-warning py-4">No items found for this Purchase Order.${hint}</td></tr>`;
                         return;
                     }
 
                     let html = '';
+                    if (data.format_name || data.excluded_count) {
+                        html += `<tr><td colspan="8" class="small text-body-secondary bg-body-tertiary">` +
+                            `Order Format: <strong>${data.format_name || '—'}</strong>` +
+                            (data.excluded_count ? ` · ${data.excluded_count} line(s) hidden (product outside category/format)` : '') +
+                            `</td></tr>`;
+                    }
                     data.items.forEach((item, index) => {
                         html += `
                             <tr>
