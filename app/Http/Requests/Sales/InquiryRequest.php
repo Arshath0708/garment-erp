@@ -130,6 +130,10 @@ abstract class InquiryRequest extends FormRequest
      * Master can also supply unit_export / unit_po. Accept either source so
      * auto-fill from the product does not fail validation when that unit is
      * missing from the format's chip list.
+     *
+     * On update, also allow units already saved on this inquiry: the form's
+     * ensureUnitOption keeps those visible when a chip is later removed from
+     * the Order Format, and re-saving must not reject them.
      */
     private function validateItemUnits(Validator $validator): void
     {
@@ -155,6 +159,17 @@ abstract class InquiryRequest extends FormRequest
             ? collect()
             : Product::query()->whereIn('id', $productIds)->get(['id', 'unit_po', 'unit_export'])->keyBy('id');
 
+        $legacyUnits = [];
+        $inquiry = $this->route('inquiry');
+        if ($inquiry instanceof Inquiry) {
+            $legacyUnits = $inquiry->items()
+                ->whereNotNull('unit')
+                ->pluck('unit')
+                ->unique()
+                ->values()
+                ->all();
+        }
+
         foreach ((array) $this->input('items', []) as $index => $item) {
             $unit = $item['unit'] ?? null;
             if (blank($unit)) {
@@ -168,6 +183,13 @@ abstract class InquiryRequest extends FormRequest
                     ...$allowed,
                     $product->unit_export,
                     $product->unit_po,
+                ])));
+            }
+
+            if ($legacyUnits !== []) {
+                $allowed = array_values(array_unique(array_filter([
+                    ...$allowed,
+                    ...$legacyUnits,
                 ])));
             }
 

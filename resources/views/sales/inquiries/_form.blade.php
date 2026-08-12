@@ -529,7 +529,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         bomWrap.innerHTML = '';
         rows.forEach(function (row) {
-            bomWrap.appendChild(buildBomRow(row));
+            // Snapshot from Product Master — keep is_custom=false so a later
+            // save does not rewrite every line as a hand-added custom row.
+            bomWrap.appendChild(buildBomRow(Object.assign({}, row, { is_custom: false })));
         });
     }
 
@@ -537,6 +539,8 @@ document.addEventListener('DOMContentLoaded', function () {
         data = data || {};
         const node = bomTemplate.content.cloneNode(true);
         const row = node.querySelector('[data-bom-row]');
+        const isCustom = data.is_custom === true || data.is_custom === 1 || data.is_custom === '1';
+        row.dataset.isCustom = isCustom ? '1' : '0';
         row.querySelector('.js-bom-name').value = data.component_name || '';
         row.querySelector('.js-bom-qty').value = data.qty != null ? data.qty : 1;
         row.querySelector('.js-bom-unit').value = data.unit || '';
@@ -720,7 +724,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (e.target.closest('.js-add-bom')) {
             const itemEl = e.target.closest('.inquiry-item');
-            itemEl.querySelector('.bom-wrap').appendChild(buildBomRow({ qty: 1 }));
+            itemEl.querySelector('.bom-wrap').appendChild(buildBomRow({ qty: 1, is_custom: true }));
             return;
         }
         if (e.target.closest('.js-remove-bom')) {
@@ -841,7 +845,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 appendHidden('items[' + i + '][bom][' + b + '][qty]', bomEl.querySelector('.js-bom-qty').value || 0);
                 appendHidden('items[' + i + '][bom][' + b + '][unit]', bomEl.querySelector('.js-bom-unit').value);
                 appendHidden('items[' + i + '][bom][' + b + '][remarks]', bomEl.querySelector('.js-bom-remarks').value);
-                appendHidden('items[' + i + '][bom][' + b + '][is_custom]', '1');
+                appendHidden('items[' + i + '][bom][' + b + '][is_custom]', bomEl.dataset.isCustom === '0' ? '0' : '1');
             });
 
             itemEl.querySelectorAll(':scope .custom-fields-wrap [data-custom-key]').forEach(function (fieldEl) {
@@ -896,7 +900,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </template>
 
 <template id="tpl-bom">
-    <div class="row g-1 align-items-end mb-1 inquiry-bom-row" data-bom-row>
+    <div class="row g-1 align-items-end mb-1 inquiry-bom-row" data-bom-row data-is-custom="1">
         <div class="col-md-4">
             <input type="text" class="form-control form-control-sm js-bom-name" placeholder="Component" maxlength="200">
         </div>

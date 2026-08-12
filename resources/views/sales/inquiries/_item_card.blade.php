@@ -161,8 +161,9 @@
                                 $bQty = $bIsArr ? ($bom['qty'] ?? 1) : $bom->qty;
                                 $bUnit = $bIsArr ? ($bom['unit'] ?? '') : $bom->unit;
                                 $bRemarks = $bIsArr ? ($bom['remarks'] ?? '') : $bom->remarks;
+                                $bCustom = $bIsArr ? (bool) ($bom['is_custom'] ?? true) : (bool) $bom->is_custom;
                             @endphp
-                            <div class="row g-1 align-items-end mb-1 inquiry-bom-row" data-bom-row>
+                            <div class="row g-1 align-items-end mb-1 inquiry-bom-row" data-bom-row data-is-custom="{{ $bCustom ? '1' : '0' }}">
                                 <div class="col-md-4">
                                     <input type="text" class="form-control form-control-sm js-bom-name" placeholder="Component" maxlength="200" value="{{ $bName }}">
                                 </div>
