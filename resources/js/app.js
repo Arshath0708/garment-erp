@@ -83,7 +83,7 @@ window.upgradeSearchableSelect = function (el) {
      * first click. allowEmptyOption above still lets a user pick
      * "— Select —" back off the list later to clear a value they'd set.
      */
-    if (! el.multiple && el.selectedIndex === 0 && el.options[0]?.value === '') {
+    if (!el.multiple && el.selectedIndex === 0 && el.options[0]?.value === '') {
         el.selectedIndex = -1;
     }
 
@@ -114,11 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 function initCascadingSelects() {
     const children = document.querySelectorAll('select[data-cascade-parent]');
-    if (! children.length) return;
+    if (!children.length) return;
 
     children.forEach((child) => {
         const parent = document.querySelector(child.dataset.cascadeParent);
-        if (! parent) return;
+        if (!parent) return;
 
         // A child whose parent is empty starts disabled — an open dropdown
         // listing every city in the world is worse than one that says why it
@@ -140,7 +140,7 @@ function initCascadingSelects() {
             ? (select.dataset.placeholder || 'Search…')
             : (select.dataset.cascadeEmpty || 'Select the field above first');
 
-        select.disabled = ! enabled;
+        select.disabled = !enabled;
 
         if (ts) {
             enabled ? ts.enable() : ts.disable();
@@ -164,12 +164,12 @@ function initCascadingSelects() {
         applyEnabledState(select, parentValue);
         resetDescendants(select);
 
-        if (! parentValue) return;
+        if (!parentValue) return;
 
         const url = new URL(select.dataset.cascadeUrl, window.location.origin);
         url.searchParams.set(select.dataset.cascadeKey, parentValue);
 
-        if (ts) ts.load(() => {});
+        if (ts) ts.load(() => { });
 
         fetch(url, { headers: { Accept: 'application/json' } })
             .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
@@ -189,7 +189,7 @@ function initCascadingSelects() {
 
     /** Clearing a select invalidates everything hanging off it. */
     function resetDescendants(select) {
-        if (! select.dataset.cascadeChild) return;
+        if (!select.dataset.cascadeChild) return;
 
         const child = document.querySelector(select.dataset.cascadeChild);
         if (child) reload(child, '');

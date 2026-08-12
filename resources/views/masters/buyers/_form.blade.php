@@ -771,7 +771,9 @@ document.addEventListener('DOMContentLoaded', function () {
         contactRows.appendChild(row);
 
         const select = row.querySelector('select[data-searchable]');
-        if (select) window.upgradeSearchableSelect(select);
+        if (select && typeof window.upgradeSearchableSelect === 'function') {
+            window.upgradeSearchableSelect(select);
+        }
 
         row.querySelector('input')?.focus();
     });
