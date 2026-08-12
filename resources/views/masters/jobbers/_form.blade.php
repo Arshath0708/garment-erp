@@ -463,6 +463,37 @@
                      data-cascade-parent="#party_type"
                      :data-cascade-url="route('masters.jobbers.agents')"
                      data-cascade-key="party_type" />
+
+        {{-- Was missing entirely on this form — the Supplier form has had
+             it all along. Without it there was no way to enter this
+             jobber's negotiated rate, only to pick the agent. Feeds change
+             request #6's commission calculation on the Purchase Order. --}}
+        <div class="row form-line">
+            <label for="agent_commission_value" class="col-sm-4 col-lg-3 col-form-label fw-semibold">
+                Agent Commission
+            </label>
+            <div class="col-sm-8 col-lg-9">
+                <div class="input-group">
+                    <input type="number" step="0.0001" min="0"
+                           id="agent_commission_value" name="agent_commission_value"
+                           value="{{ old('agent_commission_value', $supplier?->agent_commission_value) }}"
+                           class="form-control @error('agent_commission_value') is-invalid @enderror"
+                           placeholder="0.0000">
+                    <select name="agent_commission_type" style="max-width:140px"
+                            class="form-select @error('agent_commission_type') is-invalid @enderror">
+                        @foreach(['percent' => '% Percent', 'amount' => 'Fixed amount / piece'] as $value => $text)
+                            <option value="{{ $value }}"
+                                @selected(old('agent_commission_type', $supplier?->agent_commission_type) === $value)>{{ $text }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @error('agent_commission_value')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                @error('agent_commission_type')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                <div class="form-text">
+                    "Fixed amount / piece" feeds the per-piece × quantity commission shown on this jobber's Purchase Orders.
+                </div>
+            </div>
+        </div>
     </div>
 </x-ui.form-section>
 

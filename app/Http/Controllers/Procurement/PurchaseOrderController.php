@@ -74,7 +74,7 @@ class PurchaseOrderController extends Controller implements HasMiddleware
     {
         return view('procurement.purchase-orders.show', [
             'purchaseOrder' => $purchaseOrder->load([
-                'orderConfirmation.buyer', 'orderConfirmation.category', 'supplier',
+                'orderConfirmation.buyer', 'orderConfirmation.category', 'supplier.agent',
                 'items' => fn ($q) => $q->with(['product', 'colours.sizes', 'sourceItem']),
                 'timelineEntries',
                 'creator', 'updater',

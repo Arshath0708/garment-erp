@@ -56,27 +56,12 @@ class Inquiry extends Model
     ];
 
     /**
-     * No Source master exists — same treatment as Supplier::PARTY_TYPES.
-     *
-     * @var array<string, string>
-     */
-    public const SOURCES = [
-        'direct'     => 'Direct',
-        'agent'      => 'Through Agent',
-        'referral'   => 'Referral',
-        'exhibition' => 'Exhibition',
-        'website'    => 'Website / Email',
-        'other'      => 'Other',
-    ];
-
-    /**
      * @var list<string>
      */
     protected $fillable = [
         'inquiry_date',
         'buyer_ref',
-        'source',
-        'source_other',
+        'source_id',
         'buyer_id',
         'category_id',
         'document_format_id',
@@ -113,6 +98,12 @@ class Inquiry extends Model
     public function buyer(): BelongsTo
     {
         return $this->belongsTo(Buyer::class);
+    }
+
+    /** Change request #8 — quick-add lookup, replacing the fixed SOURCES list. */
+    public function source(): BelongsTo
+    {
+        return $this->belongsTo(InquirySource::class);
     }
 
     public function category(): BelongsTo
@@ -157,14 +148,9 @@ class Inquiry extends Model
         return self::STATUSES[$this->status] ?? $this->status;
     }
 
-    /** "Other — Trade Show Referral", or the plain label for any other source. */
     public function sourceLabel(): string
     {
-        $label = self::SOURCES[$this->source] ?? $this->source;
-
-        return $this->source === 'other' && filled($this->source_other)
-            ? "{$label} — {$this->source_other}"
-            : $label;
+        return $this->source?->name ?? '—';
     }
 
     public function statusColor(): string

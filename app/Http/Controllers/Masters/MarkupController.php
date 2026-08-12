@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Masters\StoreMarkupRequest;
 use App\Http\Requests\Masters\UpdateMarkupRequest;
 use App\Models\Buyer;
+use App\Models\DefaultMarkup;
 use App\Models\Markup;
 use App\Models\Supplier;
 use App\Services\Masters\MarkupService;
@@ -186,6 +187,19 @@ class MarkupController extends Controller implements HasMiddleware
         return [
             'suppliers' => $this->party(Supplier::query(), $markup?->supplier_id),
             'buyers'    => $this->party(Buyer::query(), $markup?->buyer_id),
+
+            /*
+             * Change request #7 — a seeded preset dropdown in addition to
+             * manual entry. No management screen — see DefaultMarkupSeeder.
+             * Sent as a percent-keyed-by-id dict, same idea as $discounts
+             * below: the form fills markup_percent on selection without a
+             * round trip.
+             */
+            'defaultMarkups' => DefaultMarkup::active()->orderBy('name')->pluck('name', 'id'),
+            'defaultMarkupPercents' => DefaultMarkup::active()
+                ->pluck('markup_percent', 'id')
+                ->map(fn ($value) => (float) $value)
+                ->all(),
 
             // Every supplier's discount, so the form can fill the read-only
             // field on first paint without a round trip.

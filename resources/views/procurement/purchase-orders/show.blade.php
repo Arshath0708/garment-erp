@@ -38,6 +38,18 @@
             <dt class="col-sm-3 text-body-secondary fw-normal">Supplier</dt>
             <dd class="col-sm-9">{{ $purchaseOrder->supplier?->company_name }} ({{ $purchaseOrder->supplier?->display_code }})</dd>
 
+            {{-- Change request #6 — jobwork Agent Commission, calculated from
+                 the supplier's own negotiated rate (per piece or %). Blank
+                 rather than "—" when there is no agent at all — most POs
+                 have none, and a row that never applies is noise. --}}
+            @if($purchaseOrder->supplier?->agent_id)
+                <dt class="col-sm-3 text-body-secondary fw-normal">Agent</dt>
+                <dd class="col-sm-9">{{ $purchaseOrder->supplier->agent?->label ?: '—' }}</dd>
+
+                <dt class="col-sm-3 text-body-secondary fw-normal">Agent Commission</dt>
+                <dd class="col-sm-9">{{ $purchaseOrder->agentCommissionAmountLabel() ?: '—' }}</dd>
+            @endif
+
             <dt class="col-sm-3 text-body-secondary fw-normal">Dispatch Date</dt>
             <dd class="col-sm-9">{{ $purchaseOrder->dispatch_date?->format('d M Y') ?? '—' }}</dd>
 

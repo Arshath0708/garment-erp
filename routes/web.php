@@ -168,6 +168,10 @@ Route::middleware('auth')->group(function () {
             ->name('inquiries.products');
         Route::get('inquiries/suppliers', [InquiryController::class, 'suppliers'])
             ->name('inquiries.suppliers');
+        // Quick-add for the Source field — same shape as the Buyer form's
+        // designations/payment-terms quick-add routes.
+        Route::post('inquiries/sources', [InquiryController::class, 'storeSource'])
+            ->name('inquiries.sources.store');
 
         // Points at OrderConfirmationController, not InquiryController — the
         // route name stays sales.inquiries.convert-to-oc because it's reached

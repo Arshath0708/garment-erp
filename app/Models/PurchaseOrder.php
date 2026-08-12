@@ -119,6 +119,62 @@ class PurchaseOrder extends Model
         return (float) $this->items->sum('amount');
     }
 
+    /**
+     * Change request #6 — "commission should be calculated from a Per Piece
+     * Value" on a jobwork order. Reads straight off the supplier's own
+     * agent_commission_type/value — the one negotiated rate set on the
+     * Jobber master when the Agent was linked — rather than adding a second
+     * place to store it. Null when the supplier has no agent or no rate set;
+     * the two commission_type values already on that column say which
+     * formula applies, so both cases work without needing to ask "which
+     * kind of jobwork order is this":
+     *
+     *   'amount'  — a fixed rate per piece. Sheet's own wording: "commission
+     *               = per piece value × quantity". qty is every PO item's
+     *               qty summed, same total the PO footer already shows.
+     *   'percent' — a percentage of the order's net value (this PO's own
+     *               totalAmount() — the only real "net value" figure that
+     *               exists anywhere in the app; Agent's own calculation
+     *               basis lookup is a label, not a computed figure).
+     */
+    public function agentCommissionAmount(): ?float
+    {
+        $supplier = $this->supplier;
+
+        if (blank($supplier?->agent_id) || blank($supplier->agent_commission_value)) {
+            return null;
+        }
+
+        $value = (float) $supplier->agent_commission_value;
+
+        return $supplier->agent_commission_type === 'amount'
+            ? round($value * (int) $this->items->sum('qty'), 2)
+            : round($this->totalAmount() * $value / 100, 2);
+    }
+
+    /** "₹ 4,500.00 (₹2.50/pc × 1,800 pcs)" or "₹ 3,200.00 (2.5% of ₹1,28,000.00)" — the arithmetic alongside the figure, not just the total. */
+    public function agentCommissionAmountLabel(): ?string
+    {
+        $amount = $this->agentCommissionAmount();
+
+        if ($amount === null) {
+            return null;
+        }
+
+        $supplier = $this->supplier;
+        $formatted = '₹'.number_format($amount, 2);
+
+        if ($supplier->agent_commission_type === 'amount') {
+            $qty = (int) $this->items->sum('qty');
+
+            return "{$formatted} (₹".number_format((float) $supplier->agent_commission_value, 2)."/pc × ".number_format($qty).' pcs)';
+        }
+
+        $rate = rtrim(rtrim(number_format((float) $supplier->agent_commission_value, 4), '0'), '.');
+
+        return "{$formatted} ({$rate}% of ₹".number_format($this->totalAmount(), 2).')';
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Filtering

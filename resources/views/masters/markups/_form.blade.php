@@ -5,6 +5,9 @@
     'discounts' => [],
     'supplierAgentCommissions' => [],
     'buyerAgentCommissions'    => [],
+    // Change request #7 — seeded Default Markup presets, no management screen.
+    'defaultMarkups'        => [],
+    'defaultMarkupPercents' => [],
 ])
 
 {{--
@@ -99,6 +102,22 @@
 <x-ui.form-section title="Pricing Rules" icon="bi-percent"
                    subtitle="Applied per cost price at OC / PO entry.">
     <div class="row">
+        {{-- Change request #7 — a seeded preset in addition to typing the
+             percentage manually. Picking one fills Markup % below; the field
+             stays editable afterwards. No screen manages these presets —
+             see DefaultMarkupSeeder. --}}
+        <div class="col-md-6 mb-3">
+            <label for="default_markup_id" class="form-label fw-semibold">Default Markup</label>
+            <select id="default_markup_id" class="form-select" data-searchable
+                    data-placeholder="Pick a preset, or type a value below…">
+                <option value="">— Select a preset —</option>
+                @foreach($defaultMarkups as $id => $name)
+                    <option value="{{ $id }}">{{ $name }}</option>
+                @endforeach
+            </select>
+            <div class="form-text">Optional. Fills Markup % below — you can still edit it after.</div>
+        </div>
+
         <div class="col-md-6 mb-3">
             <label for="markup_percent" class="form-label fw-semibold">
                 Markup % <span class="req">*</span>
@@ -261,6 +280,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     [markup, sample].forEach((el) => el.addEventListener('input', recalc));
     recalc();
+
+    /* ------------------------------------------------------------------ *
+     * Change request #7 — Default Markup preset dropdown. Fills Markup %
+     * on selection; the field stays editable afterwards.
+     * ------------------------------------------------------------------ */
+    const defaultMarkupSelect = document.getElementById('default_markup_id');
+    const defaultMarkupPercents = @json($defaultMarkupPercents);
+
+    defaultMarkupSelect?.addEventListener('change', function () {
+        const id = defaultMarkupSelect.value;
+        if (! id || ! Object.prototype.hasOwnProperty.call(defaultMarkupPercents, id)) return;
+
+        markup.value = defaultMarkupPercents[id];
+        recalc();
+    });
 
     /* ------------------------------------------------------------------ *
      * Agent Commission — each party's own agent, synced the same way as

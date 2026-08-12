@@ -54,7 +54,7 @@
         </tr>
         <tr>
             <td><span class="lbl">Buyer's Ref / Season</span>{{ $inquiry->buyer_ref ?: '—' }}</td>
-            <td><span class="lbl">Source</span>{{ \App\Models\Inquiry::SOURCES[$inquiry->source] ?? '—' }}</td>
+            <td><span class="lbl">Source</span>{{ $inquiry->sourceLabel() }}</td>
             <td><span class="lbl">Expected Shipment</span>{{ $inquiry->expected_shipment_date?->format('d M Y') ?? '—' }}</td>
             <td><span class="lbl">Exchange Rate</span>{{ $inquiry->exchange_rate ?? '—' }}</td>
         </tr>

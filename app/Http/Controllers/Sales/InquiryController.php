@@ -12,6 +12,7 @@ use App\Models\Currency;
 use App\Models\DocumentFormat;
 use App\Models\FobValue;
 use App\Models\Inquiry;
+use App\Models\InquirySource;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Exports\InquiryExport;
@@ -54,6 +55,8 @@ class InquiryController extends Controller implements HasMiddleware
             new Middleware('permission:inquiry.create', only: ['create', 'store']),
             new Middleware('permission:inquiry.edit', only: ['edit', 'update']),
             new Middleware('permission:inquiry.delete', only: ['destroy']),
+            // Reachable from either the create or the edit form.
+            new Middleware('permission:inquiry.create|inquiry.edit', only: ['storeSource']),
         ];
     }
 
@@ -114,7 +117,7 @@ class InquiryController extends Controller implements HasMiddleware
     {
         return view('sales.inquiries.show', [
             'inquiry' => $inquiry->load([
-                'buyer', 'category', 'format', 'agent', 'currency',
+                'buyer', 'category', 'format', 'agent', 'currency', 'source',
                 'items' => fn ($q) => $q->with(['product', 'supplier', 'fobValue', 'colours.sizes', 'bomLines']),
                 'followUps.creator',
                 'creator', 'updater',
@@ -163,6 +166,25 @@ class InquiryController extends Controller implements HasMiddleware
         return redirect()
             ->route('sales.inquiries.index')
             ->with('success', "Inquiry \"{$inquiry->inquiry_no}\" deleted successfully.");
+    }
+
+    /**
+     * Quick-add for the Source field. Same shape as
+     * BuyerController::storeDesignation() — typing a name not already in the
+     * list adds it, rather than sending the user off to a separate screen.
+     */
+    public function storeSource(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:80'],
+        ]);
+
+        $source = InquirySource::firstOrCreate(
+            ['name' => trim($data['name'])],
+            ['status' => 'active']
+        );
+
+        return response()->json(['id' => $source->id, 'name' => $source->name]);
     }
 
     /**
@@ -224,7 +246,7 @@ class InquiryController extends Controller implements HasMiddleware
     private function loadForDocument(Inquiry $inquiry): Inquiry
     {
         return $inquiry->load([
-            'buyer', 'category', 'format.columns', 'currency',
+            'buyer', 'category', 'format.columns', 'currency', 'source',
             'items' => fn ($q) => $q->with(['product', 'supplier', 'colours.sizes']),
         ]);
     }
@@ -270,7 +292,8 @@ class InquiryController extends Controller implements HasMiddleware
             'currencies' => Currency::active()->orderBy('iso_code')->get()->pluck('label', 'id'),
 
             'statuses' => Inquiry::STATUSES,
-            'sources'  => Inquiry::SOURCES,
+            // Change request #8 — quick-add lookup, replacing the fixed list.
+            'sources'  => InquirySource::active()->orderBy('name')->pluck('name', 'id'),
 
             'financialYear'  => $financialYear,
             'numberPreview'  => $this->numbers->preview('inquiry', $financialYear) ?? "INQ/{$financialYear}/001",

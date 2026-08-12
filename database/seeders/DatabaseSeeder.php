@@ -48,6 +48,10 @@ class DatabaseSeeder extends Seeder
             // Two more Order Formats besides "Standard Format", so the
             // Inquiry / OC format picker has real choices to demo.
             OrderFormatDemoSeeder::class,
+
+            // Change request #7 — presets for the Markup form's "Default
+            // Markup" dropdown. No screen manages these.
+            DefaultMarkupSeeder::class,
         ]);
     }
 }

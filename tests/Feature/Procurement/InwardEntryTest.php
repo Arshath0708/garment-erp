@@ -39,14 +39,14 @@ class InwardEntryTest extends TestCase
         $this->user = User::factory()->create();
 
         $this->supplier = Supplier::create([
-            'display_code' => 'SUP001',
+            'display_code' => 'SUP01',
             'company_name' => 'Test Supplier Fabrics',
             'party_type'   => 'supplier',
             'status'       => 'active',
         ]);
 
         $buyer = Buyer::forceCreate([
-            'display_code' => 'BUY001',
+            'display_code' => 'BUY01',
             'company_name' => 'Test Overseas Buyer',
             'status'       => 'active',
         ]);

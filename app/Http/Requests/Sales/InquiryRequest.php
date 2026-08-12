@@ -27,19 +27,6 @@ abstract class InquiryRequest extends FormRequest
         return $this->user()->can($this->permission());
     }
 
-    /**
-     * Change request #8 — same "hidden field, blanked server-side" treatment
-     * as SupplierRequest's gst_number: the form only shows source_other when
-     * source is "other", so a value left behind by an earlier choice is
-     * dropped here rather than saved.
-     */
-    protected function prepareForValidation(): void
-    {
-        if ($this->input('source') !== 'other') {
-            $this->merge(['source_other' => null]);
-        }
-    }
-
     public function rules(): array
     {
         $requiredUnlessDraft = 'required_unless:mode,draft';
@@ -49,9 +36,8 @@ abstract class InquiryRequest extends FormRequest
 
             'inquiry_date'   => ['required', 'date'],
             'buyer_ref'      => ['nullable', 'string', 'max:100'],
-            'source'         => [$requiredUnlessDraft, 'nullable', Rule::in(array_keys(Inquiry::SOURCES))],
-            // Change request #8 — free text captured only when source is "other".
-            'source_other'   => ['required_if:source,other', 'nullable', 'string', 'max:150'],
+            // Change request #8 — quick-add lookup, replacing the fixed list.
+            'source_id'      => [$requiredUnlessDraft, 'nullable', 'integer', Rule::exists('inquiry_sources', 'id')],
             'buyer_id'       => [$requiredUnlessDraft, 'nullable', 'integer', Rule::exists('buyers', 'id')],
             'category_id'    => [$requiredUnlessDraft, 'nullable', 'integer', Rule::exists('categories', 'id')],
             'document_format_id' => [$requiredUnlessDraft, 'nullable', 'integer', Rule::exists('document_formats', 'id')],
@@ -205,6 +191,7 @@ abstract class InquiryRequest extends FormRequest
     public function attributes(): array
     {
         return [
+            'source_id'           => 'source',
             'buyer_id'            => 'buyer',
             'category_id'         => 'category',
             'document_format_id'  => 'order format',
