@@ -138,12 +138,38 @@ class InwardEntryController extends Controller implements HasMiddleware
 
     /**
      * AJAX endpoint returning Purchase Order details & item quantities for dynamic form populating.
+     *
+     * Task 14 — only PO lines whose Product matches the OC category / Order
+     * Format categories are returned (custom lines with no product stay).
      */
     public function poDetails(PurchaseOrder $purchaseOrder): JsonResponse
     {
-        $purchaseOrder->load(['supplier:id,company_name,display_code', 'items.product:id,name,code']);
+        $purchaseOrder->load([
+            'supplier:id,company_name,display_code',
+            'items.product:id,name,item_group_code,category_id',
+            'orderConfirmation:id,category_id,document_format_id',
+            'orderConfirmation.format.categories:id',
+        ]);
 
-        $items = $purchaseOrder->items->map(function ($poItem) use ($purchaseOrder) {
+        $oc = $purchaseOrder->orderConfirmation;
+        $categoryId = $oc?->category_id;
+        $formatCategoryIds = $oc?->format?->categories?->pluck('id')->map(fn ($id) => (int) $id)->all() ?? [];
+
+        $allItems = $purchaseOrder->items;
+        $items = $allItems->filter(function ($poItem) use ($categoryId, $formatCategoryIds) {
+            if (! $poItem->product_id) {
+                return true;
+            }
+
+            $productCategoryId = (int) ($poItem->product?->category_id ?? 0);
+            if ($categoryId && $productCategoryId === (int) $categoryId) {
+                return true;
+            }
+
+            return $productCategoryId && in_array($productCategoryId, $formatCategoryIds, true);
+        })->values();
+
+        $mapped = $items->map(function ($poItem) {
             $prevReceived = (int) InwardEntryItem::query()
                 ->where('purchase_order_item_id', $poItem->id)
                 ->sum('received_qty');
@@ -155,7 +181,7 @@ class InwardEntryController extends Controller implements HasMiddleware
                 'purchase_order_item_id' => $poItem->id,
                 'product_id'             => $poItem->product_id,
                 'product_name'           => $poItem->product?->name ?? 'Custom Item',
-                'product_code'           => $poItem->product?->code ?? $poItem->design_no,
+                'product_code'           => $poItem->product?->item_group_code ?? $poItem->design_no,
                 'description'            => $poItem->description,
                 'unit'                   => $poItem->unit ?? 'pcs',
                 'ordered_qty'            => $orderedQty,
@@ -170,7 +196,11 @@ class InwardEntryController extends Controller implements HasMiddleware
             'supplier_id'       => $purchaseOrder->supplier_id,
             'supplier_name'     => $purchaseOrder->supplier?->company_name,
             'po_date'           => $purchaseOrder->po_date?->format('Y-m-d'),
-            'items'             => $items,
+            'category_id'       => $categoryId,
+            'document_format_id'=> $oc?->document_format_id,
+            'format_name'       => $oc?->format?->name,
+            'excluded_count'    => $allItems->count() - $items->count(),
+            'items'             => $mapped,
         ]);
     }
 

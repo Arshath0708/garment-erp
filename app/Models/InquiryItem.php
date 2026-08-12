@@ -70,6 +70,11 @@ class InquiryItem extends Model
         return $this->hasMany(InquiryItemColour::class)->orderBy('sort_order');
     }
 
+    public function bomLines(): HasMany
+    {
+        return $this->hasMany(InquiryItemBomLine::class)->orderBy('sort_order');
+    }
+
     public function statusLabel(): string
     {
         return Inquiry::STATUSES[$this->status] ?? $this->status;

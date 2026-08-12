@@ -77,7 +77,7 @@ class ProductController extends Controller implements HasMiddleware
         return view('masters.products.show', [
             'product' => $product->load([
                 'category', 'priceBand', 'gstRate',
-                'incentives.calculationBasis', 'creator', 'updater',
+                'incentives.calculationBasis', 'bomItems', 'creator', 'updater',
             ]),
         ]);
     }
@@ -85,7 +85,7 @@ class ProductController extends Controller implements HasMiddleware
     public function edit(Product $product): View
     {
         return view('masters.products.edit', $this->formData($product) + [
-            'product' => $product->load('incentives'),
+            'product' => $product->load(['incentives', 'bomItems']),
         ]);
     }
 

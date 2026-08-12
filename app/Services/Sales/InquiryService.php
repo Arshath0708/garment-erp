@@ -132,6 +132,21 @@ class InquiryService
                 'qty'    => $qty,
                 'amount' => round($qty * (float) ($itemData['price'] ?? 0), 2),
             ]);
+
+            foreach (array_values($itemData['bom'] ?? []) as $bomIndex => $bomRow) {
+                if (blank($bomRow['component_name'] ?? null)) {
+                    continue;
+                }
+
+                $item->bomLines()->create([
+                    'sort_order'     => $bomIndex,
+                    'component_name' => $bomRow['component_name'],
+                    'qty'            => $bomRow['qty'] ?? 1,
+                    'unit'           => $bomRow['unit'] ?? null,
+                    'is_custom'      => (bool) ($bomRow['is_custom'] ?? true),
+                    'remarks'        => $bomRow['remarks'] ?? null,
+                ]);
+            }
         }
     }
 

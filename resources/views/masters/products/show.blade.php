@@ -128,6 +128,35 @@
                     </dd>
                 </dl>
             </div>
+            <div class="col-12 mt-2">
+                <h6 class="text-uppercase text-body-secondary fw-bold small border-bottom pb-2 mb-3">BOM / Components</h6>
+                @if($product->bomItems->isEmpty())
+                    <p class="text-body-secondary small mb-0">No BOM components.</p>
+                @else
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Component</th>
+                                    <th class="text-end">Qty / piece</th>
+                                    <th>Unit</th>
+                                    <th>Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($product->bomItems as $bom)
+                                    <tr>
+                                        <td>{{ $bom->component_name }}</td>
+                                        <td class="text-end font-monospace">{{ $bom->qty }}</td>
+                                        <td>{{ $bom->unit ?: '—' }}</td>
+                                        <td>{{ $bom->remarks ?: '—' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            </div>
         </div>
     </x-ui.card>
 </x-app-layout>

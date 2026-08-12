@@ -115,7 +115,7 @@ class InquiryController extends Controller implements HasMiddleware
         return view('sales.inquiries.show', [
             'inquiry' => $inquiry->load([
                 'buyer', 'category', 'format', 'agent', 'currency',
-                'items' => fn ($q) => $q->with(['product', 'supplier', 'fobValue', 'colours.sizes']),
+                'items' => fn ($q) => $q->with(['product', 'supplier', 'fobValue', 'colours.sizes', 'bomLines']),
                 'followUps.creator',
                 'creator', 'updater',
             ]),
@@ -125,7 +125,7 @@ class InquiryController extends Controller implements HasMiddleware
     public function edit(Inquiry $inquiry): View
     {
         $inquiry->load([
-            'items' => fn ($q) => $q->with('colours.sizes'),
+            'items' => fn ($q) => $q->with(['colours.sizes', 'bomLines']),
             'followUps',
         ]);
 
@@ -171,13 +171,27 @@ class InquiryController extends Controller implements HasMiddleware
      */
     public function products(Request $request): JsonResponse
     {
+        // unit_export / unit_po travel with each option so the Inquiry (and OC)
+        // item row can default Unit from Product Master — Unit Master was
+        // cancelled, so Product is the only authoritative source beyond the
+        // Order Format's own unit chips.
         $products = Product::active()
+            ->with('bomItems')
             ->when($request->filled('category_id'), fn ($q) => $q->where('category_id', $request->integer('category_id')))
             ->orderBy('name')
-            ->get(['id', 'name', 'item_group_code'])
+            ->get(['id', 'name', 'item_group_code', 'unit_po', 'unit_export'])
             ->map(fn (Product $product) => [
-                'id'   => $product->id,
-                'text' => $product->item_group_code ? "{$product->name} ({$product->item_group_code})" : $product->name,
+                'id'          => $product->id,
+                'text'        => $product->item_group_code ? "{$product->name} ({$product->item_group_code})" : $product->name,
+                'unit_po'     => $product->unit_po,
+                'unit_export' => $product->unit_export,
+                'bom'         => $product->bomItems->map(fn ($line) => [
+                    'component_name' => $line->component_name,
+                    'qty'            => (float) $line->qty,
+                    'unit'           => $line->unit,
+                    'is_custom'      => (bool) $line->is_custom,
+                    'remarks'        => $line->remarks,
+                ])->values(),
             ]);
 
         return response()->json($products);
