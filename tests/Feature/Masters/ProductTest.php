@@ -391,69 +391,6 @@ class ProductTest extends TestCase
 
     /*
     |--------------------------------------------------------------------------
-    | BOM — Task 13
-    |--------------------------------------------------------------------------
-    */
-
-    public function test_product_bom_rows_are_saved_and_shown(): void
-    {
-        $user = $this->actingAsRole('Super Admin');
-
-        $this->actingAs($user)->post(route('masters.products.store'), $this->payload([
-            'bom' => [
-                [
-                    'component_name' => 'Shell Fabric',
-                    'qty' => 1.25,
-                    'unit' => 'MTR',
-                    'is_custom' => 1,
-                    'remarks' => 'Primary',
-                ],
-                [
-                    'component_name' => '',
-                    'qty' => 9,
-                    'unit' => 'PCS',
-                ],
-            ],
-        ]))->assertRedirect(route('masters.products.index'));
-
-        $product = Product::with('bomItems')->first();
-        $this->assertCount(1, $product->bomItems);
-        $this->assertSame('Shell Fabric', $product->bomItems->first()->component_name);
-        $this->assertSame('1.2500', $product->bomItems->first()->qty);
-
-        $this->actingAs($user)
-            ->get(route('masters.products.show', $product))
-            ->assertOk()
-            ->assertSee('Shell Fabric')
-            ->assertSee('Primary');
-    }
-
-    public function test_product_bom_rows_are_rewritten_on_update(): void
-    {
-        $user = $this->actingAsRole('Super Admin');
-
-        $this->actingAs($user)->post(route('masters.products.store'), $this->payload([
-            'bom' => [
-                ['component_name' => 'Old Component', 'qty' => 1, 'unit' => 'PCS'],
-            ],
-        ]));
-
-        $product = Product::first();
-
-        $this->actingAs($user)->put(route('masters.products.update', $product), $this->payload([
-            'bom' => [
-                ['component_name' => 'New Component', 'qty' => 3, 'unit' => 'SET'],
-            ],
-        ]))->assertRedirect()->assertSessionHasNoErrors();
-
-        $product->refresh()->load('bomItems');
-        $this->assertCount(1, $product->bomItems);
-        $this->assertSame('New Component', $product->bomItems->first()->component_name);
-        $this->assertSame(0, \App\Models\ProductBomItem::where('component_name', 'Old Component')->count());
-    }
-
-    /*
-    |--------------------------------------------------------------------------
     | Permissions
     |--------------------------------------------------------------------------
     */

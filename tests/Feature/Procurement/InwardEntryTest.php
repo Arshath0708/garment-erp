@@ -45,7 +45,7 @@ class InwardEntryTest extends TestCase
             'status'       => 'active',
         ]);
 
-        $buyer = Buyer::forceCreate([
+        $buyer = Buyer::create([
             'display_code' => 'BUY001',
             'company_name' => 'Test Overseas Buyer',
             'status'       => 'active',
