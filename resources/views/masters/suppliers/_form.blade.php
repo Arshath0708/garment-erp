@@ -734,7 +734,9 @@ document.addEventListener('DOMContentLoaded', function () {
         // has to be upgraded here or it renders as a bare dropdown next to
         // three searchable ones.
         const select = row.querySelector('select[data-searchable]');
-        if (select) window.upgradeSearchableSelect(select);
+        if (select && typeof window.upgradeSearchableSelect === 'function') {
+            window.upgradeSearchableSelect(select);
+        }
 
         row.querySelector('input')?.focus();
     });
