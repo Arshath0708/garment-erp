@@ -19,6 +19,7 @@ class SupplierService
 
             $supplier->categories()->sync($data['category_ids'] ?? []);
             $supplier->products()->sync($data['product_ids'] ?? []);
+            $supplier->buyers()->sync($data['buyer_ids'] ?? []);
             $this->syncContacts($supplier, $data);
 
             return $supplier;
@@ -35,6 +36,7 @@ class SupplierService
 
             $supplier->categories()->sync($data['category_ids'] ?? []);
             $supplier->products()->sync($data['product_ids'] ?? []);
+            $supplier->buyers()->sync($data['buyer_ids'] ?? []);
             $this->syncContacts($supplier, $data);
 
             return $supplier->refresh();
@@ -66,6 +68,7 @@ class SupplierService
         return array_diff_key($data, array_flip([
             'category_ids',
             'product_ids',
+            'buyer_ids',
             'contacts',
             'contact_name',
             'contact_designation_id',

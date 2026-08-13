@@ -79,7 +79,7 @@ abstract class SupplierRequest extends FormRequest
                 'we_supply_material'       => false,
                 'requires_sample_approval' => false,
                 // Change request #5 — jobwork-only, same reasoning as the two above.
-                'client_name'              => null,
+                'buyer_ids'                => [],
                 'client_details'           => null,
             ]);
         }
@@ -254,8 +254,13 @@ abstract class SupplierRequest extends FormRequest
             'requires_sample_approval' => ['boolean'],
             'default_delivery_mode'    => ['required', Rule::in(array_keys(Supplier::DELIVERY_MODES))],
 
-            // Change request #5 — "an option to add client name and details".
-            'client_name'    => ['nullable', 'string', 'max:200'],
+            /*
+             * Change request #5, revised — "link the Client Name to the Buyer
+             * master instead of free text, and allow more than one buyer."
+             * Same shape as product_ids/category_ids above.
+             */
+            'buyer_ids'      => ['nullable', 'array'],
+            'buyer_ids.*'    => ['integer', Rule::exists('buyers', 'id')],
             'client_details' => ['nullable', 'string', 'max:2000'],
 
             // Cols Z, AA
@@ -377,6 +382,7 @@ abstract class SupplierRequest extends FormRequest
             'state_id'                 => 'state',
             'city_id'                  => 'city',
             'category_ids'             => 'product category',
+            'buyer_ids'                => 'buyer',
             'discount_percent'         => 'discount %',
             'credit_days'              => 'credit terms',
             'ifsc_code'                => 'IFSC code',

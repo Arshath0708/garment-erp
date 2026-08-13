@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Masters\StoreSupplierRequest;
 use App\Http\Requests\Masters\UpdateSupplierRequest;
 use App\Models\Agent;
+use App\Models\Buyer;
 use App\Models\Category;
 use App\Models\City;
 use App\Models\Country;
@@ -100,7 +101,9 @@ class JobberController extends Controller implements HasMiddleware
     {
         return view('masters.jobbers.show', [
             'jobber' => $jobber->load([
-                'categories:id,name', 'products:id,name', 'contacts.designation', 'supplierType',
+                'categories:id,name', 'products:id,name',
+                'buyers:id,company_name,display_code',
+                'contacts.designation', 'supplierType',
                 'country', 'state', 'city', 'agent',
                 'creator', 'updater',
             ]),
@@ -117,7 +120,7 @@ class JobberController extends Controller implements HasMiddleware
             $countryId ? (int) $countryId : null,
             $stateId ? (int) $stateId : null,
         ) + [
-            'jobber' => $jobber->load('categories:id', 'products:id', 'contacts'),
+            'jobber' => $jobber->load('categories:id', 'products:id', 'buyers:id', 'contacts'),
         ]);
     }
 
@@ -193,6 +196,10 @@ class JobberController extends Controller implements HasMiddleware
             'designations' => Designation::active()->orderBy('name')->pluck('name', 'id'),
             'categories'   => Category::active()->orderBy('name')->pluck('name', 'id'),
             'products'     => Product::active()->orderBy('name')->pluck('name', 'id'),
+            // Change request #5, revised — the jobwork "client" is now a link
+            // to the Buyer master rather than free text. get()->pluck('label')
+            // because label is an accessor, not a column.
+            'buyers'       => Buyer::active()->orderBy('company_name')->get()->pluck('label', 'id'),
             'agents'       => $this->agentsFor($partyType)->pluck('label', 'id'),
             'countries'    => Country::active()->orderBy('name')->get()->pluck('label', 'id'),
 

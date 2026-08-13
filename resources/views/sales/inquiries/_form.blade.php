@@ -92,7 +92,7 @@
     </div>
 </x-ui.form-section>
 
-<x-ui.form-section title="Order Format &amp; Terms" icon="bi-file-earmark-ruled"
+<x-ui.form-section title="Order Format & Terms" icon="bi-file-earmark-ruled"
                    subtitle="Defines the item table structure across Inquiry → OC → PO.">
     <div class="row">
         <x-ui.select name="document_format_id" label="Order Format" required col="col-md-6"
@@ -130,7 +130,7 @@
     </div>
 </x-ui.form-section>
 
-<x-ui.form-section title="Items, Costing &amp; Follow-ups" icon="bi-table"
+<x-ui.form-section title="Items, Costing & Follow-ups" icon="bi-table"
                    subtitle="Each item shows Qty / Amount up top. Expand Costing for FOB, colour and size breakdown.">
     <div id="items-wrap">
         @php $existingItems = old('items', $isEdit ? $inquiry->items : []); @endphp
@@ -176,7 +176,7 @@
     </button>
 </x-ui.form-section>
 
-<x-ui.form-section title="Delivery &amp; Packing Details" icon="bi-box-seam"
+<x-ui.form-section title="Delivery & Packing Details" icon="bi-box-seam"
                    subtitle="Pre-fills from Order Format · editable per inquiry.">
     <div class="row">
         <x-ui.textarea name="delivery_details" label="Delivery Details" required col="col-12"

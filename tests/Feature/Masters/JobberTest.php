@@ -3,6 +3,7 @@
 namespace Tests\Feature\Masters;
 
 use App\Models\Agent;
+use App\Models\Buyer;
 use App\Models\Category;
 use App\Models\City;
 use App\Models\Country;
@@ -129,5 +130,45 @@ class JobberTest extends TestCase
             'company_name' => 'Updated Jobber Name',
             'comments'     => 'Updated jobber comments',
         ]);
+    }
+
+    public function test_can_link_multiple_buyers_to_a_jobber(): void
+    {
+        $country = Country::create(['iso_code' => 'IN', 'name' => 'India']);
+        $state   = State::create(['country_id' => $country->id, 'name' => 'Tamil Nadu']);
+        $city    = City::create(['state_id' => $state->id, 'name' => 'Tirupur']);
+        $category = Category::forceCreate(['code' => 'CAT01', 'name' => 'Apparel']);
+
+        $buyerOne = Buyer::forceCreate(['display_code' => 'BUY01', 'company_name' => 'ABC Fashion Ltd']);
+        $buyerTwo = Buyer::forceCreate(['display_code' => 'BUY02', 'company_name' => 'XYZ Retail Ltd']);
+
+        $response = $this->actingAs($this->admin)->post(route('masters.jobbers.store'), [
+            'display_code' => 'JOB03',
+            'party_type'   => 'jobber',
+            'company_name' => 'Multi Buyer Jobber Co',
+            'category_ids' => [$category->id],
+            'buyer_ids'    => [$buyerOne->id, $buyerTwo->id],
+            'country_id'   => $country->id,
+            'state_id'     => $state->id,
+            'city_id'      => $city->id,
+            'primary_contact' => [
+                'name'   => 'Primary Person',
+                'mobile' => '9876543210',
+            ],
+            'status'                  => 'active',
+            'we_supply_material'      => 1,
+            'requires_sample_approval'=> 1,
+            'default_delivery_mode'   => 'direct_to_port',
+        ]);
+
+        $response->assertRedirect(route('masters.jobbers.index'));
+
+        $jobber = Supplier::where('display_code', 'JOB03')->firstOrFail();
+        $this->assertEqualsCanonicalizing([$buyerOne->id, $buyerTwo->id], $jobber->buyers->pluck('id')->all());
+
+        $showResponse = $this->actingAs($this->admin)->get(route('masters.jobbers.show', $jobber));
+        $showResponse->assertOk()
+            ->assertSee('ABC Fashion Ltd')
+            ->assertSee('XYZ Retail Ltd');
     }
 }

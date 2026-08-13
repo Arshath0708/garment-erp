@@ -7,6 +7,7 @@
     'designations' => [],
     'categories' => [],
     'products' => [],
+    'buyers' => [],
     'agents' => [],
     'countries' => [],
     // Change request #4 — "Default the Country to India".
@@ -19,6 +20,9 @@
     $selectedCategories = $supplier?->categories->pluck('id')->all() ?? [];
     // Change request #1 (revised) — multiple products, same shape as categories.
     $selectedProducts = $supplier?->products->pluck('id')->all() ?? [];
+    // Change request #5, revised — the jobwork client is now one or more
+    // linked buyers, same shape as products/categories above.
+    $selectedBuyers = $supplier?->buyers->pluck('id')->all() ?? [];
     $primary = $supplier?->contacts->firstWhere('is_primary', true);
     $extraContacts = old('contacts');
 
@@ -420,11 +424,16 @@
             </div>
         </div>
 
-        {{-- Change request #5 — "an option to add client name and details". --}}
-        <x-ui.field name="client_name" label="Client Name" :value="$supplier?->client_name"
-                    horizontal maxlength="200" placeholder="Who this jobwork is ultimately for" />
+        {{-- Change request #5, revised — "link the Client Name to the Buyer
+             master instead of a Buyer Name link in a dropdown, and allow more
+             than one buyer to be added here." Same multi-select shape as
+             Product Category / Product above. --}}
+        <x-ui.select name="buyer_ids" label="Buyer(s)" :options="$buyers"
+                     :selected="$selectedBuyers" horizontal searchable multiple
+                     placeholder="Search and select buyers…"
+                     hint="Who this jobwork is ultimately for — one or more buyers from the Buyer master." />
 
-        <x-ui.textarea name="client_details" label="Client Details" :value="$supplier?->client_details"
+        <x-ui.textarea name="client_details" label="Buyer Details" :value="$supplier?->client_details"
                        horizontal rows="3" placeholder="Optional — address, contact, or anything else worth recording" />
     </div>
 </x-ui.form-section>

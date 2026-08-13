@@ -204,7 +204,7 @@
     </div>
 </x-ui.form-section>
 
-<x-ui.form-section title="Delivery &amp; Packing Details" icon="bi-box-seam"
+<x-ui.form-section title="Delivery & Packing Details" icon="bi-box-seam"
                    subtitle="Printed at the bottom of every PO using this format. Pre-fills when a PO is created — editable per PO.">
     <div class="row">
         <x-ui.textarea name="delivery_details" label="Delivery Details" :value="$format?->delivery_details"

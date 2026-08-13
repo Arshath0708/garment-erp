@@ -99,7 +99,7 @@
 </x-ui.form-section>
 
 {{-- ==================== CONTACT ==================== --}}
-<x-ui.form-section title="Contact &amp; Address" icon="bi-geo-alt"
+<x-ui.form-section title="Contact & Address" icon="bi-geo-alt"
                    subtitle="Prints on the commission debit note.">
     <div class="form-stack">
         <x-ui.field name="phone" label="Phone" :value="$agent?->phone" required
@@ -288,7 +288,7 @@
 </x-ui.form-section>
 
 {{-- ==================== STATUS ==================== --}}
-<x-ui.form-section title="Status &amp; Remarks" icon="bi-toggle-on">
+<x-ui.form-section title="Status & Remarks" icon="bi-toggle-on">
     <div class="form-stack">
         <x-ui.select name="status" label="Status" required horizontal
                      :options="['active' => 'Active', 'inactive' => 'Inactive']"

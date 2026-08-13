@@ -277,7 +277,7 @@
     </button>
 </x-ui.form-section>
 
-<x-ui.form-section title="Delivery &amp; Packing Details" icon="bi-box-seam"
+<x-ui.form-section title="Delivery & Packing Details" icon="bi-box-seam"
                    subtitle="Pre-fills from Order Format · editable per OC · carries to PO.">
     <div class="row">
         <x-ui.textarea name="delivery_details" label="Delivery Details" required col="col-12"

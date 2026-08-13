@@ -182,7 +182,7 @@
     </div>
 </x-ui.form-section>
 
-<x-ui.form-section title="Status &amp; Notes" icon="bi-toggles">
+<x-ui.form-section title="Status & Notes" icon="bi-toggles">
     <div class="row">
         <x-ui.select name="status" label="Status" required
                      :options="['active' => 'Active', 'inactive' => 'Inactive']"

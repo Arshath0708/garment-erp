@@ -104,10 +104,21 @@
                     <dt class="col-sm-5 text-body-secondary fw-normal">Delivery Mode</dt>
                     <dd class="col-sm-7">{{ Supplier::DELIVERY_MODES[$jobber->default_delivery_mode] ?? '—' }}</dd>
 
-                    <dt class="col-sm-5 text-body-secondary fw-normal">Client Name</dt>
-                    <dd class="col-sm-7">{{ $jobber->client_name ?: '—' }}</dd>
+                    <dt class="col-sm-5 text-body-secondary fw-normal">Buyer(s)</dt>
+                    <dd class="col-sm-7">
+                        @forelse($jobber->buyers as $buyer)
+                            @can('buyer.view')
+                                <a href="{{ route('masters.buyers.show', $buyer) }}"
+                                   class="badge text-bg-light border me-1 mb-1 text-decoration-none">{{ $buyer->label }}</a>
+                            @else
+                                <span class="badge text-bg-light border me-1 mb-1">{{ $buyer->label }}</span>
+                            @endcan
+                        @empty
+                            —
+                        @endforelse
+                    </dd>
 
-                    <dt class="col-sm-5 text-body-secondary fw-normal">Client Details</dt>
+                    <dt class="col-sm-5 text-body-secondary fw-normal">Buyer Details</dt>
                     <dd class="col-sm-7" style="white-space: pre-line;">{{ $jobber->client_details ?: '—' }}</dd>
 
                     <dt class="col-sm-12 pt-3"><hr class="my-2"></dt>

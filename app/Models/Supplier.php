@@ -92,7 +92,6 @@ class Supplier extends Model
         'we_supply_material',
         'requires_sample_approval',
         'default_delivery_mode',
-        'client_name',
         'client_details',
         'status',
         'remarks',
@@ -131,6 +130,17 @@ class Supplier extends Model
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'supplier_product');
+    }
+
+    /**
+     * Jobwork's "client" — who the finished goods are ultimately for. Was a
+     * free-text `client_name` column; now linked to the Buyer master so the
+     * jobber can point at one or more real buyer records instead of a typed
+     * name that could drift from the actual buyer.
+     */
+    public function buyers(): BelongsToMany
+    {
+        return $this->belongsToMany(Buyer::class, 'supplier_buyer');
     }
 
     /**
