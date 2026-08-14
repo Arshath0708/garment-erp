@@ -43,6 +43,7 @@ class OrderConfirmationItem extends Model
             'amount'        => 'decimal:2',
             'custom_values' => 'array',
             'raised_at'     => 'datetime',
+            'shipped_at'    => 'datetime',
         ];
     }
 
@@ -71,6 +72,11 @@ class OrderConfirmationItem extends Model
         return $this->belongsTo(PurchaseOrder::class);
     }
 
+    public function exportDocument(): BelongsTo
+    {
+        return $this->belongsTo(ExportDocument::class);
+    }
+
     public function colours(): HasMany
     {
         return $this->hasMany(OrderConfirmationItemColour::class)->orderBy('sort_order');
@@ -79,5 +85,10 @@ class OrderConfirmationItem extends Model
     public function isRaised(): bool
     {
         return $this->purchase_order_id !== null;
+    }
+
+    public function isShipped(): bool
+    {
+        return $this->export_document_id !== null;
     }
 }

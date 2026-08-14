@@ -10,6 +10,8 @@ use App\Http\Controllers\Masters\JobberController;
 use App\Http\Controllers\Masters\MarkupController;
 use App\Http\Controllers\Masters\ProductController;
 use App\Http\Controllers\Masters\SupplierController;
+use App\Http\Controllers\Export\ExportDocumentChecklistController;
+use App\Http\Controllers\Export\ExportDocumentController;
 use App\Http\Controllers\Procurement\InwardEntryController;
 use App\Http\Controllers\Procurement\PurchaseOrderController;
 use App\Http\Controllers\ProfileController;
@@ -189,6 +191,8 @@ Route::middleware('auth')->group(function () {
 
         Route::post('order-confirmations/{orderConfirmation}/raise-purchase-orders', [OrderConfirmationController::class, 'raisePurchaseOrders'])
             ->name('order-confirmations.raise-purchase-orders');
+        Route::post('order-confirmations/{orderConfirmation}/raise-export-document', [ExportDocumentController::class, 'raiseFromOrderConfirmation'])
+            ->name('order-confirmations.raise-export-document');
         Route::resource('order-confirmations', OrderConfirmationController::class)
             ->parameters(['order-confirmations' => 'orderConfirmation']);
     });
@@ -210,6 +214,25 @@ Route::middleware('auth')->group(function () {
             ->name('inward-entries.approve');
         Route::resource('inward-entries', InwardEntryController::class)
             ->parameters(['inward-entries' => 'inwardEntry']);
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Export
+    |--------------------------------------------------------------------------
+    | "We pack, we ship the paperwork" — the checklist tracker for one
+    | Export Document, raised against a confirmed OC from the Sales group
+    | above (see order-confirmations.raise-export-document).
+    */
+    Route::prefix('export')->name('export.')->group(function () {
+        Route::post('documents/{document}/checklist/{checklist}', [ExportDocumentChecklistController::class, 'update'])
+            ->name('documents.checklist.update');
+        Route::delete('documents/{document}/checklist/{checklist}', [ExportDocumentChecklistController::class, 'reset'])
+            ->name('documents.checklist.reset');
+
+        Route::resource('documents', ExportDocumentController::class)
+            ->parameters(['documents' => 'document'])
+            ->only(['index', 'show', 'destroy']);
     });
 
     /*

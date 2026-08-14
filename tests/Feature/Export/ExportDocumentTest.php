@@ -1,0 +1,222 @@
+<?php
+
+namespace Tests\Feature\Export;
+
+use App\Models\Buyer;
+use App\Models\Category;
+use App\Models\Currency;
+use App\Models\DocumentChecklistType;
+use App\Models\DocumentFormat;
+use App\Models\ExportDocument;
+use App\Models\OrderConfirmation;
+use App\Models\User;
+use Database\Seeders\DocumentChecklistTypeSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Spatie\Permission\Models\Permission;
+use Tests\TestCase;
+
+class ExportDocumentTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private User $admin;
+    private User $user;
+    private OrderConfirmation $oc;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Storage::fake('public');
+        $this->seed(DocumentChecklistTypeSeeder::class);
+
+        foreach ([
+            'export-document.view', 'export-document.create', 'export-document.edit', 'export-document.delete',
+            'order-confirmation.approve',
+        ] as $perm) {
+            Permission::firstOrCreate(['name' => $perm]);
+        }
+
+        $this->admin = User::factory()->create();
+        $this->admin->givePermissionTo([
+            'export-document.view', 'export-document.create', 'export-document.edit', 'export-document.delete',
+            'order-confirmation.approve',
+        ]);
+
+        $this->user = User::factory()->create();
+
+        $buyer = Buyer::forceCreate([
+            'display_code' => 'BUY01',
+            'company_name' => 'Test Overseas Buyer',
+            'status'       => 'active',
+        ]);
+
+        $category = new Category(['name' => 'Woven Garments', 'status' => 'active']);
+        $category->code = 'CAT001';
+        $category->save();
+
+        $format = DocumentFormat::create(['name' => 'Standard Order Format', 'status' => 'active']);
+
+        $currency = new Currency(['name' => 'US Dollar', 'symbol' => '$', 'status' => 'active']);
+        $currency->iso_code = 'USD';
+        $currency->save();
+
+        $this->oc = new OrderConfirmation([
+            'buyer_id'           => $buyer->id,
+            'category_id'        => $category->id,
+            'document_format_id' => $format->id,
+            'currency_id'        => $currency->id,
+            'oc_date'            => now()->toDateString(),
+            'status'             => 'confirmed',
+        ]);
+        $this->oc->oc_num = 'GT/OC/001/26-27';
+        $this->oc->financial_year = '26-27';
+        $this->oc->save();
+
+        $this->oc->items()->create([
+            'sort_order'  => 0,
+            'design_no'   => 'D-100',
+            'description' => 'Cotton T-Shirt Blue L',
+            'unit'        => 'pcs',
+            'price'       => 5.00,
+            'qty'         => 100,
+            'amount'      => 500.00,
+        ]);
+    }
+
+    public function test_guest_cannot_access_export_documents(): void
+    {
+        $this->get(route('export.documents.index'))
+            ->assertRedirect(route('login'));
+    }
+
+    public function test_raising_export_document_creates_header_items_and_full_checklist(): void
+    {
+        $item = $this->oc->items->first();
+
+        $response = $this->actingAs($this->admin)
+            ->post(route('sales.order-confirmations.raise-export-document', $this->oc), [
+                'item_ids' => [$item->id],
+            ]);
+
+        $document = ExportDocument::first();
+        $response->assertRedirect(route('export.documents.show', $document));
+
+        $this->assertNotNull($document);
+        $this->assertSame($this->oc->id, $document->order_confirmation_id);
+        $this->assertSame('draft', $document->status);
+        $this->assertCount(1, $document->items);
+        $this->assertSame(100, $document->items->first()->qty);
+
+        $expectedRows = DocumentChecklistType::where('status', 'active')
+            ->get()
+            ->sum(fn (DocumentChecklistType $type) => $type->hasVariants() ? count($type->variant_labels) : 1);
+
+        $this->assertSame($expectedRows, $document->checklist()->count());
+        $this->assertTrue($document->checklist()->where('status', 'pending')->count() === $expectedRows);
+
+        $this->assertNotNull($item->fresh()->export_document_id);
+        $this->assertNotNull($item->fresh()->shipped_at);
+    }
+
+    public function test_cannot_raise_export_document_from_unconfirmed_oc(): void
+    {
+        $this->oc->update(['status' => 'draft']);
+        $item = $this->oc->items->first();
+
+        $this->actingAs($this->admin)
+            ->post(route('sales.order-confirmations.raise-export-document', $this->oc), [
+                'item_ids' => [$item->id],
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('warning');
+
+        $this->assertSame(0, ExportDocument::count());
+    }
+
+    public function test_uploading_a_checklist_document_marks_it_uploaded(): void
+    {
+        $document = $this->raiseDocument();
+        $entry = $document->checklist()->whereHas('type', fn ($q) => $q->where('code', 'assessed_copy'))->firstOrFail();
+
+        $file = UploadedFile::fake()->create('assessed-copy.pdf', 100, 'application/pdf');
+
+        $response = $this->actingAs($this->admin)->post(
+            route('export.documents.checklist.update', [$document, $entry]),
+            ['file' => $file, 'reference_no' => 'REF-001', 'mark_done' => 1]
+        );
+
+        $response->assertRedirect();
+        $entry->refresh();
+
+        $this->assertSame('uploaded', $entry->status);
+        $this->assertSame('REF-001', $entry->reference_no);
+        $this->assertNotNull($entry->file_path);
+        $this->assertNotNull($entry->uploaded_at);
+        $this->assertSame('in_progress', $document->fresh()->status);
+    }
+
+    public function test_uploading_ebrc_closes_the_export_document(): void
+    {
+        $document = $this->raiseDocument();
+        $entry = $document->checklist()->whereHas('type', fn ($q) => $q->where('code', 'ebrc'))->firstOrFail();
+
+        $file = UploadedFile::fake()->create('ebrc.pdf', 50, 'application/pdf');
+
+        $this->actingAs($this->admin)->post(
+            route('export.documents.checklist.update', [$document, $entry]),
+            ['file' => $file, 'mark_done' => 1]
+        );
+
+        $this->assertSame('closed', $document->fresh()->status);
+    }
+
+    public function test_resetting_a_checklist_row_reverts_to_pending(): void
+    {
+        $document = $this->raiseDocument();
+        $entry = $document->checklist()->whereHas('type', fn ($q) => $q->where('code', 'examination'))->firstOrFail();
+
+        $this->actingAs($this->admin)->post(
+            route('export.documents.checklist.update', [$document, $entry]),
+            ['mark_done' => 1, 'remarks' => 'Examined ok']
+        );
+        $this->assertSame('received', $entry->fresh()->status);
+
+        $this->actingAs($this->admin)->delete(route('export.documents.checklist.reset', [$document, $entry]));
+
+        $this->assertSame('pending', $entry->fresh()->status);
+    }
+
+    public function test_user_without_permission_cannot_raise_or_edit(): void
+    {
+        $item = $this->oc->items->first();
+
+        $this->actingAs($this->user)
+            ->post(route('sales.order-confirmations.raise-export-document', $this->oc), ['item_ids' => [$item->id]])
+            ->assertForbidden();
+
+        $document = $this->raiseDocument();
+        $entry = $document->checklist()->first();
+
+        $this->actingAs($this->user)
+            ->get(route('export.documents.show', $document))
+            ->assertForbidden();
+
+        $this->actingAs($this->user)
+            ->post(route('export.documents.checklist.update', [$document, $entry]), ['mark_done' => 1])
+            ->assertForbidden();
+    }
+
+    private function raiseDocument(): ExportDocument
+    {
+        $item = $this->oc->items->first();
+
+        $this->actingAs($this->admin)->post(route('sales.order-confirmations.raise-export-document', $this->oc), [
+            'item_ids' => [$item->id],
+        ]);
+
+        return ExportDocument::firstOrFail();
+    }
+}

@@ -82,8 +82,9 @@ class OrderConfirmationController extends Controller implements HasMiddleware
         return view('sales.order-confirmations.show', [
             'orderConfirmation' => $orderConfirmation->load([
                 'buyer', 'category', 'format', 'agent', 'currency', 'sourceInquiry',
-                'items' => fn ($q) => $q->with(['product', 'supplier', 'fobValue', 'colours.sizes', 'purchaseOrder']),
+                'items' => fn ($q) => $q->with(['product', 'supplier', 'fobValue', 'colours.sizes', 'purchaseOrder', 'exportDocument']),
                 'purchaseOrders',
+                'exportDocuments',
                 'creator', 'updater',
             ]),
         ]);
