@@ -138,7 +138,11 @@ return [
 
         'Export' => [
             'packing'         => ['label' => 'Packing',           'built' => false],
-            'export-document' => ['label' => 'Export Documents',  'actions' => ['view', 'create', 'edit', 'delete', 'generate', 'export'], 'built' => false],
+            // Phase 1 built: the Export Document header + 26-row checklist
+            // tracker (raise from OC, upload/generate/manual per row). The
+            // document-generation logic behind "generate"/"export" (Packing
+            // List, Export Invoice, VGM, etc.) is a later phase.
+            'export-document' => ['label' => 'Export Documents',  'actions' => ['view', 'create', 'edit', 'delete', 'generate', 'export'], 'built' => true],
         ],
 
         'Finance' => [

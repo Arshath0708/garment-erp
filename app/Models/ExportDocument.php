@@ -7,18 +7,21 @@ use App\Models\Concerns\HasAuditColumns;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Order Confirmation — the buyer's agreement to an inquiry's costed items, or
- * a direct contract raised without one. Confirmed lines here are what get
- * raised onto a Purchase Order, one PO per supplier.
+ * Export Document — one outward consignment to one buyer, raised from a
+ * confirmed Order Confirmation. This is the "document set" the sidebar's
+ * Export section refers to: booking, container and BL details live here,
+ * and `checklist` is the live version of the 26-row sheet this module was
+ * built from.
  *
- * `oc_num` is deliberately absent from $fillable — service-assigned, same
- * treatment as Inquiry::$inquiry_no.
+ * `doc_num` is service-assigned, absent from $fillable — same treatment as
+ * OrderConfirmation::$oc_num.
  */
-class OrderConfirmation extends Model
+class ExportDocument extends Model
 {
     use Filterable, HasAuditColumns, SoftDeletes;
 
@@ -26,64 +29,39 @@ class OrderConfirmation extends Model
      * @var array<string, string>
      */
     public const STATUSES = [
-        'draft'     => 'Draft',
-        'sent'      => 'OC Sent',
-        'confirmed' => 'Confirmed',
+        'draft'       => 'Draft',
+        'in_progress' => 'In Progress',
+        'closed'      => 'Closed',
     ];
 
     /**
      * @var array<string, string>
      */
     public const STATUS_COLORS = [
-        'draft'     => 'secondary',
-        'sent'      => 'info',
-        'confirmed' => 'success',
-    ];
-
-    /**
-     * 'direct' skips the OC document entirely: no items at this stage, the
-     * contract number is only an anchor POs are raised against later.
-     *
-     * @var array<string, string>
-     */
-    public const MODES = [
-        'oc'     => 'Order Confirmation',
-        'direct' => 'Direct Buyer Contract',
+        'draft'       => 'secondary',
+        'in_progress' => 'primary',
+        'closed'      => 'success',
     ];
 
     /**
      * @var list<string>
      */
     protected $fillable = [
-        'mode',
-        'oc_date',
-        'buyer_ref',
-        'source_inquiry_id',
+        'order_confirmation_id',
         'buyer_id',
-        'category_id',
-        'document_format_id',
-        'agent_id',
-        'agent_commission_type',
-        'agent_commission_value',
         'currency_id',
-        'incoterm',
-        'ship_method',
+        'incoterm_id',
+        'port_of_loading_id',
+        'port_of_discharge_id',
+        'shipment_method_id',
         'shipment_date',
-        'pol',
-        'pod',
-        'payment_terms',
-        'delivery_details',
-        'packing_details',
         'remarks',
         'status',
     ];
 
     protected function casts(): array
     {
-        return [
-            'oc_date'                => 'date',
-            'agent_commission_value' => 'decimal:4',
-        ];
+        return ['shipment_date' => 'date'];
     }
 
     /*
@@ -92,9 +70,9 @@ class OrderConfirmation extends Model
     |--------------------------------------------------------------------------
     */
 
-    public function sourceInquiry(): BelongsTo
+    public function orderConfirmation(): BelongsTo
     {
-        return $this->belongsTo(Inquiry::class, 'source_inquiry_id');
+        return $this->belongsTo(OrderConfirmation::class);
     }
 
     public function buyer(): BelongsTo
@@ -102,39 +80,50 @@ class OrderConfirmation extends Model
         return $this->belongsTo(Buyer::class);
     }
 
-    public function category(): BelongsTo
-    {
-        return $this->belongsTo(Category::class);
-    }
-
-    public function format(): BelongsTo
-    {
-        return $this->belongsTo(DocumentFormat::class, 'document_format_id');
-    }
-
-    public function agent(): BelongsTo
-    {
-        return $this->belongsTo(Agent::class);
-    }
-
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
     }
 
+    public function incoterm(): BelongsTo
+    {
+        return $this->belongsTo(Incoterm::class);
+    }
+
+    public function portOfLoading(): BelongsTo
+    {
+        return $this->belongsTo(Port::class, 'port_of_loading_id');
+    }
+
+    public function portOfDischarge(): BelongsTo
+    {
+        return $this->belongsTo(Port::class, 'port_of_discharge_id');
+    }
+
+    public function shipmentMethod(): BelongsTo
+    {
+        return $this->belongsTo(ShipmentMethod::class);
+    }
+
     public function items(): HasMany
     {
-        return $this->hasMany(OrderConfirmationItem::class)->orderBy('sort_order');
+        return $this->hasMany(ExportDocumentItem::class)->orderBy('sort_order');
     }
 
-    public function purchaseOrders(): HasMany
+    public function checklist(): HasMany
     {
-        return $this->hasMany(PurchaseOrder::class);
+        return $this->hasMany(ExportDocumentChecklist::class);
     }
 
-    public function exportDocuments(): HasMany
+    public function containers(): BelongsToMany
     {
-        return $this->hasMany(ExportDocument::class);
+        return $this->belongsToMany(Container::class);
+    }
+
+    /** The OC items this Export Document was raised from — set on those items, not here. */
+    public function shippedItems(): HasMany
+    {
+        return $this->hasMany(OrderConfirmationItem::class);
     }
 
     /*
@@ -153,14 +142,17 @@ class OrderConfirmation extends Model
         return self::STATUS_COLORS[$this->status] ?? 'secondary';
     }
 
-    public function isDirect(): bool
-    {
-        return $this->mode === 'direct';
-    }
-
     public function totalAmount(): float
     {
         return (float) $this->items->sum('amount');
+    }
+
+    /** "14 / 26" — how many checklist rows are past pending. */
+    public function checklistProgress(): string
+    {
+        $entries = $this->checklist;
+
+        return $entries->where('status', '!=', 'pending')->count().' / '.$entries->count();
     }
 
     /*
@@ -171,12 +163,12 @@ class OrderConfirmation extends Model
 
     public function searchable(): array
     {
-        return ['oc_num', 'buyer_ref', 'remarks'];
+        return ['doc_num', 'remarks'];
     }
 
     public function sortable(): array
     {
-        return ['id', 'oc_num', 'oc_date', 'status', 'created_at'];
+        return ['id', 'doc_num', 'shipment_date', 'status', 'created_at'];
     }
 
     public function scopeSearch(Builder $query, ?string $term): Builder

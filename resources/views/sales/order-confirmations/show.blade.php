@@ -67,18 +67,27 @@
         </dl>
 
         @php
-            // Raising a PO only makes sense once the buyer has actually
-            // confirmed the order — enforced again server-side in
-            // OrderConfirmationController::raisePurchaseOrders().
+            // Raising a PO or an Export Document only makes sense once the
+            // buyer has actually confirmed the order — enforced again
+            // server-side in OrderConfirmationController::raisePurchaseOrders()
+            // and ExportDocumentController::raiseFromOrderConfirmation().
             $canRaise = auth()->user()->can('order-confirmation.approve') && $orderConfirmation->status === 'confirmed';
+            $canShip = auth()->user()->can('export-document.create') && $orderConfirmation->status === 'confirmed';
         @endphp
 
         @if($orderConfirmation->items->isNotEmpty())
             <h6 class="fw-semibold mb-2">Items</h6>
 
+            {{-- Empty, sibling forms — every checkbox/submit below points at
+                 one of these via the form="" attribute rather than being
+                 nested inside it, since the two selections (Raise PO,
+                 Raise Export Document) share the same item table and a
+                 <form> cannot nest inside another. --}}
             @if($canRaise)
-                <form action="{{ route('sales.order-confirmations.raise-purchase-orders', $orderConfirmation) }}" method="POST" id="raise-po-form">
-                    @csrf
+                <form action="{{ route('sales.order-confirmations.raise-purchase-orders', $orderConfirmation) }}" method="POST" id="raise-po-form">@csrf</form>
+            @endif
+            @if($canShip)
+                <form action="{{ route('sales.order-confirmations.raise-export-document', $orderConfirmation) }}" method="POST" id="raise-export-form">@csrf</form>
             @endif
 
             <div class="table-responsive mb-2">
@@ -86,7 +95,10 @@
                     <thead class="table-light">
                         <tr>
                             @if($canRaise)
-                                <th style="width:32px"></th>
+                                <th style="width:32px" title="Raise PO"><i class="bi bi-cart-check"></i></th>
+                            @endif
+                            @if($canShip)
+                                <th style="width:32px" title="Raise Export Document"><i class="bi bi-box-seam"></i></th>
                             @endif
                             <th>#</th>
                             <th>Design No.</th>
@@ -99,6 +111,7 @@
                             <th class="text-end">Qty</th>
                             <th class="text-end">Amount</th>
                             <th>PO</th>
+                            <th>Export Doc</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -109,9 +122,18 @@
                                         @if($item->isRaised())
                                             <i class="bi bi-check-circle-fill text-success" title="Already raised"></i>
                                         @elseif($item->supplier_id)
-                                            <input type="checkbox" name="item_ids[]" value="{{ $item->id }}" class="form-check-input">
+                                            <input type="checkbox" name="item_ids[]" value="{{ $item->id }}" class="form-check-input" form="raise-po-form">
                                         @else
                                             <span class="text-body-secondary" data-bs-toggle="tooltip" title="No supplier set">—</span>
+                                        @endif
+                                    </td>
+                                @endif
+                                @if($canShip)
+                                    <td>
+                                        @if($item->isShipped())
+                                            <i class="bi bi-check-circle-fill text-success" title="Already on an Export Document"></i>
+                                        @else
+                                            <input type="checkbox" name="item_ids[]" value="{{ $item->id }}" class="form-check-input" form="raise-export-form">
                                         @endif
                                     </td>
                                 @endif
@@ -147,27 +169,48 @@
                                         <span class="text-body-secondary small">—</span>
                                     @endif
                                 </td>
+                                <td>
+                                    @if($item->exportDocument)
+                                        <a href="{{ route('export.documents.show', $item->exportDocument) }}" class="small">
+                                            {{ $item->exportDocument->doc_num }}
+                                        </a>
+                                    @else
+                                        <span class="text-body-secondary small">—</span>
+                                    @endif
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>
                     <tfoot>
                         <tr class="fw-semibold table-light">
-                            <td colspan="{{ $canRaise ? 9 : 8 }}" class="text-end">Total</td>
+                            <td colspan="{{ ($canRaise ? 1 : 0) + ($canShip ? 1 : 0) + 8 }}" class="text-end">Total</td>
                             <td class="text-end">{{ number_format($orderConfirmation->totalAmount(), 2) }}</td>
-                            <td></td>
+                            <td colspan="2"></td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
 
-            @if($canRaise)
-                    <button type="submit" class="btn btn-sm btn-success mb-4">
-                        <i class="bi bi-arrow-right-circle me-1"></i> Raise PO for Selected
-                    </button>
-                    <div class="form-text mb-4">Selected items are grouped by their own supplier — one PO is raised per supplier.</div>
-                </form>
-            @elseif(auth()->user()->can('order-confirmation.approve') && $orderConfirmation->status !== 'confirmed')
-                <p class="text-body-secondary small mb-4">Mark the OC Confirmed before raising a PO.</p>
+            <div class="d-flex flex-wrap gap-3 align-items-start mb-4">
+                @if($canRaise)
+                    <div>
+                        <button type="submit" form="raise-po-form" class="btn btn-sm btn-success">
+                            <i class="bi bi-arrow-right-circle me-1"></i> Raise PO for Selected
+                        </button>
+                        <div class="form-text">Grouped by supplier — one PO per supplier.</div>
+                    </div>
+                @endif
+                @if($canShip)
+                    <div>
+                        <button type="submit" form="raise-export-form" class="btn btn-sm btn-info">
+                            <i class="bi bi-box-seam me-1"></i> Raise Export Document for Selected
+                        </button>
+                        <div class="form-text">Creates one Export Document with the full document checklist.</div>
+                    </div>
+                @endif
+            </div>
+            @if(! $canRaise && ! $canShip && auth()->user()->can('order-confirmation.approve') && $orderConfirmation->status !== 'confirmed')
+                <p class="text-body-secondary small mb-4">Mark the OC Confirmed before raising a PO or Export Document.</p>
             @endif
         @else
             <p class="text-body-secondary small">No items — {{ $orderConfirmation->isDirect() ? 'items are entered at PO stage for a direct contract.' : 'add items in Edit.' }}</p>
@@ -179,6 +222,17 @@
                 @foreach($orderConfirmation->purchaseOrders as $po)
                     <a href="{{ route('procurement.purchase-orders.show', $po) }}" class="badge text-bg-{{ $po->statusColor() }} text-decoration-none">
                         {{ $po->po_num }} — {{ $po->supplier?->company_name }} ({{ $po->statusLabel() }})
+                    </a>
+                @endforeach
+            </div>
+        @endif
+
+        @if($orderConfirmation->exportDocuments->isNotEmpty())
+            <h6 class="fw-semibold mb-2">Export Documents Raised</h6>
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                @foreach($orderConfirmation->exportDocuments as $doc)
+                    <a href="{{ route('export.documents.show', $doc) }}" class="badge text-bg-{{ $doc->statusColor() }} text-decoration-none">
+                        {{ $doc->doc_num }} ({{ $doc->statusLabel() }}, {{ $doc->checklistProgress() }})
                     </a>
                 @endforeach
             </div>

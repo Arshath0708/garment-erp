@@ -52,6 +52,10 @@ class DatabaseSeeder extends Seeder
             // Change request #7 — presets for the Markup form's "Default
             // Markup" dropdown. No screen manages these.
             DefaultMarkupSeeder::class,
+
+            // The Export Document checklist's 26 row types — see
+            // "Export docs to payment receipt from buyer".
+            DocumentChecklistTypeSeeder::class,
         ]);
     }
 }

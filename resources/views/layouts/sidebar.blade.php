@@ -245,7 +245,12 @@
                         <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-boxes"></i><p>Packing</p></a></li>
                     @endcan
                     @can('export-document.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-files"></i><p>Export Documents</p></a></li>
+                        <li class="nav-item">
+                            <a href="{{ route('export.documents.index') }}"
+                               class="nav-link {{ request()->routeIs('export.documents.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-files"></i><p>Export Documents</p>
+                            </a>
+                        </li>
                     @endcan
                 @endif
 
