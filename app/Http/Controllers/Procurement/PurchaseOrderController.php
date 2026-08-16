@@ -84,7 +84,7 @@ class PurchaseOrderController extends Controller implements HasMiddleware
 
     public function edit(PurchaseOrder $purchaseOrder): View
     {
-        $purchaseOrder->load(['items.colours.sizes', 'timelineEntries']);
+        $purchaseOrder->load(['items.product', 'items.colours.sizes', 'timelineEntries']);
 
         return view('procurement.purchase-orders.edit', $this->formData() + ['purchaseOrder' => $purchaseOrder]);
     }
@@ -125,7 +125,7 @@ class PurchaseOrderController extends Controller implements HasMiddleware
         return [
             'orderConfirmations' => OrderConfirmation::query()
                 ->where('status', 'confirmed')
-                ->with(['buyer:id,company_name,display_code', 'format.units'])
+                ->with(['buyer:id,company_name,display_code', 'format.units', 'format.columns'])
                 ->orderByDesc('id')
                 ->get(['id', 'oc_num', 'buyer_id', 'category_id', 'document_format_id', 'delivery_details', 'packing_details']),
 

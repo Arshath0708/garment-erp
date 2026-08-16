@@ -59,7 +59,7 @@
             <div class="form-text">Global running sequence</div>
         </div>
 
-        <x-ui.select name="mode" label="Type" required col="col-md-3" id="mode-select"
+        <x-ui.select name="mode" label="Type" required col="col-md-3"
                      :options="$modes" :selected="$val('mode', 'oc')" />
 
         <x-ui.field name="oc_date" label="OC Date" type="date" required col="col-md-3"
@@ -334,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const deliveryEl     = document.getElementById('delivery_details');
     const packingEl      = document.getElementById('packing_details');
     const itemsWrap      = document.getElementById('items-wrap');
-    const modeSelect     = document.getElementById('mode-select');
+    const modeSelect     = document.getElementById('mode');
     const itemsSection   = document.getElementById('items-section');
     const directNote     = document.getElementById('oc-direct-note');
 
