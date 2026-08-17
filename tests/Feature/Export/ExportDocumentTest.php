@@ -189,6 +189,58 @@ class ExportDocumentTest extends TestCase
         $this->assertSame('pending', $entry->fresh()->status);
     }
 
+    public function test_insurance_option_one_cancels_draft_without_file(): void
+    {
+        $document = $this->raiseDocument();
+        $entry = $document->checklist()->whereHas('type', fn ($q) => $q->where('code', 'insurance'))->firstOrFail();
+
+        $this->actingAs($this->admin)->post(
+            route('export.documents.checklist.update', [$document, $entry]),
+            ['insurance_action' => 'cancel_draft', 'mark_done' => 1]
+        )->assertRedirect()->assertSessionHas('success');
+
+        $entry->refresh();
+        $this->assertSame('cancelled', $entry->status);
+        $this->assertNull($entry->file_path);
+        $this->assertSame('Insurance draft cancelled', $entry->remarks);
+    }
+
+    public function test_insurance_option_two_requires_bl_and_certificate_file(): void
+    {
+        $document = $this->raiseDocument();
+        $entry = $document->checklist()->whereHas('type', fn ($q) => $q->where('code', 'insurance'))->firstOrFail();
+
+        $this->actingAs($this->admin)->post(
+            route('export.documents.checklist.update', [$document, $entry]),
+            [
+                'insurance_action' => 'upload_certificate',
+                'mark_done'        => 1,
+                'bl_number'        => 'MAEU1234567',
+            ]
+        )->assertSessionHasErrors(['file', 'bl_date']);
+
+        $file = UploadedFile::fake()->create('insurance-cert.pdf', 80, 'application/pdf');
+
+        $this->actingAs($this->admin)->post(
+            route('export.documents.checklist.update', [$document, $entry]),
+            [
+                'insurance_action' => 'upload_certificate',
+                'mark_done'        => 1,
+                'file'             => $file,
+                'bl_number'        => 'MAEU1234567',
+                'bl_date'          => '2026-06-15',
+                'reference_no'     => 'POL-9988',
+            ]
+        )->assertRedirect()->assertSessionHas('success');
+
+        $entry->refresh();
+        $this->assertSame('uploaded', $entry->status);
+        $this->assertSame('POL-9988', $entry->reference_no);
+        $this->assertNotNull($entry->file_path);
+        $this->assertStringContainsString('B/L: MAEU1234567', (string) $entry->remarks);
+        $this->assertStringContainsString('B/L date: 2026-06-15', (string) $entry->remarks);
+    }
+
     public function test_user_without_permission_cannot_raise_or_edit(): void
     {
         $item = $this->oc->items->first();

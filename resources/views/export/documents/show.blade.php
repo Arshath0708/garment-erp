@@ -148,6 +148,77 @@
                                         <details>
                                             <summary class="small text-primary" style="cursor:pointer">Update</summary>
 
+                                            @if($entry->type->code === 'insurance')
+                                                <div class="mt-2 small text-body-secondary mb-2">
+                                                    Sheet #16 — cancel the draft, or upload the certificate with B/L details.
+                                                </div>
+
+                                                <form action="{{ route('export.documents.checklist.update', [$document, $entry]) }}"
+                                                      method="POST" class="row g-2 mb-3">
+                                                    @csrf
+                                                    <input type="hidden" name="insurance_action" value="cancel_draft">
+                                                    <input type="hidden" name="mark_done" value="1">
+                                                    <div class="col-12">
+                                                        <button class="btn btn-sm btn-outline-warning" type="submit"
+                                                                onclick="return confirm('Cancel / delete the insurance draft for this shipment?')">
+                                                            <i class="bi bi-x-circle me-1"></i> Option 1 — Cancel draft
+                                                        </button>
+                                                    </div>
+                                                </form>
+
+                                                <form action="{{ route('export.documents.checklist.update', [$document, $entry]) }}"
+                                                      method="POST" enctype="multipart/form-data"
+                                                      class="row g-2 js-checklist-form"
+                                                      data-type-code="insurance"
+                                                      data-ocr-url="{{ route('export.documents.checklist.ocr', [$document, $entry]) }}"
+                                                      data-ocr-supported="1">
+                                                    @csrf
+                                                    <input type="hidden" name="insurance_action" value="upload_certificate">
+                                                    <input type="hidden" name="mark_done" value="1">
+
+                                                    <div class="col-md-4">
+                                                        <label class="form-label small mb-0">Certificate file <span class="text-danger">*</span></label>
+                                                        <input type="file" name="file" class="form-control form-control-sm js-ocr-file" required
+                                                               accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,image/*,application/pdf">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label small mb-0">B/L number <span class="text-danger">*</span></label>
+                                                        <input type="text" name="bl_number" class="form-control form-control-sm"
+                                                               value="{{ old('bl_number', $entry->insuranceBlNumber()) }}" required
+                                                               placeholder="From final B/L">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label small mb-0">B/L date <span class="text-danger">*</span></label>
+                                                        <input type="date" name="bl_date" class="form-control form-control-sm"
+                                                               value="{{ old('bl_date', $entry->insuranceBlDate()) }}" required>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label small mb-0">Policy / cert no.</label>
+                                                        <input type="text" name="reference_no" value="{{ $entry->reference_no }}"
+                                                               class="form-control form-control-sm js-ocr-reference" placeholder="Filled by OCR">
+                                                    </div>
+                                                    <div class="col-md-5">
+                                                        <label class="form-label small mb-0">Remarks</label>
+                                                        <input type="text" name="remarks" value="{{ $entry->remarks }}"
+                                                               class="form-control form-control-sm js-ocr-remarks" placeholder="Extra notes">
+                                                    </div>
+                                                    <div class="col-md-3 d-flex flex-wrap gap-1 align-items-end">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary js-ocr-extract"
+                                                                @disabled(! $ocrEnabled)
+                                                                title="{{ $ocrEnabled ? 'Read the certificate with Gemini' : 'Set GEMINI_API_KEY in .env to enable' }}">
+                                                            <i class="bi bi-stars me-1"></i>Extract
+                                                        </button>
+                                                        <button class="btn btn-sm btn-primary" type="submit">
+                                                            Option 2 — Save certificate
+                                                        </button>
+                                                        @if($entry->status !== 'pending')
+                                                            <button class="btn btn-sm btn-outline-danger" type="submit"
+                                                                    form="reset-checklist-{{ $entry->id }}">Reset</button>
+                                                        @endif
+                                                    </div>
+                                                    <div class="col-12 small text-body-secondary js-ocr-status d-none"></div>
+                                                </form>
+                                            @else
                                             <form action="{{ route('export.documents.checklist.update', [$document, $entry]) }}"
                                                   method="POST" enctype="multipart/form-data"
                                                   class="row g-2 mt-2 js-checklist-form"
@@ -187,6 +258,7 @@
                                                 </div>
                                                 <div class="col-12 small text-body-secondary js-ocr-status d-none"></div>
                                             </form>
+                                            @endif
 
                                             @if($entry->status !== 'pending')
                                                 <form id="reset-checklist-{{ $entry->id }}"
@@ -220,76 +292,101 @@
             </dd>
         </dl>
     </x-ui.card>
-</x-app-layout>
 
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.js-checklist-form').forEach(function (form) {
-        const btn = form.querySelector('.js-ocr-extract');
-        if (! btn) return;
+    @push('scripts')
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.js-checklist-form').forEach(function (form) {
+            const btn = form.querySelector('.js-ocr-extract');
+            if (! btn) return;
 
-        const fileInput = form.querySelector('.js-ocr-file');
-        const refInput = form.querySelector('.js-ocr-reference');
-        const remarksInput = form.querySelector('.js-ocr-remarks');
-        const statusEl = form.querySelector('.js-ocr-status');
+            const fileInput = form.querySelector('.js-ocr-file');
+            const refInput = form.querySelector('.js-ocr-reference');
+            const remarksInput = form.querySelector('.js-ocr-remarks');
+            const statusEl = form.querySelector('.js-ocr-status');
 
-        btn.addEventListener('click', async function () {
-            if (! fileInput || ! fileInput.files.length) {
-                statusEl.classList.remove('d-none', 'text-success');
-                statusEl.classList.add('text-danger');
-                statusEl.textContent = 'Choose a PDF or image first.';
-                return;
-            }
+            btn.addEventListener('click', async function () {
+                if (! fileInput || ! fileInput.files.length) {
+                    statusEl.classList.remove('d-none', 'text-success');
+                    statusEl.classList.add('text-danger');
+                    statusEl.textContent = 'Choose a PDF or image first.';
+                    return;
+                }
 
-            const csrf = form.querySelector('input[name="_token"]')?.value
-                || document.querySelector('meta[name="csrf-token"]')?.content;
+                const csrf = form.querySelector('input[name="_token"]')?.value
+                    || document.querySelector('meta[name="csrf-token"]')?.content;
 
-            const body = new FormData();
-            body.append('file', fileInput.files[0]);
-            body.append('type_code', form.dataset.typeCode);
-            body.append('_token', csrf);
+                const xsrfMatch = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
+                const xsrf = xsrfMatch ? decodeURIComponent(xsrfMatch[1]) : '';
 
-            btn.disabled = true;
-            statusEl.classList.remove('d-none', 'text-danger', 'text-success');
-            statusEl.classList.add('text-body-secondary');
-            statusEl.textContent = 'Reading document with Gemini…';
+                const body = new FormData();
+                body.append('file', fileInput.files[0]);
+                body.append('type_code', form.dataset.typeCode);
+                body.append('_token', csrf);
 
-            try {
-                const res = await fetch(form.dataset.ocrUrl, {
-                    method: 'POST',
-                    headers: {
+                btn.disabled = true;
+                statusEl.classList.remove('d-none', 'text-danger', 'text-success');
+                statusEl.classList.add('text-body-secondary');
+                statusEl.textContent = 'Reading document with Gemini…';
+
+                try {
+                    const headers = {
                         'Accept': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest',
-                    },
-                    body,
-                });
+                    };
+                    if (csrf) headers['X-CSRF-TOKEN'] = csrf;
+                    if (xsrf) headers['X-XSRF-TOKEN'] = xsrf;
 
-                const data = await res.json().catch(function () { return {}; });
+                    const res = await fetch(form.dataset.ocrUrl, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers,
+                        body,
+                    });
 
-                if (! res.ok) {
-                    throw new Error(data.message || ('OCR failed (' + res.status + ')'));
+                    const data = await res.json().catch(function () { return {}; });
+
+                    if (res.status === 419) {
+                        throw new Error('Session expired (CSRF). Refresh the page (Ctrl+F5) and try again.');
+                    }
+                    if (! res.ok) {
+                        throw new Error(data.message || ('OCR failed (' + res.status + ')'));
+                    }
+
+                    if (data.reference_no != null && data.reference_no !== '') {
+                        refInput.value = data.reference_no;
+                    }
+                    if (data.remarks != null && data.remarks !== '') {
+                        remarksInput.value = data.remarks;
+                    }
+
+                    const blNumberInput = form.querySelector('[name="bl_number"]');
+                    const blDateInput = form.querySelector('[name="bl_date"]');
+                    const fields = data.fields || {};
+                    if (blNumberInput && fields.bl_number) {
+                        blNumberInput.value = fields.bl_number;
+                    }
+                    if (blDateInput) {
+                        const blDate = fields.bl_date || fields.document_date
+                            || (String(data.remarks || '').match(/B\/L date:\s*(\d{4}-\d{2}-\d{2})/i) || [])[1]
+                            || (String(data.remarks || '').match(/Date:\s*(\d{4}-\d{2}-\d{2})/i) || [])[1]
+                            || '';
+                        if (blDate) blDateInput.value = blDate;
+                    }
+
+                    statusEl.classList.remove('text-body-secondary', 'text-danger');
+                    statusEl.classList.add('text-success');
+                    statusEl.textContent = 'Fields filled — review them, then click Save.';
+                } catch (err) {
+                    statusEl.classList.remove('text-body-secondary', 'text-success');
+                    statusEl.classList.add('text-danger');
+                    statusEl.textContent = err.message || 'OCR failed.';
+                } finally {
+                    btn.disabled = false;
                 }
-
-                if (data.reference_no != null && data.reference_no !== '') {
-                    refInput.value = data.reference_no;
-                }
-                if (data.remarks != null && data.remarks !== '') {
-                    remarksInput.value = data.remarks;
-                }
-
-                statusEl.classList.remove('text-body-secondary', 'text-danger');
-                statusEl.classList.add('text-success');
-                statusEl.textContent = 'Fields filled — review them, then click Save.';
-            } catch (err) {
-                statusEl.classList.remove('text-body-secondary', 'text-success');
-                statusEl.classList.add('text-danger');
-                statusEl.textContent = err.message || 'OCR failed.';
-            } finally {
-                btn.disabled = false;
-            }
+            });
         });
     });
-});
-</script>
-@endpush
+    </script>
+    @endpush
+</x-app-layout>

@@ -44,17 +44,43 @@ class ExportDocumentChecklistController extends Controller implements HasMiddlew
     {
         abort_unless($checklist->export_document_id === $document->id, 404);
 
-        $data = $request->validate([
-            'file'         => ['nullable', 'file', 'max:10240'],
-            'mark_done'    => ['nullable', 'boolean'],
-            'reference_no' => ['nullable', 'string', 'max:120'],
-            'amount'       => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
-            'remarks'      => ['nullable', 'string', 'max:1000'],
-        ]);
+        $checklist->loadMissing('type');
+        $isInsurance = $checklist->type?->code === 'insurance';
 
-        $this->documents->recordChecklist($checklist, $data);
+        $rules = [
+            'file'              => ['nullable', 'file', 'max:10240'],
+            'mark_done'         => ['nullable', 'boolean'],
+            'reference_no'      => ['nullable', 'string', 'max:120'],
+            'amount'            => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+            'remarks'           => ['nullable', 'string', 'max:1000'],
+            'insurance_action'  => ['nullable', 'in:cancel_draft,upload_certificate'],
+            'bl_number'         => ['nullable', 'string', 'max:120'],
+            'bl_date'           => ['nullable', 'date'],
+        ];
 
-        return back()->with('success', "\"{$checklist->type->name}\" updated.");
+        if ($isInsurance && $request->string('insurance_action')->toString() === 'upload_certificate') {
+            $rules['file'] = ['required', 'file', 'max:10240'];
+            $rules['bl_number'] = ['required', 'string', 'max:120'];
+            $rules['bl_date'] = ['required', 'date'];
+        }
+
+        if ($isInsurance && $request->string('insurance_action')->toString() === 'cancel_draft') {
+            $rules['file'] = ['nullable'];
+        }
+
+        $data = $request->validate($rules);
+
+        try {
+            $this->documents->recordChecklist($checklist, $data);
+        } catch (RuntimeException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        $message = $isInsurance && ($data['insurance_action'] ?? null) === 'cancel_draft'
+            ? '"Insurance Certificate" — draft cancelled.'
+            : "\"{$checklist->type->name}\" updated.";
+
+        return back()->with('success', $message);
     }
 
     public function reset(ExportDocument $document, ExportDocumentChecklist $checklist): RedirectResponse

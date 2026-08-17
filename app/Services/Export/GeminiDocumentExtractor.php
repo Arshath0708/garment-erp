@@ -10,15 +10,14 @@ use Throwable;
 /**
  * Gemini OCR for Export Document uploads.
  *
- * Phase 1 focuses on sheet row #4 — CHA Checklist (`cha_checklist`) — and only
- * the "Uploaded" document types from the client sheet. Generated formats are
- * out of scope here.
+ * Only "Uploaded" sheet rows (not Generated packing/invoice formats).
+ * Enabled types are listed in PHASE1_TYPES / shown on the Document OCR desk.
  */
 class GeminiDocumentExtractor
 {
     /**
      * Uploaded checklist types we will enable over time.
-     * Phase 1 UI only exposes PHASE1_TYPES.
+     * The Document OCR UI only exposes PHASE1_TYPES.
      *
      * @var list<string>
      */
@@ -39,13 +38,11 @@ class GeminiDocumentExtractor
     ];
 
     /**
-     * Currently live in the Document OCR screen.
+     * Currently live in the Document OCR screen (all uploaded sheet rows).
      *
      * @var list<string>
      */
-    public const PHASE1_TYPES = [
-        'cha_checklist',
-    ];
+    public const PHASE1_TYPES = self::UPLOADED_TYPES;
 
     /**
      * @deprecated Use PHASE1_TYPES / UPLOADED_TYPES — kept for older checklist OCR route.
@@ -77,7 +74,19 @@ class GeminiDocumentExtractor
     public static function phase1Labels(): array
     {
         return [
-            'cha_checklist' => '#4 Checklist (from CHA)',
+            'cha_checklist'     => 'Checklist (from CHA)',
+            'e_sanchit_docs'    => 'E-Sanchit Documents',
+            'assessed_copy'     => 'Assessed Copy',
+            'leo_copy'          => 'LEO Copy',
+            'measurement_copy'  => 'Measurement Copy',
+            'clp'               => 'CLP',
+            'bl_final'          => 'Bill of Lading (Final)',
+            'insurance'         => 'Insurance Certificate',
+            'payment_received'  => 'Payment Received (Swift)',
+            'eefc_upload'       => 'Payment Proof to Bank (EEFC)',
+            'firc'              => 'FIRC',
+            'bank_certificate'  => 'Bank Certificate',
+            'ebrc'              => 'eBRC',
         ];
     }
 
@@ -163,18 +172,102 @@ class GeminiDocumentExtractor
                 'cha_name'           => 'Clearing house agent / CHA name if printed',
                 'status_or_remarks'  => 'Any status line or short note on the checklist',
             ],
+            // Sheet #5 — signed letterhead pack filed on ICEGATE e-Sanchit.
+            'e_sanchit_docs' => [
+                'ack_or_ref_no'      => 'E-Sanchit acknowledgement / IRN / upload reference if printed',
+                'document_date'      => 'Document or upload date as YYYY-MM-DD',
+                'invoice_no'         => 'Export invoice number if printed',
+                'packing_list_ref'   => 'Packing list number or reference if printed',
+                'shipping_bill_no'   => 'Shipping bill number if printed',
+                'exporter_name'      => 'Exporter / shipper name if printed',
+                'status_or_remarks'  => 'Any status line or short note on the document',
+            ],
             'leo_copy' => [
-                'leo_number' => 'LEO / Let Export Order number',
-                'leo_date'   => 'LEO date as YYYY-MM-DD',
+                'leo_number'         => 'LEO / Let Export Order number',
+                'leo_date'           => 'LEO date as YYYY-MM-DD',
+                'shipping_bill_no'   => 'Shipping bill number if printed',
+                'invoice_no'         => 'Export invoice number if printed',
+                'port_of_loading'    => 'Port of loading if printed',
+                'status_or_remarks'  => 'Any status line or short note on the LEO copy',
+            ],
+            'assessed_copy' => [
+                'assessed_ref_no'    => 'Assessed copy / customs assessment reference if printed',
+                'assessed_date'      => 'Assessment date as YYYY-MM-DD',
+                'shipping_bill_no'   => 'Shipping bill number if printed',
+                'invoice_no'         => 'Export invoice number if printed',
+                'examiner_or_office' => 'Examining officer / customs office name if printed',
+                'status_or_remarks'  => 'Any status line such as Passed for stuffing / Examined',
             ],
             'bl_final' => [
-                'bl_number' => 'Bill of Lading number',
-                'bl_date'   => 'B/L date as YYYY-MM-DD',
+                'bl_number'          => 'Bill of Lading number',
+                'bl_date'            => 'B/L date as YYYY-MM-DD',
+                'vessel_or_voyage'   => 'Vessel / voyage if printed',
+                'container_no'       => 'Container number if printed',
+                'port_of_loading'    => 'Port of loading if printed',
+                'port_of_discharge'  => 'Port of discharge if printed',
+                'status_or_remarks'  => 'Any status line or short note on the B/L',
             ],
-            'assessed_copy', 'measurement_copy', 'clp', 'e_sanchit_docs',
-            'insurance', 'payment_received', 'eefc_upload', 'firc', 'bank_certificate', 'ebrc' => [
-                'reference_no' => 'Primary reference / document number if printed',
-                'date'         => 'Document date as YYYY-MM-DD',
+            'clp' => [
+                'clp_ref_no'         => 'CLP / container load plan reference if printed',
+                'document_date'      => 'Document date as YYYY-MM-DD',
+                'container_no'       => 'Container number if printed',
+                'seal_no'            => 'Seal number if printed',
+                'shipping_bill_no'   => 'Shipping bill number if printed',
+                'status_or_remarks'  => 'Any status line or short note on the CLP',
+            ],
+            'measurement_copy' => [
+                'measurement_ref'    => 'Measurement copy reference if printed',
+                'document_date'      => 'Document date as YYYY-MM-DD',
+                'container_no'       => 'Container number if printed',
+                'cbm_or_volume'      => 'CBM / volume if printed',
+                'gross_weight'       => 'Gross weight if printed',
+                'status_or_remarks'  => 'Any status line or short note',
+            ],
+            'insurance' => [
+                'policy_or_cert_no'  => 'Insurance policy / certificate number',
+                'document_date'      => 'Certificate / policy date as YYYY-MM-DD',
+                'bl_number'          => 'Bill of lading number if printed',
+                'bl_date'            => 'Bill of lading date as YYYY-MM-DD if printed; if only one date appears on the certificate, use that same date here',
+                'insured_amount'     => 'Insured amount / sum insured if printed',
+                'insurer_name'       => 'Insurance company name if printed',
+                'status_or_remarks'  => 'Any status line or short note',
+            ],
+            'payment_received' => [
+                'swift_or_ref_no'    => 'Swift / UTR / payment reference number',
+                'payment_date'       => 'Payment date as YYYY-MM-DD',
+                'amount'             => 'Payment amount with currency if printed',
+                'payer_or_bank'      => 'Payer / remitting bank if printed',
+                'invoice_no'         => 'Related invoice number if printed',
+                'status_or_remarks'  => 'Any status line or short note',
+            ],
+            'eefc_upload' => [
+                'eefc_ref_no'        => 'EEFC / bank payment proof reference',
+                'document_date'      => 'Document date as YYYY-MM-DD',
+                'amount'             => 'Amount credited if printed',
+                'bank_name'          => 'Bank name if printed',
+                'status_or_remarks'  => 'Any status line or short note',
+            ],
+            'firc' => [
+                'firc_no'            => 'FIRC number',
+                'document_date'      => 'FIRC date as YYYY-MM-DD',
+                'amount'             => 'FIRC amount with currency if printed',
+                'bank_name'          => 'Issuing bank if printed',
+                'status_or_remarks'  => 'Any status line or short note',
+            ],
+            'bank_certificate' => [
+                'certificate_no'     => 'Bank certificate number',
+                'document_date'      => 'Certificate date as YYYY-MM-DD',
+                'amount'             => 'Amount if printed',
+                'bank_name'          => 'Issuing bank if printed',
+                'status_or_remarks'  => 'Any status line or short note',
+            ],
+            'ebrc' => [
+                'ebrc_no'            => 'eBRC number',
+                'document_date'      => 'eBRC date as YYYY-MM-DD',
+                'shipping_bill_no'   => 'Shipping bill number if printed',
+                'invoice_no'         => 'Invoice number if printed',
+                'amount'             => 'Realised amount if printed',
+                'status_or_remarks'  => 'Any status line or short note',
             ],
             default => [],
         };
@@ -191,6 +284,18 @@ class GeminiDocumentExtractor
 
         $context = match ($typeCode) {
             'cha_checklist' => 'This is an Indian export CHA checklist / customs filing checklist received from the Clearing House Agent after documents were uploaded to the customs website.',
+            'e_sanchit_docs' => 'This is an Indian ICEGATE e-Sanchit document pack (export invoice / packing list / declaration) on the exporter letterhead, signed and stamped for customs upload.',
+            'assessed_copy' => 'This is an Indian customs Assessed Copy / examination copy emailed after goods are examined and passed for stuffing.',
+            'leo_copy' => 'This is an Indian customs LEO (Let Export Order) copy — the final customs permission to export, showing LEO number and date.',
+            'clp' => 'This is a Container Load Plan (CLP) received from the CHA for an export shipment.',
+            'measurement_copy' => 'This is a measurement / volume copy for an export container or cargo.',
+            'bl_final' => 'This is a final ocean Bill of Lading (B/L) for an export shipment.',
+            'insurance' => 'This is a marine cargo insurance certificate / policy for an export shipment.',
+            'payment_received' => 'This is a Swift / payment advice showing foreign inward remittance from the buyer.',
+            'eefc_upload' => 'This is bank proof of payment release / credit into an EEFC account.',
+            'firc' => 'This is a Foreign Inward Remittance Certificate (FIRC) issued by a bank.',
+            'bank_certificate' => 'This is a bank certificate related to export proceeds realisation.',
+            'ebrc' => 'This is an electronic Bank Realisation Certificate (eBRC) from the RBI / DGFT ecosystem.',
             default => 'This is an export-shipping document scan for a garment exporter.',
         };
 
@@ -266,17 +371,248 @@ PROMPT;
                 }
                 break;
 
+            case 'e_sanchit_docs':
+                $reference = $nullIfBlank($fields['ack_or_ref_no'] ?? null)
+                    ?? $nullIfBlank($fields['invoice_no'] ?? null)
+                    ?? $nullIfBlank($fields['packing_list_ref'] ?? null);
+
+                if ($date = $nullIfBlank($fields['document_date'] ?? null)) {
+                    $remarksParts[] = 'Date: '.$date;
+                }
+                if ($inv = $nullIfBlank($fields['invoice_no'] ?? null)) {
+                    $remarksParts[] = 'Invoice: '.$inv;
+                }
+                if ($pl = $nullIfBlank($fields['packing_list_ref'] ?? null)) {
+                    $remarksParts[] = 'PL: '.$pl;
+                }
+                if ($sb = $nullIfBlank($fields['shipping_bill_no'] ?? null)) {
+                    $remarksParts[] = 'SB: '.$sb;
+                }
+                if ($exporter = $nullIfBlank($fields['exporter_name'] ?? null)) {
+                    $remarksParts[] = 'Exporter: '.$exporter;
+                }
+                if ($note = $nullIfBlank($fields['status_or_remarks'] ?? null)) {
+                    $remarksParts[] = $note;
+                }
+                break;
+
             case 'bl_final':
                 $reference = $nullIfBlank($fields['bl_number'] ?? null);
                 if ($date = $nullIfBlank($fields['bl_date'] ?? null)) {
                     $remarksParts[] = 'B/L date: '.$date;
                 }
+                if ($vessel = $nullIfBlank($fields['vessel_or_voyage'] ?? null)) {
+                    $remarksParts[] = 'Vessel: '.$vessel;
+                }
+                if ($container = $nullIfBlank($fields['container_no'] ?? null)) {
+                    $remarksParts[] = 'Container: '.$container;
+                }
+                if ($pol = $nullIfBlank($fields['port_of_loading'] ?? null)) {
+                    $remarksParts[] = 'POL: '.$pol;
+                }
+                if ($pod = $nullIfBlank($fields['port_of_discharge'] ?? null)) {
+                    $remarksParts[] = 'POD: '.$pod;
+                }
+                if ($note = $nullIfBlank($fields['status_or_remarks'] ?? null)) {
+                    $remarksParts[] = $note;
+                }
+                break;
+
+            case 'clp':
+                $reference = $nullIfBlank($fields['clp_ref_no'] ?? null)
+                    ?? $nullIfBlank($fields['container_no'] ?? null);
+                if ($date = $nullIfBlank($fields['document_date'] ?? null)) {
+                    $remarksParts[] = 'Date: '.$date;
+                }
+                if ($container = $nullIfBlank($fields['container_no'] ?? null)) {
+                    $remarksParts[] = 'Container: '.$container;
+                }
+                if ($seal = $nullIfBlank($fields['seal_no'] ?? null)) {
+                    $remarksParts[] = 'Seal: '.$seal;
+                }
+                if ($sb = $nullIfBlank($fields['shipping_bill_no'] ?? null)) {
+                    $remarksParts[] = 'SB: '.$sb;
+                }
+                if ($note = $nullIfBlank($fields['status_or_remarks'] ?? null)) {
+                    $remarksParts[] = $note;
+                }
+                break;
+
+            case 'measurement_copy':
+                $reference = $nullIfBlank($fields['measurement_ref'] ?? null)
+                    ?? $nullIfBlank($fields['container_no'] ?? null);
+                if ($date = $nullIfBlank($fields['document_date'] ?? null)) {
+                    $remarksParts[] = 'Date: '.$date;
+                }
+                if ($container = $nullIfBlank($fields['container_no'] ?? null)) {
+                    $remarksParts[] = 'Container: '.$container;
+                }
+                if ($cbm = $nullIfBlank($fields['cbm_or_volume'] ?? null)) {
+                    $remarksParts[] = 'CBM: '.$cbm;
+                }
+                if ($gw = $nullIfBlank($fields['gross_weight'] ?? null)) {
+                    $remarksParts[] = 'GW: '.$gw;
+                }
+                if ($note = $nullIfBlank($fields['status_or_remarks'] ?? null)) {
+                    $remarksParts[] = $note;
+                }
+                break;
+
+            case 'insurance':
+                $reference = $nullIfBlank($fields['policy_or_cert_no'] ?? null)
+                    ?? $nullIfBlank($fields['bl_number'] ?? null);
+                // Certificates often print one date only — use it as B/L date when
+                // a separate B/L date line is missing (fills the #16 form field).
+                if (! $nullIfBlank($fields['bl_date'] ?? null) && ($docDate = $nullIfBlank($fields['document_date'] ?? null))) {
+                    $fields['bl_date'] = $docDate;
+                }
+                if ($date = $nullIfBlank($fields['document_date'] ?? null)) {
+                    $remarksParts[] = 'Date: '.$date;
+                }
+                if ($bl = $nullIfBlank($fields['bl_number'] ?? null)) {
+                    $remarksParts[] = 'B/L: '.$bl;
+                }
+                if ($blDate = $nullIfBlank($fields['bl_date'] ?? null)) {
+                    $remarksParts[] = 'B/L date: '.$blDate;
+                }
+                if ($amt = $nullIfBlank($fields['insured_amount'] ?? null)) {
+                    $remarksParts[] = 'Insured: '.$amt;
+                }
+                if ($insurer = $nullIfBlank($fields['insurer_name'] ?? null)) {
+                    $remarksParts[] = 'Insurer: '.$insurer;
+                }
+                if ($note = $nullIfBlank($fields['status_or_remarks'] ?? null)) {
+                    $remarksParts[] = $note;
+                }
+                break;
+
+            case 'payment_received':
+                $reference = $nullIfBlank($fields['swift_or_ref_no'] ?? null);
+                if ($date = $nullIfBlank($fields['payment_date'] ?? null)) {
+                    $remarksParts[] = 'Date: '.$date;
+                }
+                if ($amt = $nullIfBlank($fields['amount'] ?? null)) {
+                    $remarksParts[] = 'Amount: '.$amt;
+                }
+                if ($payer = $nullIfBlank($fields['payer_or_bank'] ?? null)) {
+                    $remarksParts[] = 'From: '.$payer;
+                }
+                if ($inv = $nullIfBlank($fields['invoice_no'] ?? null)) {
+                    $remarksParts[] = 'Invoice: '.$inv;
+                }
+                if ($note = $nullIfBlank($fields['status_or_remarks'] ?? null)) {
+                    $remarksParts[] = $note;
+                }
+                break;
+
+            case 'eefc_upload':
+                $reference = $nullIfBlank($fields['eefc_ref_no'] ?? null);
+                if ($date = $nullIfBlank($fields['document_date'] ?? null)) {
+                    $remarksParts[] = 'Date: '.$date;
+                }
+                if ($amt = $nullIfBlank($fields['amount'] ?? null)) {
+                    $remarksParts[] = 'Amount: '.$amt;
+                }
+                if ($bank = $nullIfBlank($fields['bank_name'] ?? null)) {
+                    $remarksParts[] = 'Bank: '.$bank;
+                }
+                if ($note = $nullIfBlank($fields['status_or_remarks'] ?? null)) {
+                    $remarksParts[] = $note;
+                }
+                break;
+
+            case 'firc':
+                $reference = $nullIfBlank($fields['firc_no'] ?? null);
+                if ($date = $nullIfBlank($fields['document_date'] ?? null)) {
+                    $remarksParts[] = 'Date: '.$date;
+                }
+                if ($amt = $nullIfBlank($fields['amount'] ?? null)) {
+                    $remarksParts[] = 'Amount: '.$amt;
+                }
+                if ($bank = $nullIfBlank($fields['bank_name'] ?? null)) {
+                    $remarksParts[] = 'Bank: '.$bank;
+                }
+                if ($note = $nullIfBlank($fields['status_or_remarks'] ?? null)) {
+                    $remarksParts[] = $note;
+                }
+                break;
+
+            case 'bank_certificate':
+                $reference = $nullIfBlank($fields['certificate_no'] ?? null);
+                if ($date = $nullIfBlank($fields['document_date'] ?? null)) {
+                    $remarksParts[] = 'Date: '.$date;
+                }
+                if ($amt = $nullIfBlank($fields['amount'] ?? null)) {
+                    $remarksParts[] = 'Amount: '.$amt;
+                }
+                if ($bank = $nullIfBlank($fields['bank_name'] ?? null)) {
+                    $remarksParts[] = 'Bank: '.$bank;
+                }
+                if ($note = $nullIfBlank($fields['status_or_remarks'] ?? null)) {
+                    $remarksParts[] = $note;
+                }
+                break;
+
+            case 'ebrc':
+                $reference = $nullIfBlank($fields['ebrc_no'] ?? null)
+                    ?? $nullIfBlank($fields['shipping_bill_no'] ?? null);
+                if ($date = $nullIfBlank($fields['document_date'] ?? null)) {
+                    $remarksParts[] = 'Date: '.$date;
+                }
+                if ($sb = $nullIfBlank($fields['shipping_bill_no'] ?? null)) {
+                    $remarksParts[] = 'SB: '.$sb;
+                }
+                if ($inv = $nullIfBlank($fields['invoice_no'] ?? null)) {
+                    $remarksParts[] = 'Invoice: '.$inv;
+                }
+                if ($amt = $nullIfBlank($fields['amount'] ?? null)) {
+                    $remarksParts[] = 'Amount: '.$amt;
+                }
+                if ($note = $nullIfBlank($fields['status_or_remarks'] ?? null)) {
+                    $remarksParts[] = $note;
+                }
                 break;
 
             case 'leo_copy':
-                $reference = $nullIfBlank($fields['leo_number'] ?? null);
+                $reference = $nullIfBlank($fields['leo_number'] ?? null)
+                    ?? $nullIfBlank($fields['shipping_bill_no'] ?? null);
+
                 if ($date = $nullIfBlank($fields['leo_date'] ?? null)) {
                     $remarksParts[] = 'LEO date: '.$date;
+                }
+                if ($sb = $nullIfBlank($fields['shipping_bill_no'] ?? null)) {
+                    $remarksParts[] = 'SB: '.$sb;
+                }
+                if ($inv = $nullIfBlank($fields['invoice_no'] ?? null)) {
+                    $remarksParts[] = 'Invoice: '.$inv;
+                }
+                if ($port = $nullIfBlank($fields['port_of_loading'] ?? null)) {
+                    $remarksParts[] = 'Port: '.$port;
+                }
+                if ($note = $nullIfBlank($fields['status_or_remarks'] ?? null)) {
+                    $remarksParts[] = $note;
+                }
+                break;
+
+            case 'assessed_copy':
+                $reference = $nullIfBlank($fields['assessed_ref_no'] ?? null)
+                    ?? $nullIfBlank($fields['shipping_bill_no'] ?? null)
+                    ?? $nullIfBlank($fields['invoice_no'] ?? null);
+
+                if ($date = $nullIfBlank($fields['assessed_date'] ?? null)) {
+                    $remarksParts[] = 'Date: '.$date;
+                }
+                if ($sb = $nullIfBlank($fields['shipping_bill_no'] ?? null)) {
+                    $remarksParts[] = 'SB: '.$sb;
+                }
+                if ($inv = $nullIfBlank($fields['invoice_no'] ?? null)) {
+                    $remarksParts[] = 'Invoice: '.$inv;
+                }
+                if ($office = $nullIfBlank($fields['examiner_or_office'] ?? null)) {
+                    $remarksParts[] = 'Office: '.$office;
+                }
+                if ($note = $nullIfBlank($fields['status_or_remarks'] ?? null)) {
+                    $remarksParts[] = $note;
                 }
                 break;
 

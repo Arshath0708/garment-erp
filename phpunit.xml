@@ -23,21 +23,14 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
-        <!-- MySQL, not the Laravel default of sqlite::memory: — this environment
-             has no pdo_sqlite, and testing against the same engine as production
-             catches MySQL-specific issues (enum, generated columns, index limits)
-             that sqlite silently accepts. Create it once:
-             CREATE DATABASE guru_traders_test; -->
-        <env name="DB_CONNECTION" value="mysql"/>
-        <env name="DB_HOST" value="127.0.0.1"/>
-        <env name="DB_PORT" value="3306"/>
-        <env name="DB_DATABASE" value="guru_traders_test"/>
-        <env name="DB_USERNAME" value="root"/>
-        <env name="DB_PASSWORD" value=""/>
-        <env name="DB_URL" value=""/>
+        <!-- force=true is required so these override .env — otherwise RefreshDatabase
+             wipes the local development database.sqlite. -->
+        <env name="DB_CONNECTION" value="sqlite" force="true"/>
+        <env name="DB_DATABASE" value=":memory:" force="true"/>
+        <env name="DB_URL" value="" force="true"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
-        <env name="SESSION_DRIVER" value="array"/>
+        <env name="SESSION_DRIVER" value="array" force="true"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>

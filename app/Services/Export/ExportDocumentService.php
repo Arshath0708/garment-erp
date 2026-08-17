@@ -130,13 +130,65 @@ class ExportDocumentService
     }
 
     /**
-     * @param  array{file?: ?UploadedFile, mark_done?: bool, reference_no?: ?string, amount?: ?float, remarks?: ?string}  $data
+     * @param  array{
+     *     file?: ?UploadedFile,
+     *     mark_done?: bool,
+     *     reference_no?: ?string,
+     *     amount?: ?float,
+     *     remarks?: ?string,
+     *     insurance_action?: ?string,
+     *     bl_number?: ?string,
+     *     bl_date?: ?string
+     * }  $data
      */
     public function recordChecklist(ExportDocumentChecklist $entry, array $data): ExportDocumentChecklist
     {
         return DB::transaction(function () use ($entry, $data) {
             $type = $entry->type;
             $file = $data['file'] ?? null;
+
+            if ($type->code === 'insurance' && ($data['insurance_action'] ?? null) === 'cancel_draft') {
+                if ($entry->hasFile()) {
+                    Storage::disk('public')->delete($entry->file_path);
+                }
+
+                $entry->file_path = null;
+                $entry->original_name = null;
+                $entry->uploaded_at = null;
+                $entry->generated_at = now();
+                $entry->status = 'cancelled';
+                $entry->reference_no = $data['reference_no'] ?? $entry->reference_no;
+                $entry->remarks = filled($data['remarks'] ?? null)
+                    ? $data['remarks']
+                    : 'Insurance draft cancelled';
+                $entry->save();
+
+                $this->syncShipmentStatus($entry->exportDocument, $type);
+
+                return $entry->refresh();
+            }
+
+            if ($type->code === 'insurance' && ($data['insurance_action'] ?? null) === 'upload_certificate') {
+                $blNumber = trim((string) ($data['bl_number'] ?? ''));
+                $blDate = trim((string) ($data['bl_date'] ?? ''));
+
+                if (! $file instanceof UploadedFile) {
+                    throw new RuntimeException('Upload the insurance certificate for option 2.');
+                }
+                if ($blNumber === '' || $blDate === '') {
+                    throw new RuntimeException('B/L number and B/L date are required to create the insurance certificate.');
+                }
+
+                $data['remarks'] = $this->composeInsuranceRemarks(
+                    $data['remarks'] ?? null,
+                    $blNumber,
+                    $blDate
+                );
+
+                if (blank($data['reference_no'] ?? null)) {
+                    $data['reference_no'] = $blNumber;
+                }
+            }
 
             if ($file instanceof UploadedFile) {
                 if ($entry->hasFile()) {
@@ -187,6 +239,8 @@ class ExportDocumentService
             'original_name' => null,
             'uploaded_at'   => null,
             'generated_at'  => null,
+            'reference_no'  => null,
+            'remarks'       => null,
         ]);
 
         if ($entry->exportDocument->status === 'closed') {
@@ -194,6 +248,25 @@ class ExportDocumentService
         }
 
         return $entry;
+    }
+
+    private function composeInsuranceRemarks(?string $remarks, string $blNumber, string $blDate): string
+    {
+        $parts = [];
+        $parts[] = 'B/L: '.$blNumber;
+        $parts[] = 'B/L date: '.$blDate;
+
+        $existing = trim((string) $remarks);
+        if ($existing !== '') {
+            // Drop prior B/L lines so re-saves do not stack duplicates.
+            $existing = preg_replace('/B\/L(?: date)?:\s*[^·]+(?:\s*·\s*)?/i', '', $existing) ?? $existing;
+            $existing = trim($existing, " \t·");
+            if ($existing !== '') {
+                $parts[] = $existing;
+            }
+        }
+
+        return implode(' · ', $parts);
     }
 
     /**

@@ -91,8 +91,14 @@ class DocumentOcrTest extends TestCase
         $this->actingAs($this->admin)
             ->get(route('export.ocr.index'))
             ->assertOk()
-            ->assertSee('Document OCR', false)
-            ->assertSee('#4 Checklist', false);
+            ->assertSee('Checklist (from CHA)', false)
+            ->assertSee('E-Sanchit Documents', false)
+            ->assertSee('Assessed Copy', false)
+            ->assertSee('LEO Copy', false)
+            ->assertSee('CLP', false)
+            ->assertSee('Bill of Lading (Final)', false)
+            ->assertSee('Insurance Certificate', false)
+            ->assertSee('eBRC', false);
     }
 
     public function test_ocr_requires_gemini_key(): void
@@ -143,14 +149,119 @@ class DocumentOcrTest extends TestCase
             ->assertJsonFragment(['remarks' => 'Date: 2026-08-15 · SB: SB1234567 · Invoice: INV/001 · CHA: Demo CHA Pvt Ltd · Filed on ICEGATE']);
     }
 
-    public function test_ocr_rejects_non_phase1_type_on_desk(): void
+    public function test_ocr_extracts_e_sanchit_fields(): void
+    {
+        config([
+            'services.gemini.key'   => 'test-key',
+            'services.gemini.model' => 'gemini-2.5-flash',
+        ]);
+
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [[
+                    'content' => [
+                        'parts' => [[
+                            'text' => json_encode([
+                                'ack_or_ref_no'     => 'ESAN/ACK/91',
+                                'document_date'     => '2026-08-14',
+                                'invoice_no'        => 'GT/EXP/001/2026-27',
+                                'packing_list_ref'  => 'GT/PL/001/2026-27',
+                                'shipping_bill_no'  => 'SB-7845123',
+                                'exporter_name'     => 'Guru Traders',
+                                'status_or_remarks' => 'Ready for ICEGATE upload',
+                            ]),
+                        ]],
+                    ],
+                ]],
+            ], 200),
+        ]);
+
+        $this->actingAs($this->admin)
+            ->postJson(route('export.ocr.extract'), [
+                'file'      => UploadedFile::fake()->image('esan.jpg'),
+                'type_code' => 'e_sanchit_docs',
+            ])
+            ->assertOk()
+            ->assertJsonPath('reference_no', 'ESAN/ACK/91')
+            ->assertJsonFragment([
+                'remarks' => 'Date: 2026-08-14 · Invoice: GT/EXP/001/2026-27 · PL: GT/PL/001/2026-27 · SB: SB-7845123 · Exporter: Guru Traders · Ready for ICEGATE upload',
+            ]);
+    }
+
+    public function test_ocr_extracts_assessed_and_leo_fields(): void
+    {
+        config([
+            'services.gemini.key'   => 'test-key',
+            'services.gemini.model' => 'gemini-2.5-flash',
+        ]);
+
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::sequence()
+                ->push([
+                    'candidates' => [[
+                        'content' => [
+                            'parts' => [[
+                                'text' => json_encode([
+                                    'assessed_ref_no'    => 'ASC/NS/1',
+                                    'assessed_date'      => '2025-04-09',
+                                    'shipping_bill_no'   => 'SB-1',
+                                    'invoice_no'         => 'INV-1',
+                                    'examiner_or_office' => 'Nhava Sheva Customs',
+                                    'status_or_remarks'  => 'Passed for stuffing',
+                                ]),
+                            ]],
+                        ],
+                    ]],
+                ], 200)
+                ->push([
+                    'candidates' => [[
+                        'content' => [
+                            'parts' => [[
+                                'text' => json_encode([
+                                    'leo_number'        => 'LEO/NS/1',
+                                    'leo_date'          => '2025-04-10',
+                                    'shipping_bill_no'  => 'SB-1',
+                                    'invoice_no'        => 'INV-1',
+                                    'port_of_loading'   => 'Nhava Sheva',
+                                    'status_or_remarks' => 'LEO granted',
+                                ]),
+                            ]],
+                        ],
+                    ]],
+                ], 200),
+        ]);
+
+        $this->actingAs($this->admin)
+            ->postJson(route('export.ocr.extract'), [
+                'file'      => UploadedFile::fake()->image('assessed.jpg'),
+                'type_code' => 'assessed_copy',
+            ])
+            ->assertOk()
+            ->assertJsonPath('reference_no', 'ASC/NS/1')
+            ->assertJsonFragment([
+                'remarks' => 'Date: 2025-04-09 · SB: SB-1 · Invoice: INV-1 · Office: Nhava Sheva Customs · Passed for stuffing',
+            ]);
+
+        $this->actingAs($this->admin)
+            ->postJson(route('export.ocr.extract'), [
+                'file'      => UploadedFile::fake()->image('leo.jpg'),
+                'type_code' => 'leo_copy',
+            ])
+            ->assertOk()
+            ->assertJsonPath('reference_no', 'LEO/NS/1')
+            ->assertJsonFragment([
+                'remarks' => 'LEO date: 2025-04-10 · SB: SB-1 · Invoice: INV-1 · Port: Nhava Sheva · LEO granted',
+            ]);
+    }
+
+    public function test_ocr_rejects_non_uploaded_type_on_desk(): void
     {
         config(['services.gemini.key' => 'test-key']);
 
         $this->actingAs($this->admin)
             ->postJson(route('export.ocr.extract'), [
-                'file'      => UploadedFile::fake()->image('bl.jpg'),
-                'type_code' => 'bl_final',
+                'file'      => UploadedFile::fake()->image('pack.jpg'),
+                'type_code' => 'packing_list',
             ])
             ->assertStatus(422);
     }
@@ -178,10 +289,15 @@ class DocumentOcrTest extends TestCase
         $this->assertNotNull($entry->file_path);
     }
 
-    public function test_phase1_only_lists_cha_checklist(): void
+    public function test_phase1_lists_all_uploaded_types(): void
     {
-        $this->assertSame(['cha_checklist'], GeminiDocumentExtractor::PHASE1_TYPES);
-        $this->assertContains('cha_checklist', GeminiDocumentExtractor::UPLOADED_TYPES);
+        $this->assertSame(
+            GeminiDocumentExtractor::UPLOADED_TYPES,
+            GeminiDocumentExtractor::PHASE1_TYPES
+        );
+        $this->assertContains('clp', GeminiDocumentExtractor::PHASE1_TYPES);
+        $this->assertContains('bl_final', GeminiDocumentExtractor::PHASE1_TYPES);
+        $this->assertContains('ebrc', GeminiDocumentExtractor::PHASE1_TYPES);
         $this->assertNotContains('packing_list', GeminiDocumentExtractor::UPLOADED_TYPES);
     }
 }

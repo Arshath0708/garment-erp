@@ -20,7 +20,7 @@ use Throwable;
 
 /**
  * Standalone Document OCR desk — sits under Export, after Export Documents.
- * Phase 1: only sheet #4 CHA Checklist (uploaded).
+ * Covers Uploaded checklist types (Gemini extract → save to Export Document).
  */
 class ExportDocumentOcrController extends Controller implements HasMiddleware
 {
@@ -77,15 +77,7 @@ class ExportDocumentOcrController extends Controller implements HasMiddleware
             'typeLabels'     => GeminiDocumentExtractor::phase1Labels(),
             'checklist'      => $checklist,
             'ocrConfigured'  => $this->ocr->isConfigured(),
-            'upcomingTypes'  => [
-                '#5 E-Sanchit Documents',
-                '#9 Assessed Copy',
-                '#10 LEO Copy',
-                '#13 CLP',
-                '#15 Bill of Lading (Final)',
-                '#16 Insurance Certificate',
-                '#20–23 Payment / FIRC / Bank Certificate / eBRC',
-            ],
+            'upcomingTypes'  => [],
         ]);
     }
 
@@ -95,7 +87,7 @@ class ExportDocumentOcrController extends Controller implements HasMiddleware
 
         if (! in_array($typeCode, GeminiDocumentExtractor::PHASE1_TYPES, true)) {
             return response()->json([
-                'message' => 'Only Phase 1 uploaded types are enabled here (start with #4 CHA Checklist).',
+                'message' => 'Only uploaded checklist types are enabled for OCR on this desk.',
             ], 422);
         }
 
@@ -129,7 +121,20 @@ class ExportDocumentOcrController extends Controller implements HasMiddleware
             'file'               => ['required', 'file', 'max:10240', 'mimes:jpg,jpeg,png,webp,gif,pdf'],
             'reference_no'       => ['nullable', 'string', 'max:120'],
             'remarks'            => ['nullable', 'string', 'max:1000'],
+            'insurance_action'   => ['nullable', 'in:upload_certificate'],
+            'bl_number'          => ['nullable', 'string', 'max:120'],
+            'bl_date'            => ['nullable', 'date'],
         ]);
+
+        if ($data['type_code'] === 'insurance') {
+            $request->validate([
+                'bl_number' => ['required', 'string', 'max:120'],
+                'bl_date'   => ['required', 'date'],
+            ]);
+            $data['bl_number'] = $request->string('bl_number')->toString();
+            $data['bl_date'] = $request->string('bl_date')->toString();
+            $data['insurance_action'] = 'upload_certificate';
+        }
 
         $document = ExportDocument::query()->findOrFail($data['export_document_id']);
         $type = DocumentChecklistType::query()->where('code', $data['type_code'])->firstOrFail();
@@ -147,12 +152,19 @@ class ExportDocumentOcrController extends Controller implements HasMiddleware
                 ->firstOrFail();
         }
 
-        $this->documents->recordChecklist($checklist, [
-            'file'         => $request->file('file'),
-            'mark_done'    => true,
-            'reference_no' => $data['reference_no'] ?? null,
-            'remarks'      => $data['remarks'] ?? null,
-        ]);
+        try {
+            $this->documents->recordChecklist($checklist, [
+                'file'              => $request->file('file'),
+                'mark_done'         => true,
+                'reference_no'      => $data['reference_no'] ?? null,
+                'remarks'           => $data['remarks'] ?? null,
+                'insurance_action'  => $data['insurance_action'] ?? null,
+                'bl_number'         => $data['bl_number'] ?? null,
+                'bl_date'           => $data['bl_date'] ?? null,
+            ]);
+        } catch (RuntimeException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('export.ocr.index', [
