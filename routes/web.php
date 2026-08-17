@@ -227,6 +227,8 @@ Route::middleware('auth')->group(function () {
     Route::prefix('export')->name('export.')->group(function () {
         Route::post('documents/{document}/checklist/{checklist}', [ExportDocumentChecklistController::class, 'update'])
             ->name('documents.checklist.update');
+        Route::post('documents/{document}/checklist/{checklist}/ocr', [ExportDocumentChecklistController::class, 'extract'])
+            ->name('documents.checklist.ocr');
         Route::delete('documents/{document}/checklist/{checklist}', [ExportDocumentChecklistController::class, 'reset'])
             ->name('documents.checklist.reset');
 

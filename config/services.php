@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Google Gemini (document OCR)
+    |--------------------------------------------------------------------------
+    | Used by Export Document checklist "Extract with AI" — reads uploaded
+    | scans (B/L, LEO, container/seal) and suggests reference fields.
+    */
+    'gemini' => [
+        'key'   => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-2.0-flash'),
+    ],
+
 ];
