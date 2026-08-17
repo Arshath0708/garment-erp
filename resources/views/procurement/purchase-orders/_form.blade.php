@@ -33,7 +33,7 @@
         <x-ui.field name="po_date" label="PO Date" type="date" required col="col-md-3"
                     :value="$val('po_date') instanceof \Carbon\CarbonInterface ? $val('po_date')->format('Y-m-d') : $val('po_date', now()->format('Y-m-d'))" />
 
-        <x-ui.select name="order_confirmation_id" label="Contract No." required col="col-md-3" id="contract-select"
+        <x-ui.select name="order_confirmation_id" label="Contract No." required col="col-md-3"
                      :options="$orderConfirmations->pluck('oc_num', 'id')" :selected="$val('order_confirmation_id')" />
 
         <div class="col-md-3 mb-3">
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const ocData = @json($ocJs);
     const productsUrl = "{{ route('sales.inquiries.products') }}";
 
-    const contractSelect = document.getElementById('contract-select');
+    const contractSelect = document.getElementById('order_confirmation_id');
     const buyerDisplay    = document.getElementById('buyer-display');
     const deliveryEl      = document.getElementById('delivery_details');
     const packingEl       = document.getElementById('packing_details');

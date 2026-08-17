@@ -28,7 +28,7 @@
                     </div>
                 </div>
 
-                <x-ui.select name="purchase_order_id" label="Purchase Order" required horizontal id="po_select"
+                <x-ui.select name="purchase_order_id" label="Purchase Order" required horizontal
                     placeholder="Select Raised / Partial PO..."
                     :options="$purchaseOrders->mapWithKeys(fn ($po) => [$po->id => $po->po_num.' — '.$po->supplier?->company_name.' ('.$po->statusLabel().')'])"
                     :selected="$selectedPoId ?? null" />
@@ -126,7 +126,7 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const poSelect = document.getElementById('po_select');
+    const poSelect = document.getElementById('purchase_order_id');
     const tbody = document.getElementById('inward_items_tbody');
 
     if (poSelect) {
