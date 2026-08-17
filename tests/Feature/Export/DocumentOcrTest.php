@@ -86,22 +86,28 @@ class DocumentOcrTest extends TestCase
         $this->document->load('checklist.type');
     }
 
+    public function test_ocr_desk_page_loads(): void
+    {
+        $this->actingAs($this->admin)
+            ->get(route('export.ocr.index'))
+            ->assertOk()
+            ->assertSee('Document OCR', false)
+            ->assertSee('#4 Checklist', false);
+    }
+
     public function test_ocr_requires_gemini_key(): void
     {
         config(['services.gemini.key' => null]);
 
-        $checklist = $this->document->checklist->first(fn ($row) => $row->type->code === 'bl_final');
-
         $this->actingAs($this->admin)
-            ->postJson(route('export.documents.checklist.ocr', [$this->document, $checklist]), [
-                'file'      => UploadedFile::fake()->image('bl.jpg'),
-                'type_code' => 'bl_final',
+            ->postJson(route('export.ocr.extract'), [
+                'file'      => UploadedFile::fake()->image('cha.jpg'),
+                'type_code' => 'cha_checklist',
             ])
-            ->assertStatus(503)
-            ->assertJsonFragment(['message' => 'Gemini is not configured. Add GEMINI_API_KEY to your .env file.']);
+            ->assertStatus(503);
     }
 
-    public function test_ocr_extracts_bill_of_lading_fields(): void
+    public function test_ocr_extracts_cha_checklist_fields(): void
     {
         config([
             'services.gemini.key'   => 'test-key',
@@ -114,8 +120,12 @@ class DocumentOcrTest extends TestCase
                     'content' => [
                         'parts' => [[
                             'text' => json_encode([
-                                'bl_number' => 'MAEU1234567',
-                                'bl_date'   => '2026-08-10',
+                                'checklist_no'      => 'CHA/JOB/7788',
+                                'checklist_date'    => '2026-08-15',
+                                'shipping_bill_no'  => 'SB1234567',
+                                'invoice_no'        => 'INV/001',
+                                'cha_name'          => 'Demo CHA Pvt Ltd',
+                                'status_or_remarks' => 'Filed on ICEGATE',
                             ]),
                         ]],
                     ],
@@ -123,101 +133,55 @@ class DocumentOcrTest extends TestCase
             ], 200),
         ]);
 
-        $checklist = $this->document->checklist->first(fn ($row) => $row->type->code === 'bl_final');
-
         $this->actingAs($this->admin)
-            ->postJson(route('export.documents.checklist.ocr', [$this->document, $checklist]), [
-                'file'      => UploadedFile::fake()->image('bl.jpg'),
-                'type_code' => 'bl_final',
+            ->postJson(route('export.ocr.extract'), [
+                'file'      => UploadedFile::fake()->image('cha.jpg'),
+                'type_code' => 'cha_checklist',
             ])
             ->assertOk()
-            ->assertJson([
-                'reference_no' => 'MAEU1234567',
-                'remarks'      => 'B/L date: 2026-08-10',
-            ]);
+            ->assertJsonPath('reference_no', 'CHA/JOB/7788')
+            ->assertJsonFragment(['remarks' => 'Date: 2026-08-15 · SB: SB1234567 · Invoice: INV/001 · CHA: Demo CHA Pvt Ltd · Filed on ICEGATE']);
     }
 
-    public function test_ocr_extracts_leo_fields(): void
-    {
-        config([
-            'services.gemini.key'   => 'test-key',
-            'services.gemini.model' => 'gemini-2.5-flash',
-        ]);
-
-        Http::fake([
-            'generativelanguage.googleapis.com/*' => Http::response([
-                'candidates' => [[
-                    'content' => [
-                        'parts' => [[
-                            'text' => json_encode([
-                                'leo_number' => 'LEO/2026/9988',
-                                'leo_date'   => '2026-08-12',
-                            ]),
-                        ]],
-                    ],
-                ]],
-            ], 200),
-        ]);
-
-        $checklist = $this->document->checklist->first(fn ($row) => $row->type->code === 'leo_copy');
-
-        $this->actingAs($this->admin)
-            ->postJson(route('export.documents.checklist.ocr', [$this->document, $checklist]), [
-                'file'      => UploadedFile::fake()->create('leo.pdf', 80, 'application/pdf'),
-                'type_code' => 'leo_copy',
-            ])
-            ->assertOk()
-            ->assertJson([
-                'reference_no' => 'LEO/2026/9988',
-                'remarks'      => 'LEO date: 2026-08-12',
-            ]);
-    }
-
-    public function test_ocr_rejects_unsupported_type(): void
+    public function test_ocr_rejects_non_phase1_type_on_desk(): void
     {
         config(['services.gemini.key' => 'test-key']);
 
-        $checklist = $this->document->checklist->first(fn ($row) => $row->type->code === 'packing_list');
-
         $this->actingAs($this->admin)
-            ->postJson(route('export.documents.checklist.ocr', [$this->document, $checklist]), [
-                'file'      => UploadedFile::fake()->image('pack.jpg'),
-                'type_code' => 'packing_list',
+            ->postJson(route('export.ocr.extract'), [
+                'file'      => UploadedFile::fake()->image('bl.jpg'),
+                'type_code' => 'bl_final',
             ])
             ->assertStatus(422);
     }
 
-    public function test_unsupported_types_list_is_documented(): void
+    public function test_saving_ocr_updates_checklist_row(): void
     {
-        $this->assertContains('bl_final', GeminiDocumentExtractor::SUPPORTED_TYPES);
-        $this->assertContains('leo_copy', GeminiDocumentExtractor::SUPPORTED_TYPES);
-        $this->assertNotContains('packing_list', GeminiDocumentExtractor::SUPPORTED_TYPES);
-    }
-
-    public function test_show_page_includes_extract_button_when_configured(): void
-    {
-        config(['services.gemini.key' => 'test-key']);
+        $file = UploadedFile::fake()->create('cha-checklist.pdf', 40, 'application/pdf');
 
         $this->actingAs($this->admin)
-            ->get(route('export.documents.show', $this->document))
-            ->assertOk()
-            ->assertSee('Extract with AI', false);
+            ->post(route('export.ocr.store'), [
+                'export_document_id' => $this->document->id,
+                'type_code'          => 'cha_checklist',
+                'file'               => $file,
+                'reference_no'       => 'CHA/JOB/7788',
+                'remarks'            => 'Date: 2026-08-15',
+            ])
+            ->assertRedirect();
+
+        $entry = $this->document->checklist()
+            ->whereHas('type', fn ($q) => $q->where('code', 'cha_checklist'))
+            ->firstOrFail();
+
+        $this->assertSame('uploaded', $entry->status);
+        $this->assertSame('CHA/JOB/7788', $entry->reference_no);
+        $this->assertNotNull($entry->file_path);
     }
 
-    public function test_user_without_edit_permission_cannot_ocr(): void
+    public function test_phase1_only_lists_cha_checklist(): void
     {
-        config(['services.gemini.key' => 'test-key']);
-
-        $viewer = User::factory()->create();
-        $viewer->givePermissionTo('export-document.view');
-
-        $checklist = $this->document->checklist->first(fn ($row) => $row->type->code === 'bl_final');
-
-        $this->actingAs($viewer)
-            ->postJson(route('export.documents.checklist.ocr', [$this->document, $checklist]), [
-                'file'      => UploadedFile::fake()->image('bl.jpg'),
-                'type_code' => 'bl_final',
-            ])
-            ->assertForbidden();
+        $this->assertSame(['cha_checklist'], GeminiDocumentExtractor::PHASE1_TYPES);
+        $this->assertContains('cha_checklist', GeminiDocumentExtractor::UPLOADED_TYPES);
+        $this->assertNotContains('packing_list', GeminiDocumentExtractor::UPLOADED_TYPES);
     }
 }

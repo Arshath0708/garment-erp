@@ -23,7 +23,7 @@ class ExtractDocumentRequest extends FormRequest
             'type_code' => [
                 'required',
                 'string',
-                Rule::in(GeminiDocumentExtractor::SUPPORTED_TYPES),
+                Rule::in(GeminiDocumentExtractor::UPLOADED_TYPES),
             ],
         ];
     }
