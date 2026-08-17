@@ -174,6 +174,35 @@ class ExportDocumentService
         });
     }
 
+    /**
+     * Marks a checklist row 'generated' and attaches the freshly rendered
+     * PDF as its file — used by the PDF-generating controller actions
+     * (Delivery Challan, E-Invoice, Export Invoice) so "Generate" leaves a
+     * real, re-downloadable file against the row exactly like "Upload" does.
+     */
+    public function attachGeneratedFile(ExportDocument $document, string $typeCode, ?string $variantCode, string $storedPath, string $originalName): ExportDocumentChecklist
+    {
+        $entry = $document->checklist()
+            ->whereHas('type', fn ($q) => $q->where('code', $typeCode))
+            ->where('variant_code', $variantCode)
+            ->firstOrFail();
+
+        if ($entry->hasFile()) {
+            Storage::disk('public')->delete($entry->file_path);
+        }
+
+        $entry->update([
+            'status'        => 'generated',
+            'file_path'     => $storedPath,
+            'original_name' => $originalName,
+            'generated_at'  => now(),
+        ]);
+
+        $this->syncShipmentStatus($document, $entry->type);
+
+        return $entry->refresh();
+    }
+
     /** Undo — clears a checklist row back to pending and removes its file. */
     public function resetChecklist(ExportDocumentChecklist $entry): ExportDocumentChecklist
     {

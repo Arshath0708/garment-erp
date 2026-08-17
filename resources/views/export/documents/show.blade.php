@@ -3,6 +3,11 @@
 
     <x-ui.card :title="$document->doc_num" variant="primary">
         <x-slot name="actions">
+            @can('export-document.edit')
+                <a href="{{ route('export.documents.edit', $document) }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-pencil me-1"></i> Edit
+                </a>
+            @endcan
             <a href="{{ route('export.documents.index') }}" class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-arrow-left me-1"></i> Back
             </a>
@@ -39,6 +44,60 @@
             <dt class="col-sm-3 text-body-secondary fw-normal">Remarks</dt>
             <dd class="col-sm-9">{{ $document->remarks ?: '—' }}</dd>
         </dl>
+
+        {{--
+            Generate Documents — a clean, dedicated panel for the document
+            types the system can actually produce a PDF for today. Was
+            previously one link buried inside each checklist row's
+            collapsed "Update" details — easy to miss, and mixed in among
+            rows that are upload/manual-only and have no button to find.
+            Two entries only: those are the only two of the ten
+            "system-generated" checklist types (see DocumentChecklistType)
+            with a real template behind them. The other eight are tracked
+            in the checklist below same as before; they simply have no
+            Generate button because nothing yet generates them.
+        --}}
+        @php
+            $generators = [
+                'delivery_challan' => [
+                    'label' => 'Delivery Challan',
+                    'icon'  => 'bi-truck',
+                    'desc'  => 'Sent to customs when the goods leave for the docks / airport.',
+                ],
+                'e_invoice' => [
+                    'label' => 'E-Invoice',
+                    'icon'  => 'bi-receipt',
+                    'desc'  => 'The export invoice, ready to upload to the GST e-Invoice portal.',
+                ],
+            ];
+            $canGenerate = auth()->user()->can('export-document.generate');
+        @endphp
+
+        <h6 class="fw-semibold mb-2">Generate Documents</h6>
+        <div class="row g-3 mb-4">
+            @foreach($generators as $code => $meta)
+                @php $entry = $document->checklist->firstWhere('type.code', $code); @endphp
+                <div class="col-md-6">
+                    <div class="border rounded p-3 d-flex align-items-start justify-content-between gap-3 h-100">
+                        <div>
+                            <div class="fw-semibold"><i class="bi {{ $meta['icon'] }} me-1"></i>{{ $meta['label'] }}</div>
+                            <div class="small text-body-secondary">{{ $meta['desc'] }}</div>
+                            @if($entry?->status === 'generated')
+                                <div class="small text-success mt-1">
+                                    <i class="bi bi-check-circle me-1"></i>Last generated {{ $entry->generated_at?->format('d M Y, H:i') }}
+                                </div>
+                            @endif
+                        </div>
+                        @if($canGenerate)
+                            <a href="{{ route('export.documents.'.str_replace('_', '-', $code), $document) }}"
+                               class="btn btn-sm btn-primary flex-shrink-0" target="_blank">
+                                <i class="bi bi-file-earmark-pdf me-1"></i> Generate
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            @endforeach
+        </div>
 
         @if($document->items->isNotEmpty())
             <h6 class="fw-semibold mb-2">Items Shipped</h6>
@@ -140,6 +199,8 @@
                                 <td class="small">{{ ($entry->uploaded_at ?? $entry->generated_at)?->format('d M Y') ?? '—' }}</td>
                                 @if($canEdit)
                                     <td>
+                                        {{-- Generating lives in the "Generate Documents" panel above now — one
+                                             button per document, not one hidden per checklist row. --}}
                                         <details>
                                             <summary class="small text-primary" style="cursor:pointer">Update</summary>
 

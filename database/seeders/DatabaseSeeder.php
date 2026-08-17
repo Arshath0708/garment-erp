@@ -56,6 +56,10 @@ class DatabaseSeeder extends Seeder
             // The Export Document checklist's 26 row types — see
             // "Export docs to payment receipt from buyer".
             DocumentChecklistTypeSeeder::class,
+
+            // Our own company's details, pre-filled from the letterhead —
+            // export documents print from this rather than hard-coded values.
+            CompanyProfileSeeder::class,
         ]);
     }
 }

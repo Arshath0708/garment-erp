@@ -10,6 +10,7 @@ use App\Http\Controllers\Masters\JobberController;
 use App\Http\Controllers\Masters\MarkupController;
 use App\Http\Controllers\Masters\ProductController;
 use App\Http\Controllers\Masters\SupplierController;
+use App\Http\Controllers\Administration\CompanyProfileController;
 use App\Http\Controllers\Export\ExportDocumentChecklistController;
 use App\Http\Controllers\Export\ExportDocumentController;
 use App\Http\Controllers\Procurement\InwardEntryController;
@@ -230,9 +231,14 @@ Route::middleware('auth')->group(function () {
         Route::delete('documents/{document}/checklist/{checklist}', [ExportDocumentChecklistController::class, 'reset'])
             ->name('documents.checklist.reset');
 
+        Route::get('documents/{document}/delivery-challan', [ExportDocumentController::class, 'deliveryChallanPdf'])
+            ->name('documents.delivery-challan');
+        Route::get('documents/{document}/e-invoice', [ExportDocumentController::class, 'eInvoicePdf'])
+            ->name('documents.e-invoice');
+
         Route::resource('documents', ExportDocumentController::class)
             ->parameters(['documents' => 'document'])
-            ->only(['index', 'show', 'destroy']);
+            ->only(['index', 'show', 'edit', 'update', 'destroy']);
     });
 
     /*
@@ -253,6 +259,9 @@ Route::middleware('auth')->group(function () {
 
         Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
         Route::post('permissions/sync', [PermissionController::class, 'sync'])->name('permissions.sync');
+
+        Route::get('company-profile', [CompanyProfileController::class, 'edit'])->name('company-profile.edit');
+        Route::put('company-profile', [CompanyProfileController::class, 'update'])->name('company-profile.update');
     });
 
 });

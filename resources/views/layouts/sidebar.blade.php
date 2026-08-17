@@ -306,10 +306,19 @@
                      No "My Profile" entry — the header's user dropdown already
                      carries Profile and Logout, top right on every page.
                 --}}
-                @if($canAny(['user.view', 'role.view', 'permission.view']))
+                @if($canAny(['user.view', 'role.view', 'permission.view', 'company-profile.view']))
                     <li class="nav-header">Administration</li>
 
-                    <li class="nav-item {{ request()->routeIs('user-management.*') ? 'menu-open' : '' }}">
+                    @can('company-profile.view')
+                        <li class="nav-item">
+                            <a href="{{ route('user-management.company-profile.edit') }}"
+                               class="nav-link {{ request()->routeIs('user-management.company-profile.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-buildings"></i><p>Company Profile</p>
+                            </a>
+                        </li>
+                    @endcan
+
+                    <li class="nav-item {{ request()->routeIs('user-management.*') && ! request()->routeIs('user-management.company-profile.*') ? 'menu-open' : '' }}">
                         <a href="#" class="nav-link {{ request()->routeIs('user-management.*') ? 'active' : '' }}">
                             <i class="nav-icon bi bi-people"></i>
                             <p>User Management<i class="nav-arrow bi bi-chevron-right"></i></p>

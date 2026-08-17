@@ -57,11 +57,36 @@ class ExportDocument extends Model
         'shipment_date',
         'remarks',
         'status',
+
+        'invoice_no',
+        'invoice_date',
+        'exporter_ref',
+
+        'forwarder_name',
+        'forwarder_address',
+        'vehicle_no',
+        'driver_cell',
+
+        'final_destination',
+        'marks_and_numbers',
+        'total_cartons',
+        'package_kind',
+
+        'freight_amount',
+        'insurance_amount',
+        'gross_weight',
     ];
 
     protected function casts(): array
     {
-        return ['shipment_date' => 'date'];
+        return [
+            'shipment_date'     => 'date',
+            'invoice_date'      => 'date',
+            'total_cartons'     => 'integer',
+            'freight_amount'    => 'decimal:2',
+            'insurance_amount'  => 'decimal:2',
+            'gross_weight'      => 'decimal:3',
+        ];
     }
 
     /*

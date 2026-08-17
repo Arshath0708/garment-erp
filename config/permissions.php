@@ -184,9 +184,12 @@ return [
          * has anything in here now.
          */
         'Administration' => [
-            'user'       => ['label' => 'Users'],
-            'role'       => ['label' => 'Roles'],
-            'permission' => ['label' => 'Permissions', 'actions' => ['view', 'sync']],
+            'user'             => ['label' => 'Users'],
+            'role'             => ['label' => 'Roles'],
+            'permission'       => ['label' => 'Permissions', 'actions' => ['view', 'sync']],
+            // Our own company's details, printed on every export document
+            // (invoice, bank docs, ...) — see CompanyProfile::current().
+            'company-profile'  => ['label' => 'Company Profile', 'actions' => ['view', 'edit']],
         ],
 
     ],
@@ -213,7 +216,7 @@ return [
         'Admin' => [
             'description' => 'Full operational access. Cannot manage permissions.',
             'permissions' => [
-                'user.*', 'role.view',
+                'user.*', 'role.view', 'company-profile.*',
                 'category.*', 'po-format.*', 'product.*', 'buyer.*', 'supplier.*', 'jobber.*',
                 'agent.*', 'fob-value.*', 'markup.*',
                 'inquiry.*', 'order-confirmation.*',

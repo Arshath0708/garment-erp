@@ -34,7 +34,7 @@ class ExportDocumentTest extends TestCase
 
         foreach ([
             'export-document.view', 'export-document.create', 'export-document.edit', 'export-document.delete',
-            'order-confirmation.approve',
+            'export-document.generate', 'order-confirmation.approve',
         ] as $perm) {
             Permission::firstOrCreate(['name' => $perm]);
         }
@@ -42,7 +42,7 @@ class ExportDocumentTest extends TestCase
         $this->admin = User::factory()->create();
         $this->admin->givePermissionTo([
             'export-document.view', 'export-document.create', 'export-document.edit', 'export-document.delete',
-            'order-confirmation.approve',
+            'export-document.generate', 'order-confirmation.approve',
         ]);
 
         $this->user = User::factory()->create();
@@ -207,6 +207,62 @@ class ExportDocumentTest extends TestCase
         $this->actingAs($this->user)
             ->post(route('export.documents.checklist.update', [$document, $entry]), ['mark_done' => 1])
             ->assertForbidden();
+    }
+
+    public function test_generating_delivery_challan_pdf_marks_checklist_generated(): void
+    {
+        $document = $this->raiseDocument();
+        $document->update([
+            'forwarder_name' => 'Shrinathji Forwarders',
+            'vehicle_no'     => 'MH-01/DR-3197',
+            'total_cartons'  => 25,
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('export.documents.delivery-challan', $document));
+
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('content-type'));
+
+        $entry = $document->checklist()->whereHas('type', fn ($q) => $q->where('code', 'delivery_challan'))->firstOrFail();
+        $this->assertSame('generated', $entry->status);
+        $this->assertNotNull($entry->file_path);
+        Storage::disk('public')->assertExists($entry->file_path);
+    }
+
+    public function test_generating_e_invoice_pdf_marks_checklist_generated(): void
+    {
+        $document = $this->raiseDocument();
+
+        $response = $this->actingAs($this->admin)->get(route('export.documents.e-invoice', $document));
+
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('content-type'));
+
+        $entry = $document->checklist()->whereHas('type', fn ($q) => $q->where('code', 'e_invoice'))->firstOrFail();
+        $this->assertSame('generated', $entry->status);
+        $this->assertNotNull($entry->file_path);
+    }
+
+    public function test_editing_export_document_saves_shipment_logistics_fields(): void
+    {
+        $document = $this->raiseDocument();
+
+        $response = $this->actingAs($this->admin)->put(route('export.documents.update', $document), [
+            'invoice_no'         => 'EXP25269001',
+            'invoice_date'       => '2025-04-08',
+            'exporter_ref'       => 'GC/BS/146/24',
+            'forwarder_name'     => 'Shrinathji Forwarders',
+            'forwarder_address'  => 'CWC Distripark, Sector 7, Dronagiri Node',
+            'vehicle_no'         => 'MH-01/DR-3197',
+            'total_cartons'      => 25,
+            'package_kind'       => 'CARTONS',
+        ]);
+
+        $response->assertRedirect(route('export.documents.show', $document));
+        $document->refresh();
+        $this->assertSame('EXP25269001', $document->invoice_no);
+        $this->assertSame(25, $document->total_cartons);
+        $this->assertSame('Shrinathji Forwarders', $document->forwarder_name);
     }
 
     private function raiseDocument(): ExportDocument
