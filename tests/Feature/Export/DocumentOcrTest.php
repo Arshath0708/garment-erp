@@ -105,7 +105,7 @@ class DocumentOcrTest extends TestCase
     {
         config([
             'services.gemini.key'   => 'test-key',
-            'services.gemini.model' => 'gemini-2.0-flash',
+            'services.gemini.model' => 'gemini-2.5-flash',
         ]);
 
         Http::fake([
@@ -141,7 +141,7 @@ class DocumentOcrTest extends TestCase
     {
         config([
             'services.gemini.key'   => 'test-key',
-            'services.gemini.model' => 'gemini-2.0-flash',
+            'services.gemini.model' => 'gemini-2.5-flash',
         ]);
 
         Http::fake([

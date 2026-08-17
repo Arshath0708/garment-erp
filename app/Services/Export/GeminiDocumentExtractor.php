@@ -5,6 +5,7 @@ namespace App\Services\Export;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
+use Throwable;
 
 /**
  * Calls Google Gemini with an uploaded scan and returns structured fields
@@ -68,9 +69,15 @@ class GeminiDocumentExtractor
         $key = config('services.gemini.key');
         $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent";
 
-        $response = Http::timeout(60)
-            ->withQueryParameters(['key' => $key])
-            ->post($url, [
+        try {
+            $http = Http::timeout(60)->withQueryParameters(['key' => $key]);
+
+            // Windows PHP often lacks a CA bundle; allow opting out locally only.
+            if (config('services.gemini.verify_ssl') === false) {
+                $http = $http->withoutVerifying();
+            }
+
+            $response = $http->post($url, [
                 'contents' => [[
                     'parts' => [
                         ['text' => $prompt],
@@ -87,11 +94,14 @@ class GeminiDocumentExtractor
                     'responseMimeType' => 'application/json',
                 ],
             ]);
+        } catch (Throwable $e) {
+            throw new RuntimeException('Gemini OCR failed: '.$this->safeErrorMessage($e->getMessage()), 0, $e);
+        }
 
         if (! $response->successful()) {
-            $message = $response->json('error.message') ?? $response->body();
+            $message = $response->json('error.message') ?? 'HTTP '.$response->status();
 
-            throw new RuntimeException('Gemini OCR failed: '.$message);
+            throw new RuntimeException('Gemini OCR failed: '.$this->safeErrorMessage((string) $message));
         }
 
         $text = data_get($response->json(), 'candidates.0.content.parts.0.text', '');
@@ -224,5 +234,15 @@ PROMPT;
             'remarks'      => $remarksParts === [] ? null : implode(' · ', $remarksParts),
             'fields'       => $fields,
         ];
+    }
+
+    /** Strip API keys / query strings from exception text before surfacing. */
+    private function safeErrorMessage(string $message): string
+    {
+        $message = preg_replace('/([?&]key=)[^&\s]+/i', '$1***', $message) ?? $message;
+        $message = preg_replace('/AIza[0-9A-Za-z_-]+/', '***', $message) ?? $message;
+        $message = preg_replace('/AQ\.[0-9A-Za-z_-]+/', '***', $message) ?? $message;
+
+        return $message;
     }
 }

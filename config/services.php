@@ -43,8 +43,10 @@ return [
     | scans (B/L, LEO, container/seal) and suggests reference fields.
     */
     'gemini' => [
-        'key'   => env('GEMINI_API_KEY'),
-        'model' => env('GEMINI_MODEL', 'gemini-2.0-flash'),
+        'key'        => env('GEMINI_API_KEY'),
+        'model'      => env('GEMINI_MODEL', 'gemini-2.5-flash'),
+        // Set GEMINI_SSL_VERIFY=false only on local Windows if CA certs are missing.
+        'verify_ssl' => filter_var(env('GEMINI_SSL_VERIFY', true), FILTER_VALIDATE_BOOL),
     ],
 
 ];
