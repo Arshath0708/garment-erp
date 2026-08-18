@@ -62,6 +62,16 @@ class ExportDocument extends Model
         'invoice_date',
         'exporter_ref',
 
+        'buyer_ref_no',
+        'buyer_ref_date',
+        'other_reference',
+        'consignee_name',
+        'consignee_address',
+        'pre_carriage_by',
+        'place_of_receipt',
+        'vessel_flight_no',
+        'country_of_origin',
+
         'forwarder_name',
         'forwarder_address',
         'vehicle_no',
@@ -75,6 +85,8 @@ class ExportDocument extends Model
         'freight_amount',
         'insurance_amount',
         'gross_weight',
+        'net_weight',
+        'carton_dimensions',
     ];
 
     protected function casts(): array
@@ -82,10 +94,12 @@ class ExportDocument extends Model
         return [
             'shipment_date'     => 'date',
             'invoice_date'      => 'date',
+            'buyer_ref_date'    => 'date',
             'total_cartons'     => 'integer',
             'freight_amount'    => 'decimal:2',
             'insurance_amount'  => 'decimal:2',
             'gross_weight'      => 'decimal:3',
+            'net_weight'        => 'decimal:3',
         ];
     }
 
@@ -135,6 +149,12 @@ class ExportDocument extends Model
         return $this->hasMany(ExportDocumentItem::class)->orderBy('sort_order');
     }
 
+    /** Feeds Packing List Formats B and C — see ExportDocumentCarton's docblock. */
+    public function cartons(): HasMany
+    {
+        return $this->hasMany(ExportDocumentCarton::class)->orderBy('sort_order');
+    }
+
     public function checklist(): HasMany
     {
         return $this->hasMany(ExportDocumentChecklist::class);
@@ -170,6 +190,27 @@ class ExportDocument extends Model
     public function totalAmount(): float
     {
         return (float) $this->items->sum('amount');
+    }
+
+    /** Packing List Format C's own header field — reads the buyer's own country rather than being typed twice. */
+    public function countryOfFinalDestination(): ?string
+    {
+        return $this->buyer?->country?->name;
+    }
+
+    /**
+     * Format C's totals page sums every carton line's qty by its unit —
+     * "MTRS. 587.5 / PCS 903 / SETS 634" — not a single blended total.
+     *
+     * @return array<string, float>
+     */
+    public function cartonQtyByUnit(): array
+    {
+        return $this->cartons
+            ->flatMap(fn (ExportDocumentCarton $carton) => $carton->lines)
+            ->groupBy(fn (ExportDocumentCartonLine $line) => strtoupper($line->unit))
+            ->map(fn ($lines) => (float) $lines->sum('qty'))
+            ->all();
     }
 
     /** "14 / 26" — how many checklist rows are past pending. */

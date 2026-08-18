@@ -255,6 +255,59 @@ class ExportDocumentService
         return $entry->refresh();
     }
 
+    /**
+     * Rewrite an Export Document's carton breakdown from the submitted rows —
+     * feeds Packing List Formats B and C. Deleted and re-inserted rather than
+     * diffed, same call as Supplier::syncContacts() and Buyer's carton
+     * markings: nothing references a carton or carton-line row by id.
+     *
+     * A carton with no carton number, or a line with no description, is
+     * dropped — a row the user left blank, not one they meant to record.
+     *
+     * @param  array<int, array{carton_no?: ?string, net_weight?: mixed, gross_weight?: mixed, dimensions?: ?string, lines?: array<int, array{description?: ?string, unit?: ?string, qty?: mixed}>}>  $rows
+     */
+    public function syncCartons(ExportDocument $document, array $rows): void
+    {
+        DB::transaction(function () use ($document, $rows) {
+            $document->cartons()->delete();
+
+            $sortOrder = 0;
+
+            foreach ($rows as $row) {
+                $cartonNo = trim((string) ($row['carton_no'] ?? ''));
+
+                if ($cartonNo === '') {
+                    continue;
+                }
+
+                $carton = $document->cartons()->create([
+                    'carton_no'    => $cartonNo,
+                    'net_weight'   => $row['net_weight'] ?? null,
+                    'gross_weight' => $row['gross_weight'] ?? null,
+                    'dimensions'   => $row['dimensions'] ?? null,
+                    'sort_order'   => $sortOrder++,
+                ]);
+
+                $lineOrder = 0;
+
+                foreach ($row['lines'] ?? [] as $line) {
+                    $description = trim((string) ($line['description'] ?? ''));
+
+                    if ($description === '') {
+                        continue;
+                    }
+
+                    $carton->lines()->create([
+                        'description' => $description,
+                        'unit'        => $line['unit'] ?: 'PCS',
+                        'qty'         => $line['qty'] ?? 0,
+                        'sort_order'  => $lineOrder++,
+                    ]);
+                }
+            }
+        });
+    }
+
     /** Undo — clears a checklist row back to pending and removes its file. */
     public function resetChecklist(ExportDocumentChecklist $entry): ExportDocumentChecklist
     {

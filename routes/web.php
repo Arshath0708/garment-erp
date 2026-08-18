@@ -242,6 +242,10 @@ Route::middleware('auth')->group(function () {
             ->name('documents.delivery-challan');
         Route::get('documents/{document}/e-invoice', [ExportDocumentController::class, 'eInvoicePdf'])
             ->name('documents.e-invoice');
+        // One route for all three Packing List formats — {variant} is the
+        // checklist row's own variant_code (see DocumentChecklistTypeSeeder).
+        Route::get('documents/{document}/packing-list/{variant}', [ExportDocumentController::class, 'packingListPdf'])
+            ->name('documents.packing-list');
 
         Route::resource('documents', ExportDocumentController::class)
             ->parameters(['documents' => 'document'])

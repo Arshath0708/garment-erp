@@ -51,11 +51,13 @@
             previously one link buried inside each checklist row's
             collapsed "Update" details — easy to miss, and mixed in among
             rows that are upload/manual-only and have no button to find.
-            Two entries only: those are the only two of the ten
-            "system-generated" checklist types (see DocumentChecklistType)
-            with a real template behind them. The other eight are tracked
-            in the checklist below same as before; they simply have no
-            Generate button because nothing yet generates them.
+            Three of the ten "system-generated" checklist types (see
+            DocumentChecklistType) have a real template behind them today:
+            Delivery Challan, E-Invoice, and Packing List (three variants,
+            one route — see ExportDocumentController::packingListPdf()).
+            The other seven are tracked in the checklist below same as
+            before; they simply have no Generate button because nothing yet
+            generates them.
         --}}
         @php
             $generators = [
@@ -71,6 +73,7 @@
                 ],
             ];
             $canGenerate = auth()->user()->can('export-document.generate');
+            $packingListEntries = $document->checklist->where('type.code', 'packing_list')->sortBy('id');
         @endphp
 
         <h6 class="fw-semibold mb-2">Generate Documents</h6>
@@ -97,6 +100,34 @@
                     </div>
                 </div>
             @endforeach
+
+            @if($packingListEntries->isNotEmpty())
+                <div class="col-md-6">
+                    <div class="border rounded p-3 h-100">
+                        <div class="fw-semibold mb-2"><i class="bi bi-box2 me-1"></i>Packing List</div>
+                        <div class="d-flex flex-column gap-2">
+                            @foreach($packingListEntries as $entry)
+                                <div class="d-flex align-items-center justify-content-between gap-2">
+                                    <div>
+                                        <div class="small">{{ $entry->variantLabel() }}</div>
+                                        @if($entry->status === 'generated')
+                                            <div class="small text-success">
+                                                <i class="bi bi-check-circle me-1"></i>Generated {{ $entry->generated_at?->format('d M Y, H:i') }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                    @if($canGenerate)
+                                        <a href="{{ route('export.documents.packing-list', [$document, $entry->variant_code]) }}"
+                                           class="btn btn-sm btn-outline-primary flex-shrink-0" target="_blank">
+                                            <i class="bi bi-file-earmark-pdf me-1"></i> Generate
+                                        </a>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
 
         @if($document->items->isNotEmpty())

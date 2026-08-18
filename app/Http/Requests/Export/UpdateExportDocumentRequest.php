@@ -31,6 +31,17 @@ class UpdateExportDocumentRequest extends FormRequest
             'invoice_date'  => ['nullable', 'date'],
             'exporter_ref'  => ['nullable', 'string', 'max:255'],
 
+            // Packing List Format C's own header fields.
+            'buyer_ref_no'      => ['nullable', 'string', 'max:60'],
+            'buyer_ref_date'    => ['nullable', 'date'],
+            'other_reference'   => ['nullable', 'string', 'max:255'],
+            'consignee_name'    => ['nullable', 'string', 'max:200'],
+            'consignee_address' => ['nullable', 'string', 'max:1000'],
+            'pre_carriage_by'   => ['nullable', 'string', 'max:60'],
+            'place_of_receipt'  => ['nullable', 'string', 'max:150'],
+            'vessel_flight_no'  => ['nullable', 'string', 'max:60'],
+            'country_of_origin' => ['nullable', 'string', 'max:60'],
+
             'forwarder_name'    => ['nullable', 'string', 'max:150'],
             'forwarder_address' => ['nullable', 'string', 'max:1000'],
             'vehicle_no'        => ['nullable', 'string', 'max:60'],
@@ -44,6 +55,19 @@ class UpdateExportDocumentRequest extends FormRequest
             'freight_amount'   => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
             'insurance_amount' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
             'gross_weight'     => ['nullable', 'numeric', 'min:0', 'max:9999999999.999'],
+            'net_weight'       => ['nullable', 'numeric', 'min:0', 'max:9999999999.999'],
+            'carton_dimensions' => ['nullable', 'string', 'max:60'],
+
+            // Packing List Formats B and C — the per-carton breakdown.
+            'cartons'                        => ['nullable', 'array', 'max:200'],
+            'cartons.*.carton_no'            => ['required_with:cartons.*.lines', 'nullable', 'string', 'max:40'],
+            'cartons.*.net_weight'           => ['nullable', 'numeric', 'min:0', 'max:99999999.999'],
+            'cartons.*.gross_weight'         => ['nullable', 'numeric', 'min:0', 'max:99999999.999'],
+            'cartons.*.dimensions'           => ['nullable', 'string', 'max:60'],
+            'cartons.*.lines'                => ['nullable', 'array', 'max:100'],
+            'cartons.*.lines.*.description'  => ['required_with:cartons.*.lines.*.qty', 'nullable', 'string', 'max:500'],
+            'cartons.*.lines.*.unit'         => ['nullable', 'string', 'max:20'],
+            'cartons.*.lines.*.qty'          => ['nullable', 'integer', 'min:0', 'max:999999'],
         ];
     }
 }

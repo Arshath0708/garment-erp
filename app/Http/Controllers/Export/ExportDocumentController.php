@@ -39,7 +39,7 @@ class ExportDocumentController extends Controller implements HasMiddleware
             new Middleware('permission:export-document.create', only: ['raiseFromOrderConfirmation']),
             new Middleware('permission:export-document.edit', only: ['edit', 'update']),
             new Middleware('permission:export-document.delete', only: ['destroy']),
-            new Middleware('permission:export-document.generate', only: ['deliveryChallanPdf', 'eInvoicePdf']),
+            new Middleware('permission:export-document.generate', only: ['deliveryChallanPdf', 'eInvoicePdf', 'packingListPdf']),
         ];
     }
 
@@ -90,7 +90,10 @@ class ExportDocumentController extends Controller implements HasMiddleware
 
     public function update(UpdateExportDocumentRequest $request, ExportDocument $document): RedirectResponse
     {
-        $document->update($request->validated());
+        $data = $request->validated();
+
+        $document->update(collect($data)->except('cartons')->all());
+        $this->documents->syncCartons($document, $data['cartons'] ?? []);
 
         return redirect()
             ->route('export.documents.show', $document)
@@ -146,12 +149,49 @@ class ExportDocumentController extends Controller implements HasMiddleware
         return $pdf->download($filename);
     }
 
+    /**
+     * Packing List — three variants of the same underlying shipment data
+     * (see DocumentChecklistTypeSeeder's packing_list row), one route
+     * covering all three rather than three near-identical actions:
+     *
+     *   for-our-record-with-supplier   Format A — flat item list + supplier breakdown
+     *   without-supplier-for-carton    Format B — one packing slip per carton
+     *   for-export-documentation       Format C — multi-sheet customs format
+     */
+    public function packingListPdf(ExportDocument $document, string $variant): Response
+    {
+        $views = [
+            'for-our-record-with-supplier' => 'export.documents.packing-list-with-supplier',
+            'without-supplier-for-carton'  => 'export.documents.packing-list-carton',
+            'for-export-documentation'     => 'export.documents.packing-list-customs',
+        ];
+
+        abort_unless(isset($views[$variant]), 404);
+
+        $document = $this->loadForInvoiceDocument($document);
+        $company = CompanyProfile::current();
+
+        $pdf = Pdf::loadView($views[$variant], compact('document', 'company'));
+        $filename = $this->documentFilename($document, "packing-list-{$variant}");
+
+        $this->documents->attachGeneratedFile(
+            $document,
+            'packing_list',
+            $variant,
+            $this->storeGeneratedPdf($pdf, $document, "packing-list-{$variant}"),
+            $filename
+        );
+
+        return $pdf->download($filename);
+    }
+
     private function loadForInvoiceDocument(ExportDocument $document): ExportDocument
     {
         return $document->load([
-            'orderConfirmation', 'buyer', 'currency', 'incoterm',
+            'orderConfirmation', 'buyer.country', 'currency', 'incoterm',
             'portOfLoading', 'portOfDischarge', 'shipmentMethod',
-            'items' => fn ($q) => $q->with(['product.category', 'colours.sizes']),
+            'items' => fn ($q) => $q->with(['product.category', 'product.gstRate', 'colours.sizes', 'sourceItem.supplier']),
+            'cartons.lines',
         ]);
     }
 
