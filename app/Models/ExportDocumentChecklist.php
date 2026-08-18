@@ -25,6 +25,7 @@ class ExportDocumentChecklist extends Model
         'generated' => 'Generated',
         'uploaded'  => 'Uploaded',
         'received'  => 'Received',
+        'cancelled' => 'Draft cancelled',
     ];
 
     /**
@@ -35,6 +36,7 @@ class ExportDocumentChecklist extends Model
         'generated' => 'info',
         'uploaded'  => 'success',
         'received'  => 'success',
+        'cancelled' => 'warning',
     ];
 
     protected $fillable = [
@@ -100,5 +102,25 @@ class ExportDocumentChecklist extends Model
     public function fileUrl(): ?string
     {
         return $this->hasFile() ? Storage::disk('public')->url($this->file_path) : null;
+    }
+
+    /** B/L number stored in insurance remarks as "B/L: …". */
+    public function insuranceBlNumber(): ?string
+    {
+        if (! preg_match('/B\/L:\s*([^·]+)/i', (string) $this->remarks, $m)) {
+            return null;
+        }
+
+        return trim($m[1]) ?: null;
+    }
+
+    /** B/L date stored in insurance remarks as "B/L date: …". */
+    public function insuranceBlDate(): ?string
+    {
+        if (! preg_match('/B\/L date:\s*([^·]+)/i', (string) $this->remarks, $m)) {
+            return null;
+        }
+
+        return trim($m[1]) ?: null;
     }
 }

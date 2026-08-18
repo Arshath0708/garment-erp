@@ -13,6 +13,7 @@ use App\Http\Controllers\Masters\SupplierController;
 use App\Http\Controllers\Administration\CompanyProfileController;
 use App\Http\Controllers\Export\ExportDocumentChecklistController;
 use App\Http\Controllers\Export\ExportDocumentController;
+use App\Http\Controllers\Export\ExportDocumentOcrController;
 use App\Http\Controllers\Procurement\InwardEntryController;
 use App\Http\Controllers\Procurement\PurchaseOrderController;
 use App\Http\Controllers\ProfileController;
@@ -226,8 +227,14 @@ Route::middleware('auth')->group(function () {
     | above (see order-confirmations.raise-export-document).
     */
     Route::prefix('export')->name('export.')->group(function () {
+        Route::get('ocr', [ExportDocumentOcrController::class, 'index'])->name('ocr.index');
+        Route::post('ocr/extract', [ExportDocumentOcrController::class, 'extract'])->name('ocr.extract');
+        Route::post('ocr', [ExportDocumentOcrController::class, 'store'])->name('ocr.store');
+
         Route::post('documents/{document}/checklist/{checklist}', [ExportDocumentChecklistController::class, 'update'])
             ->name('documents.checklist.update');
+        Route::post('documents/{document}/checklist/{checklist}/ocr', [ExportDocumentChecklistController::class, 'extract'])
+            ->name('documents.checklist.ocr');
         Route::delete('documents/{document}/checklist/{checklist}', [ExportDocumentChecklistController::class, 'reset'])
             ->name('documents.checklist.reset');
 

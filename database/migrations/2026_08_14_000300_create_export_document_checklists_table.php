@@ -24,7 +24,7 @@ return new class extends Migration
             // when the type has no variants.
             $table->string('variant_code', 60)->nullable();
 
-            $table->enum('status', ['pending', 'generated', 'uploaded', 'received'])->default('pending');
+            $table->string('status', 20)->default('pending');
 
             $table->string('file_path')->nullable();
             $table->string('original_name')->nullable();

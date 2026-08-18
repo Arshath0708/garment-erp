@@ -251,6 +251,12 @@
                                 <i class="nav-icon bi bi-files"></i><p>Export Documents</p>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="{{ route('export.ocr.index') }}"
+                               class="nav-link {{ request()->routeIs('export.ocr.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-stars"></i><p>Document OCR</p>
+                            </a>
+                        </li>
                     @endcan
                 @endif
 

@@ -91,7 +91,7 @@ class DocumentChecklistTypeSeeder extends Seeder
             ],
             [
                 'code' => 'insurance', 'name' => 'Insurance Certificate', 'category' => 'uploaded',
-                'description' => 'Created from the B/L number once the draft is finalised.',
+                'description' => 'Either cancel the insurance draft, or enter B/L number + date and upload the certificate.',
             ],
             [
                 'code' => 'e_invoice', 'name' => 'E-Invoice', 'category' => 'generated',
@@ -147,6 +147,10 @@ class DocumentChecklistTypeSeeder extends Seeder
                 ]
             );
         }
+
+        DocumentChecklistType::query()->where('code', 'insurance')->update([
+            'description' => 'Either cancel the insurance draft, or enter B/L number + date and upload the certificate.',
+        ]);
 
         $this->command?->info('Document checklist types seeded ('.count($rows).' rows).');
     }
