@@ -34,7 +34,7 @@ class ExportDocumentTest extends TestCase
 
         foreach ([
             'export-document.view', 'export-document.create', 'export-document.edit', 'export-document.delete',
-            'export-document.generate', 'order-confirmation.approve',
+            'export-document.generate', 'order-confirmation.approve', 'packing.view',
         ] as $perm) {
             Permission::firstOrCreate(['name' => $perm]);
         }
@@ -42,7 +42,7 @@ class ExportDocumentTest extends TestCase
         $this->admin = User::factory()->create();
         $this->admin->givePermissionTo([
             'export-document.view', 'export-document.create', 'export-document.edit', 'export-document.delete',
-            'export-document.generate', 'order-confirmation.approve',
+            'export-document.generate', 'order-confirmation.approve', 'packing.view',
         ]);
 
         $this->user = User::factory()->create();
@@ -293,6 +293,49 @@ class ExportDocumentTest extends TestCase
         $entry = $document->checklist()->whereHas('type', fn ($q) => $q->where('code', 'e_invoice'))->firstOrFail();
         $this->assertSame('generated', $entry->status);
         $this->assertNotNull($entry->file_path);
+    }
+
+    public function test_generating_remaining_export_pdfs_marks_checklist_generated(): void
+    {
+        $document = $this->raiseDocument();
+
+        $map = [
+            'item_summary'   => 'export.documents.item-summary',
+            'export_invoice' => 'export.documents.export-invoice',
+            'purchase_bills' => 'export.documents.purchase-bills',
+            'vgm'            => 'export.documents.vgm',
+            'bank_docs'      => 'export.documents.bank-docs',
+            'buyer_docs'     => 'export.documents.buyer-docs',
+            'packing_list'   => 'export.documents.packing-list',
+            'bl_draft'       => 'export.documents.bl-draft',
+        ];
+
+        $rows = $document->checklist()
+            ->with('type:id,code')
+            ->whereHas('type', fn ($q) => $q->whereIn('code', array_keys($map)))
+            ->get();
+
+        $this->assertNotEmpty($rows);
+
+        foreach ($rows as $row) {
+            $code = $row->type->code;
+            $variant = $row->variant_code;
+            $url = $variant
+                ? route($map[$code], [$document, $variant])
+                : route($map[$code], $document);
+
+            $response = $this->actingAs($this->admin)->get($url);
+            $this->assertSame(200, $response->status(), "Failed generating {$code} {$variant}: HTTP {$response->status()} {$url}");
+            $this->assertSame('application/pdf', $response->headers->get('content-type'));
+
+            $row->refresh();
+            $this->assertSame('generated', $row->status, "{$code} {$variant} was not marked generated");
+        }
+
+        $this->actingAs($this->admin)
+            ->get(route('export.packing.show', $document))
+            ->assertOk()
+            ->assertSee($document->doc_num);
     }
 
     public function test_editing_export_document_saves_shipment_logistics_fields(): void

@@ -14,9 +14,12 @@ use App\Http\Controllers\Administration\CompanyProfileController;
 use App\Http\Controllers\Export\ExportDocumentChecklistController;
 use App\Http\Controllers\Export\ExportDocumentController;
 use App\Http\Controllers\Export\ExportDocumentOcrController;
+use App\Http\Controllers\Export\PackingController;
+use App\Http\Controllers\Finance\FinanceController;
 use App\Http\Controllers\Procurement\InwardEntryController;
 use App\Http\Controllers\Procurement\PurchaseOrderController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Reports\ReportsController;
 use App\Http\Controllers\Sales\InquiryController;
 use App\Http\Controllers\Sales\OrderConfirmationController;
 use App\Http\Controllers\UserManagement\PermissionController;
@@ -227,6 +230,13 @@ Route::middleware('auth')->group(function () {
     | above (see order-confirmations.raise-export-document).
     */
     Route::prefix('export')->name('export.')->group(function () {
+        Route::get('packing', [PackingController::class, 'index'])
+            ->middleware('permission:packing.view')
+            ->name('packing.index');
+        Route::get('packing/{document}', [PackingController::class, 'show'])
+            ->middleware('permission:packing.view')
+            ->name('packing.show');
+
         Route::get('ocr', [ExportDocumentOcrController::class, 'index'])->name('ocr.index');
         Route::post('ocr/extract', [ExportDocumentOcrController::class, 'extract'])->name('ocr.extract');
         Route::post('ocr', [ExportDocumentOcrController::class, 'store'])->name('ocr.store');
@@ -264,6 +274,33 @@ Route::middleware('auth')->group(function () {
         Route::resource('documents', ExportDocumentController::class)
             ->parameters(['documents' => 'document'])
             ->only(['index', 'show', 'edit', 'update', 'destroy']);
+    });
+
+    Route::prefix('finance')->name('finance.')->group(function () {
+        Route::get('purchase-bills', [FinanceController::class, 'purchaseBills'])
+            ->middleware('permission:purchase-bill.view')
+            ->name('purchase-bills.index');
+        Route::get('debit-notes', [FinanceController::class, 'debitNotes'])
+            ->middleware('permission:debit-note.view')
+            ->name('debit-notes.index');
+        Route::get('supplier-payments', [FinanceController::class, 'supplierPayments'])
+            ->middleware('permission:payment.view')
+            ->name('supplier-payments.index');
+        Route::get('buyer-receipts', [FinanceController::class, 'buyerReceipts'])
+            ->middleware('permission:foreign-payment.view')
+            ->name('buyer-receipts.index');
+        Route::get('agent-commission', [FinanceController::class, 'agentCommission'])
+            ->middleware('permission:agent-commission.view')
+            ->name('agent-commission.index');
+    });
+
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('outstanding', [ReportsController::class, 'outstanding'])
+            ->middleware('permission:outstanding.view')
+            ->name('outstanding.index');
+        Route::get('/', [ReportsController::class, 'index'])
+            ->middleware('permission:report.view')
+            ->name('index');
     });
 
     /*

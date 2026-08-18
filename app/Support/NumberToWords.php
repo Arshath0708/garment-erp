@@ -23,12 +23,13 @@ class NumberToWords
         '', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety',
     ];
 
-    public static function indian(float $amount): string
+    public static function indian(float $amount, string $currency = 'INR'): string
     {
         $rupees = (int) floor($amount);
         $paise = (int) round(($amount - $rupees) * 100);
 
-        $words = self::rupeesToWords($rupees).' Rupees';
+        $unit = strtoupper($currency) === 'INR' ? ' Rupees' : '';
+        $words = trim(self::rupeesToWords($rupees).$unit);
 
         if ($paise > 0) {
             $words .= ' and '.self::twoDigits($paise).' Paise';

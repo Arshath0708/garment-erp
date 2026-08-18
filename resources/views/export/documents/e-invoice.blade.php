@@ -188,7 +188,7 @@
 
     <div class="small" style="margin-top:6px">
         Amount Chargeable (in words): {{ $document->currency?->iso_code ?? '' }}
-        {{ ucwords(\App\Support\NumberToWords::indian($totalTaxable + $totalIgst)) }} Only
+        {{ ucwords(\App\Support\NumberToWords::indian($totalTaxable + $totalIgst, $document->currency?->iso_code ?? 'INR')) }} Only
     </div>
 
     <table class="frame" style="margin-top:8px">
