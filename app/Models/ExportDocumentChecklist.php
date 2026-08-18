@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Models\Concerns\HasAuditColumns;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * One checklist row's live status against one Export Document — a stub
@@ -101,7 +100,11 @@ class ExportDocumentChecklist extends Model
 
     public function fileUrl(): ?string
     {
-        return $this->hasFile() ? Storage::disk('public')->url($this->file_path) : null;
+        if (! $this->hasFile()) {
+            return null;
+        }
+
+        return route('export.documents.checklist.file', [$this->export_document_id, $this]);
     }
 
     /** B/L number stored in insurance remarks as "B/L: …". */

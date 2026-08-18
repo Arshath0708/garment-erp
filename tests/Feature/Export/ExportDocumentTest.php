@@ -279,6 +279,12 @@ class ExportDocumentTest extends TestCase
         $this->assertSame('generated', $entry->status);
         $this->assertNotNull($entry->file_path);
         Storage::disk('public')->assertExists($entry->file_path);
+        $this->assertStringContainsString('/checklist/', (string) $entry->fileUrl());
+        $this->assertStringNotContainsString('/storage/', (string) $entry->fileUrl());
+
+        $this->actingAs($this->admin)
+            ->get(route('export.documents.checklist.file', [$document, $entry]))
+            ->assertOk();
     }
 
     public function test_generating_e_invoice_pdf_marks_checklist_generated(): void

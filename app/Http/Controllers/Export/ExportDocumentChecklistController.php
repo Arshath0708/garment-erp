@@ -13,7 +13,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Storage;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 /**
@@ -37,6 +39,7 @@ class ExportDocumentChecklistController extends Controller implements HasMiddlew
     {
         return [
             new Middleware('permission:export-document.edit', only: ['update', 'reset', 'extract']),
+            new Middleware('permission:export-document.view|purchase-bill.view|packing.view', only: ['file']),
         ];
     }
 
@@ -90,6 +93,18 @@ class ExportDocumentChecklistController extends Controller implements HasMiddlew
         $this->documents->resetChecklist($checklist);
 
         return back()->with('success', "\"{$checklist->type->name}\" reset to pending.");
+    }
+
+    /** Stream a generated/uploaded checklist file so View works without the public storage symlink. */
+    public function file(ExportDocument $document, ExportDocumentChecklist $checklist): StreamedResponse
+    {
+        abort_unless($checklist->export_document_id === $document->id, 404);
+        abort_unless($checklist->hasFile() && Storage::disk('public')->exists($checklist->file_path), 404);
+
+        return Storage::disk('public')->response(
+            $checklist->file_path,
+            $checklist->original_name ?: basename($checklist->file_path)
+        );
     }
 
     /**

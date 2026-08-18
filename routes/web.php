@@ -247,6 +247,8 @@ Route::middleware('auth')->group(function () {
             ->name('documents.checklist.ocr');
         Route::delete('documents/{document}/checklist/{checklist}', [ExportDocumentChecklistController::class, 'reset'])
             ->name('documents.checklist.reset');
+        Route::get('documents/{document}/checklist/{checklist}/file', [ExportDocumentChecklistController::class, 'file'])
+            ->name('documents.checklist.file');
 
         Route::get('documents/{document}/delivery-challan', [ExportDocumentController::class, 'deliveryChallanPdf'])
             ->name('documents.delivery-challan');
