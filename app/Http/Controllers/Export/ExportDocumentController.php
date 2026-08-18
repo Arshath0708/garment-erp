@@ -39,7 +39,7 @@ class ExportDocumentController extends Controller implements HasMiddleware
             new Middleware('permission:export-document.create', only: ['raiseFromOrderConfirmation']),
             new Middleware('permission:export-document.edit', only: ['edit', 'update']),
             new Middleware('permission:export-document.delete', only: ['destroy']),
-            new Middleware('permission:export-document.generate', only: ['deliveryChallanPdf', 'eInvoicePdf', 'packingListPdf', 'billOfLadingDraftPdf']),
+            new Middleware('permission:export-document.generate', only: ['deliveryChallanPdf', 'eInvoicePdf', 'packingListPdf', 'billOfLadingDraftPdf', 'exportInvoicePdf', 'itemSummaryPdf', 'purchaseBillsPdf', 'vgmPdf', 'bankDocsPdf', 'buyerDocsPdf']),
         ];
     }
 
@@ -206,6 +206,137 @@ class ExportDocumentController extends Controller implements HasMiddleware
             $this->storeGeneratedPdf($pdf, $document, 'bl-draft'),
             $filename
         );
+
+        return $pdf->download($filename);
+    }
+
+    public function exportInvoicePdf(ExportDocument $document, string $variant): Response
+    {
+        $views = [
+            'for-customs'      => 'For Customs',
+            'for-buyer'        => 'For Buyer',
+            'for-bank'         => 'For Bank',
+            'for-e-way-bill'   => 'For E-way Bill',
+        ];
+
+        abort_unless(isset($views[$variant]), 404);
+
+        $document = $this->loadForInvoiceDocument($document);
+        $company = CompanyProfile::current();
+        $variantTitle = $views[$variant];
+
+        $pdf = Pdf::loadView('export.documents.export-invoice', compact('document', 'company', 'variant', 'variantTitle'));
+        $filename = $this->documentFilename($document, "export-invoice-{$variant}");
+
+        $this->documents->attachGeneratedFile($document, 'export_invoice', $variant, $this->storeGeneratedPdf($pdf, $document, "export-invoice-{$variant}"), $filename);
+
+        return $pdf->download($filename);
+    }
+
+    public function itemSummaryPdf(ExportDocument $document, string $variant): Response
+    {
+        $views = [
+            'raw-data-all-details'                         => 'Raw Data (All Details)',
+            'split-by-description-price-band'              => 'Split by Description & Price Band',
+            'split-by-description-price-band-aa-ab'        => 'Split by Description & Price Band',
+            'supplier-wise-split'                          => 'Supplier-wise Split',
+        ];
+
+        abort_unless(isset($views[$variant]), 404);
+
+        $document = $this->loadForInvoiceDocument($document);
+        $company = CompanyProfile::current();
+        $variantTitle = $views[$variant];
+
+        $pdf = Pdf::loadView('export.documents.item-summary', compact('document', 'company', 'variant', 'variantTitle'));
+        $filename = $this->documentFilename($document, "item-summary-{$variant}");
+
+        $this->documents->attachGeneratedFile($document, 'item_summary', $variant, $this->storeGeneratedPdf($pdf, $document, "item-summary-{$variant}"), $filename);
+
+        return $pdf->download($filename);
+    }
+
+    public function purchaseBillsPdf(ExportDocument $document, string $variant): Response
+    {
+        $views = [
+            'by-carton-no-export-invoicebalance-shipment'         => 'By Carton No. & Export Invoice/Balance Shipment',
+            'by-carton-no-export-invoice-balance-shipment'        => 'By Carton No. & Export Invoice/Balance Shipment',
+            'by-carton-no-item-description-supplier'              => 'By Carton No., Item Description & Supplier',
+        ];
+
+        abort_unless(isset($views[$variant]), 404);
+
+        $document = $this->loadForInvoiceDocument($document);
+        $company = CompanyProfile::current();
+        $variantTitle = $views[$variant];
+
+        $pdf = Pdf::loadView('export.documents.purchase-bills', compact('document', 'company', 'variant', 'variantTitle'));
+        $filename = $this->documentFilename($document, "purchase-bills-{$variant}");
+
+        $this->documents->attachGeneratedFile($document, 'purchase_bills', $variant, $this->storeGeneratedPdf($pdf, $document, "purchase-bills-{$variant}"), $filename);
+
+        return $pdf->download($filename);
+    }
+
+    public function vgmPdf(ExportDocument $document, string $variant): Response
+    {
+        $views = [
+            'lcl-shipment' => 'LCL Shipment',
+            'fcl-shipment' => 'FCL Shipment',
+        ];
+
+        abort_unless(isset($views[$variant]), 404);
+
+        $document = $this->loadForInvoiceDocument($document);
+        $company = CompanyProfile::current();
+        $variantTitle = $views[$variant];
+
+        $pdf = Pdf::loadView('export.documents.vgm', compact('document', 'company', 'variant', 'variantTitle'));
+        $filename = $this->documentFilename($document, "vgm-{$variant}");
+
+        $this->documents->attachGeneratedFile($document, 'vgm', $variant, $this->storeGeneratedPdf($pdf, $document, "vgm-{$variant}"), $filename);
+
+        return $pdf->download($filename);
+    }
+
+    public function bankDocsPdf(ExportDocument $document, string $variant): Response
+    {
+        $views = [
+            'gr-waiver'        => 'GR Waiver',
+            'bill-of-exchange' => 'Bill of Exchange',
+        ];
+
+        abort_unless(isset($views[$variant]), 404);
+
+        $document = $this->loadForInvoiceDocument($document);
+        $company = CompanyProfile::current();
+        $variantTitle = $views[$variant];
+
+        $pdf = Pdf::loadView('export.documents.bank-docs', compact('document', 'company', 'variant', 'variantTitle'));
+        $filename = $this->documentFilename($document, "bank-docs-{$variant}");
+
+        $this->documents->attachGeneratedFile($document, 'bank_docs', $variant, $this->storeGeneratedPdf($pdf, $document, "bank-docs-{$variant}"), $filename);
+
+        return $pdf->download($filename);
+    }
+
+    public function buyerDocsPdf(ExportDocument $document, string $variant): Response
+    {
+        $views = [
+            'gr-release-email'             => 'GR Release Email',
+            'bill-of-exchange-intimation'  => 'Bill of Exchange Intimation',
+        ];
+
+        abort_unless(isset($views[$variant]), 404);
+
+        $document = $this->loadForInvoiceDocument($document);
+        $company = CompanyProfile::current();
+        $variantTitle = $views[$variant];
+
+        $pdf = Pdf::loadView('export.documents.buyer-docs', compact('document', 'company', 'variant', 'variantTitle'));
+        $filename = $this->documentFilename($document, "buyer-docs-{$variant}");
+
+        $this->documents->attachGeneratedFile($document, 'buyer_docs', $variant, $this->storeGeneratedPdf($pdf, $document, "buyer-docs-{$variant}"), $filename);
 
         return $pdf->download($filename);
     }

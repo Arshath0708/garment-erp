@@ -41,6 +41,12 @@
                 'e_invoice'        => fn ($variant) => route('export.documents.e-invoice', $document),
                 'bl_draft'         => fn ($variant) => route('export.documents.bl-draft', $document),
                 'packing_list'     => fn ($variant) => route('export.documents.packing-list', [$document, $variant]),
+                'export_invoice'   => fn ($variant) => route('export.documents.export-invoice', [$document, $variant]),
+                'item_summary'     => fn ($variant) => route('export.documents.item-summary', [$document, $variant]),
+                'purchase_bills'   => fn ($variant) => route('export.documents.purchase-bills', [$document, $variant]),
+                'vgm'              => fn ($variant) => route('export.documents.vgm', [$document, $variant]),
+                'bank_docs'        => fn ($variant) => route('export.documents.bank-docs', [$document, $variant]),
+                'buyer_docs'       => fn ($variant) => route('export.documents.buyer-docs', [$document, $variant]),
             ];
 
             /**

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>{{ $document->doc_num }} Purchase Bills — {{ $variantTitle }}</title>
+<style>
+    body { font-family: Helvetica, Arial, sans-serif; font-size: 10px; color: #111; }
+    table { border-collapse: collapse; width: 100%; }
+    .frame, .frame td { border: 1px solid #000; }
+    .frame td { padding: 5px 7px; vertical-align: top; }
+    .title { text-align: center; font-size: 14px; font-weight: bold; margin: 0 0 4px; }
+    .subtitle { text-align: center; font-size: 9px; margin: 0 0 8px; color: #555; }
+    .items th, .items td { border: 1px solid #000; padding: 4px 6px; font-size: 9px; }
+    .items th { background: #f2f2f2; text-align: left; }
+    .right { text-align: right; }
+    .center { text-align: center; }
+    .small { font-size: 8.5px; }
+    .lbl { font-size: 8.5px; text-transform: uppercase; color: #555; }
+    .cat-row td { font-weight: bold; background: #f7f7f7; }
+</style>
+</head>
+<body>
+
+    <p class="title">PURCHASE BILLS</p>
+    <p class="subtitle">{{ $variantTitle }} — {{ $document->doc_num }}</p>
+
+    <table class="frame" style="margin-bottom:8px">
+        <tr>
+            <td style="width:50%">
+                <div class="lbl">Exporter</div>
+                <strong>{{ $company->company_name }}</strong>
+            </td>
+            <td style="width:25%">
+                <div class="lbl">Invoice No.</div>
+                {{ $document->invoice_no ?: $document->doc_num }}
+            </td>
+            <td style="width:25%">
+                <div class="lbl">Invoice Date</div>
+                {{ ($document->invoice_date ?? $document->shipment_date)?->format('d-M-Y') ?? '—' }}
+            </td>
+        </tr>
+    </table>
+
+    @if($variant === 'by-carton-no-export-invoice-balance-shipment')
+        {{-- Format A: By Carton No. & Export Invoice / Balance Shipment --}}
+        @if($document->cartons->isNotEmpty())
+            @foreach($document->cartons as $carton)
+                <h4 style="font-size:11px; margin:10px 0 4px;">
+                    Carton {{ $carton->carton_no ?? $loop->iteration }}
+                    @if($carton->dimensions) <span class="small" style="font-weight:normal">({{ $carton->dimensions }})</span> @endif
+                </h4>
+                <table class="items">
+                    <thead>
+                        <tr>
+                            <th style="width:5%">Sr</th>
+                            <th style="width:14%">Design No.</th>
+                            <th>Description</th>
+                            <th style="width:12%">Supplier</th>
+                            <th style="width:8%" class="center">Qty</th>
+                            <th style="width:8%" class="center">Unit</th>
+                            <th style="width:12%" class="right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php $sr = 0; $cartonTotal = 0; @endphp
+                        @foreach($carton->lines as $line)
+                            @php $cartonTotal += (float) ($line->amount ?? 0); @endphp
+                            <tr>
+                                <td class="center">{{ ++$sr }}</td>
+                                <td>{{ $line->design_no ?: '—' }}</td>
+                                <td>{{ $line->description ?? '—' }}</td>
+                                <td class="small">{{ $line->supplier_name ?? '—' }}</td>
+                                <td class="center">{{ $line->qty }}</td>
+                                <td class="center">{{ $line->unit ?? '—' }}</td>
+                                <td class="right">{{ number_format((float) ($line->amount ?? 0), 2) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="6" class="right"><strong>Carton Total</strong></td>
+                            <td class="right"><strong>{{ number_format($cartonTotal, 2) }}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            @endforeach
+        @else
+            <table class="items">
+                <thead>
+                    <tr>
+                        <th style="width:5%">Sr</th>
+                        <th style="width:14%">Design No.</th>
+                        <th>Description</th>
+                        <th style="width:12%">Supplier</th>
+                        <th style="width:8%" class="center">Qty</th>
+                        <th style="width:8%" class="center">Unit</th>
+                        <th style="width:12%" class="right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php $sr = 0; $total = 0; @endphp
+                    @foreach($document->items as $item)
+                        @php $total += (float) $item->amount; @endphp
+                        <tr>
+                            <td class="center">{{ ++$sr }}</td>
+                            <td>{{ $item->design_no ?: '—' }}</td>
+                            <td>{{ $item->description }}</td>
+                            <td class="small">{{ $item->sourceItem?->supplier?->company_name ?? '—' }}</td>
+                            <td class="center">{{ $item->qty }}</td>
+                            <td class="center">{{ $item->unit ?? '—' }}</td>
+                            <td class="right">{{ number_format((float) $item->amount, 2) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="6" class="right"><strong>Total</strong></td>
+                        <td class="right"><strong>{{ number_format($total, 2) }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        @endif
+
+    @else
+        {{-- Format B: By Carton No., Item Description & Supplier --}}
+        @php
+            $bySupplier = $document->items->groupBy(fn ($item) => $item->sourceItem?->supplier?->company_name ?? 'Direct / No Supplier');
+        @endphp
+        @foreach($bySupplier as $supplierName => $items)
+            <h4 style="font-size:11px; margin:10px 0 4px;">{{ $supplierName }}</h4>
+            <table class="items">
+                <thead>
+                    <tr>
+                        <th style="width:5%">Sr</th>
+                        <th style="width:14%">Design No.</th>
+                        <th>Description</th>
+                        <th style="width:8%" class="center">Qty</th>
+                        <th style="width:8%" class="center">Unit</th>
+                        <th style="width:10%" class="right">Rate</th>
+                        <th style="width:12%" class="right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php $sr = 0; $supTotal = 0; @endphp
+                    @foreach($items as $item)
+                        @php $supTotal += (float) $item->amount; @endphp
+                        <tr>
+                            <td class="center">{{ ++$sr }}</td>
+                            <td>{{ $item->design_no ?: '—' }}</td>
+                            <td>{{ $item->description }}</td>
+                            <td class="center">{{ $item->qty }}</td>
+                            <td class="center">{{ $item->unit ?? '—' }}</td>
+                            <td class="right">{{ number_format((float) $item->price, 2) }}</td>
+                            <td class="right">{{ number_format((float) $item->amount, 2) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="6" class="right"><strong>Sub-Total</strong></td>
+                        <td class="right"><strong>{{ number_format($supTotal, 2) }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        @endforeach
+    @endif
+
+    <div class="small center" style="margin-top:10px; color:#555;">
+        This is a computer generated document — {{ $company->company_name }}
+    </div>
+
+</body>
+</html>
