@@ -210,6 +210,110 @@
                 </div>
             </div>
 
+            <h6 class="fw-semibold mb-2">Bill of Lading (Draft)</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label class="form-label">Booking No.</label>
+                    <input type="text" name="booking_no" value="{{ old('booking_no', $document->booking_no) }}"
+                           class="form-control @error('booking_no') is-invalid @enderror">
+                    @error('booking_no') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">B/L No.</label>
+                    <input type="text" name="bl_no" value="{{ old('bl_no', $document->bl_no) }}"
+                           class="form-control @error('bl_no') is-invalid @enderror">
+                    @error('bl_no') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Voy. No.</label>
+                    <input type="text" name="voyage_no" value="{{ old('voyage_no', $document->voyage_no) }}"
+                           class="form-control @error('voyage_no') is-invalid @enderror">
+                    @error('voyage_no') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">For Transshipment To</label>
+                    <input type="text" name="transshipment_port" value="{{ old('transshipment_port', $document->transshipment_port) }}"
+                           class="form-control @error('transshipment_port') is-invalid @enderror">
+                    @error('transshipment_port') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Notify Party Name <span class="text-body-secondary fw-normal">(leave blank to use the Consignee)</span></label>
+                    <input type="text" name="notify_party_name" value="{{ old('notify_party_name', $document->notify_party_name) }}"
+                           class="form-control @error('notify_party_name') is-invalid @enderror">
+                    @error('notify_party_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Notify Party Address</label>
+                    <input type="text" name="notify_party_address" value="{{ old('notify_party_address', $document->notify_party_address) }}"
+                           class="form-control @error('notify_party_address') is-invalid @enderror">
+                    @error('notify_party_address') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">Goods Description <span class="text-body-secondary fw-normal">(printed after "SAID TO CONTAIN ... CARTONS CONTAINING")</span></label>
+                    <input type="text" name="goods_description" value="{{ old('goods_description', $document->goods_description) }}"
+                           class="form-control @error('goods_description') is-invalid @enderror"
+                           placeholder="e.g. POWERLOOM WOVEN READYMADE GARMENTS, SAREES, PP BAGS, LADIES PURSE ETC.">
+                    @error('goods_description') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Measurement (CBM)</label>
+                    <input type="number" step="0.001" min="0" name="total_measurement" value="{{ old('total_measurement', $document->total_measurement) }}"
+                           class="form-control @error('total_measurement') is-invalid @enderror">
+                    @error('total_measurement') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Freight Terms</label>
+                    <select name="freight_terms" class="form-select @error('freight_terms') is-invalid @enderror">
+                        @foreach(['PREPAID', 'COLLECT'] as $term)
+                            <option value="{{ $term }}" @selected(old('freight_terms', $document->freight_terms) === $term)>{{ $term }}</option>
+                        @endforeach
+                    </select>
+                    @error('freight_terms') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">EX. Rate</label>
+                    <input type="text" name="ex_rate" value="{{ old('ex_rate', $document->ex_rate) }}"
+                           class="form-control @error('ex_rate') is-invalid @enderror">
+                    @error('ex_rate') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Freight Prepaid At</label>
+                    <input type="text" name="freight_prepaid_at" value="{{ old('freight_prepaid_at', $document->freight_prepaid_at) }}"
+                           class="form-control @error('freight_prepaid_at') is-invalid @enderror">
+                    @error('freight_prepaid_at') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Freight Payable At</label>
+                    <input type="text" name="freight_payable_at" value="{{ old('freight_payable_at', $document->freight_payable_at) }}"
+                           class="form-control @error('freight_payable_at') is-invalid @enderror">
+                    @error('freight_payable_at') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Total Prepaid In</label>
+                    <input type="text" name="total_prepaid_in" value="{{ old('total_prepaid_in', $document->total_prepaid_in) }}"
+                           class="form-control @error('total_prepaid_in') is-invalid @enderror">
+                    @error('total_prepaid_in') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">No. of Original B(s)/L</label>
+                    <input type="text" name="no_of_original_bls" value="{{ old('no_of_original_bls', $document->no_of_original_bls) }}"
+                           class="form-control @error('no_of_original_bls') is-invalid @enderror" placeholder="e.g. 3/THREE">
+                    @error('no_of_original_bls') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Place of Issue</label>
+                    <input type="text" name="bl_place_of_issue" value="{{ old('bl_place_of_issue', $document->bl_place_of_issue) }}"
+                           class="form-control @error('bl_place_of_issue') is-invalid @enderror">
+                    @error('bl_place_of_issue') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Date of Issue</label>
+                    <input type="date" name="bl_date_of_issue" value="{{ old('bl_date_of_issue', $document->bl_date_of_issue?->toDateString()) }}"
+                           class="form-control @error('bl_date_of_issue') is-invalid @enderror">
+                    @error('bl_date_of_issue') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+            </div>
+
             <h6 class="fw-semibold mb-2">CIF Value <span class="text-body-secondary fw-normal">(only if the incoterm needs it — manual entry, no auto-calculation yet)</span></h6>
             <div class="row g-3 mb-4">
                 <div class="col-md-4">

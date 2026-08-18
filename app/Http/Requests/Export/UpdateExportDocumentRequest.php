@@ -58,6 +58,24 @@ class UpdateExportDocumentRequest extends FormRequest
             'net_weight'       => ['nullable', 'numeric', 'min:0', 'max:9999999999.999'],
             'carton_dimensions' => ['nullable', 'string', 'max:60'],
 
+            // Bill of Lading (Draft).
+            'booking_no'          => ['nullable', 'string', 'max:60'],
+            'bl_no'               => ['nullable', 'string', 'max:60'],
+            'voyage_no'           => ['nullable', 'string', 'max:60'],
+            'transshipment_port'  => ['nullable', 'string', 'max:150'],
+            'notify_party_name'   => ['nullable', 'string', 'max:200'],
+            'notify_party_address' => ['nullable', 'string', 'max:1000'],
+            'goods_description'   => ['nullable', 'string', 'max:1000'],
+            'total_measurement'   => ['nullable', 'numeric', 'min:0', 'max:9999999999.999'],
+            'ex_rate'             => ['nullable', 'string', 'max:60'],
+            'freight_terms'       => ['nullable', Rule::in(['PREPAID', 'COLLECT'])],
+            'freight_prepaid_at'  => ['nullable', 'string', 'max:100'],
+            'freight_payable_at'  => ['nullable', 'string', 'max:100'],
+            'total_prepaid_in'    => ['nullable', 'string', 'max:150'],
+            'no_of_original_bls'  => ['nullable', 'string', 'max:40'],
+            'bl_place_of_issue'   => ['nullable', 'string', 'max:100'],
+            'bl_date_of_issue'    => ['nullable', 'date'],
+
             // Packing List Formats B and C — the per-carton breakdown.
             'cartons'                        => ['nullable', 'array', 'max:200'],
             'cartons.*.carton_no'            => ['required_with:cartons.*.lines', 'nullable', 'string', 'max:40'],

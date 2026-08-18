@@ -87,19 +87,38 @@ class ExportDocument extends Model
         'gross_weight',
         'net_weight',
         'carton_dimensions',
+
+        'booking_no',
+        'bl_no',
+        'voyage_no',
+        'transshipment_port',
+        'notify_party_name',
+        'notify_party_address',
+        'goods_description',
+        'total_measurement',
+        'ex_rate',
+        'freight_terms',
+        'freight_prepaid_at',
+        'freight_payable_at',
+        'total_prepaid_in',
+        'no_of_original_bls',
+        'bl_place_of_issue',
+        'bl_date_of_issue',
     ];
 
     protected function casts(): array
     {
         return [
-            'shipment_date'     => 'date',
-            'invoice_date'      => 'date',
-            'buyer_ref_date'    => 'date',
-            'total_cartons'     => 'integer',
-            'freight_amount'    => 'decimal:2',
-            'insurance_amount'  => 'decimal:2',
-            'gross_weight'      => 'decimal:3',
-            'net_weight'        => 'decimal:3',
+            'shipment_date'      => 'date',
+            'invoice_date'       => 'date',
+            'buyer_ref_date'     => 'date',
+            'total_cartons'      => 'integer',
+            'freight_amount'     => 'decimal:2',
+            'insurance_amount'   => 'decimal:2',
+            'gross_weight'       => 'decimal:3',
+            'net_weight'         => 'decimal:3',
+            'total_measurement'  => 'decimal:3',
+            'bl_date_of_issue'   => 'date',
         ];
     }
 
@@ -190,6 +209,17 @@ class ExportDocument extends Model
     public function totalAmount(): float
     {
         return (float) $this->items->sum('amount');
+    }
+
+    /** Bill of Lading's Notify Party block — falls back to the Consignee block (itself falling back to the Buyer) when left blank, same idea as consignee_name/address. */
+    public function notifyPartyName(): ?string
+    {
+        return $this->notify_party_name ?: ($this->consignee_name ?: $this->buyer?->company_name);
+    }
+
+    public function notifyPartyAddress(): ?string
+    {
+        return $this->notify_party_address ?: ($this->consignee_address ?: $this->buyer?->address);
     }
 
     /** Packing List Format C's own header field — reads the buyer's own country rather than being typed twice. */

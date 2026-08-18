@@ -246,6 +246,8 @@ Route::middleware('auth')->group(function () {
         // checklist row's own variant_code (see DocumentChecklistTypeSeeder).
         Route::get('documents/{document}/packing-list/{variant}', [ExportDocumentController::class, 'packingListPdf'])
             ->name('documents.packing-list');
+        Route::get('documents/{document}/bill-of-lading-draft', [ExportDocumentController::class, 'billOfLadingDraftPdf'])
+            ->name('documents.bl-draft');
 
         Route::resource('documents', ExportDocumentController::class)
             ->parameters(['documents' => 'document'])

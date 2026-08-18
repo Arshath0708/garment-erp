@@ -39,7 +39,7 @@ class ExportDocumentController extends Controller implements HasMiddleware
             new Middleware('permission:export-document.create', only: ['raiseFromOrderConfirmation']),
             new Middleware('permission:export-document.edit', only: ['edit', 'update']),
             new Middleware('permission:export-document.delete', only: ['destroy']),
-            new Middleware('permission:export-document.generate', only: ['deliveryChallanPdf', 'eInvoicePdf', 'packingListPdf']),
+            new Middleware('permission:export-document.generate', only: ['deliveryChallanPdf', 'eInvoicePdf', 'packingListPdf', 'billOfLadingDraftPdf']),
         ];
     }
 
@@ -179,6 +179,31 @@ class ExportDocumentController extends Controller implements HasMiddleware
             'packing_list',
             $variant,
             $this->storeGeneratedPdf($pdf, $document, "packing-list-{$variant}"),
+            $filename
+        );
+
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Bill of Lading (Draft) — the draft sent to the shipping line to
+     * confirm before they cut the real B/L. One fixed layout, no variants;
+     * includes the invoice number/date as the checklist row's own
+     * description requires.
+     */
+    public function billOfLadingDraftPdf(ExportDocument $document): Response
+    {
+        $document = $this->loadForInvoiceDocument($document);
+        $company = CompanyProfile::current();
+
+        $pdf = Pdf::loadView('export.documents.bill-of-lading-draft', compact('document', 'company'));
+        $filename = $this->documentFilename($document, 'bl-draft');
+
+        $this->documents->attachGeneratedFile(
+            $document,
+            'bl_draft',
+            null,
+            $this->storeGeneratedPdf($pdf, $document, 'bl-draft'),
             $filename
         );
 

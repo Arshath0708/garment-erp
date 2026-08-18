@@ -22,17 +22,18 @@ class DocumentChecklistTypeSeeder extends Seeder
         $rows = [
             [
                 'code' => 'packing_list', 'name' => 'Packing List', 'category' => 'generated',
-                'description' => 'What each carton has, and for the customs documents.',
+                'description' => 'Compiles what each carton has — for our own record and for the customs documents.',
                 'variant_labels' => ['For Our Record (with Supplier)', 'Without Supplier (for Carton)', 'For Export Documentation'],
             ],
             [
                 'code' => 'item_summary', 'name' => 'Item Summary', 'category' => 'generated',
-                'description' => 'Which cartons contain what — design number, supplier name, etc.',
-                'variant_labels' => ['Raw Data (All Details)', 'Split by Description & Price Band', 'Supplier-wise Split'],
+                'description' => 'Which cartons contain what, in detail — design number, supplier name, etc. — as per the cartons chosen for this shipment.',
+                'variant_labels' => ['Raw Data (All Details)', 'Split by Description & Price Band (AA/AB)', 'Supplier-wise Split'],
             ],
             [
                 'code' => 'export_invoice', 'name' => 'Export Invoice', 'category' => 'generated',
-                'description' => 'Split by description and price band; qty, unit, price and GST based on the incoterm (FOB/CIF/CNF).',
+                'description' => 'Split by description and price band — qty, unit, price and GST based on the incoterm (FOB/CIF/CNF). '
+                    .'For CIF, insurance and freight need to be added, calculated on CBM (volume weight), weight, or item value — a choice per shipment.',
                 'variant_labels' => ['For Customs', 'For Buyer', 'For Bank', 'For E-way Bill'],
             ],
             [
@@ -45,7 +46,8 @@ class DocumentChecklistTypeSeeder extends Seeder
             ],
             [
                 'code' => 'purchase_bills', 'name' => 'Purchase Bills (Part of E-Sanchit)', 'category' => 'generated',
-                'description' => 'Trims, transport, packing materials and supplier bills for this shipment, split carton-wise.',
+                'description' => 'Trims, transport, packing materials and every supplier bill for this shipment, split carton-wise where the same '
+                    .'goods are packed across multiple cartons — generated once the bill is scanned, so it\'s clear which goods ship in this consignment.',
                 'variant_labels' => ['By Carton No. & Export Invoice/Balance Shipment', 'By Carton No., Item Description & Supplier'],
             ],
             [
@@ -99,12 +101,13 @@ class DocumentChecklistTypeSeeder extends Seeder
             ],
             [
                 'code' => 'bank_docs', 'name' => 'Docs to Bank', 'category' => 'generated',
-                'description' => 'Sent to the bank within 21 days of the B/L date — either a GR waiver or a Bill of Exchange, each with its own bank form.',
+                'description' => 'Sent to the bank within 21 days of the B/L date. GR Waiver just records the shipment with the bank; a Bill of '
+                    .'Exchange is raised when the client\'s docs are routed through the bank instead — each has its own bank form to fill.',
                 'variant_labels' => ['GR Waiver', 'Bill of Exchange'],
             ],
             [
                 'code' => 'buyer_docs', 'name' => 'Buyer Docs', 'category' => 'generated',
-                'description' => 'Emailed to the buyer on GR release; on a Bill of Exchange, only a shipment intimation is sent instead.',
+                'description' => 'Emailed to the buyer once GR is released. On a Bill of Exchange, no docs go out to the buyer — only a shipment intimation is sent instead.',
                 'variant_labels' => ['GR Release Email', 'Bill of Exchange Intimation'],
             ],
             [
@@ -148,9 +151,27 @@ class DocumentChecklistTypeSeeder extends Seeder
             );
         }
 
-        DocumentChecklistType::query()->where('code', 'insurance')->update([
-            'description' => 'Either cancel the insurance draft, or enter B/L number + date and upload the certificate.',
-        ]);
+        /**
+         * The Generate Documents tab prints each type's description and
+         * variant labels verbatim, so a description clarified after the
+         * type already exists needs to reach rows that firstOrCreate()
+         * above intentionally leaves alone. Whitelisted here rather than
+         * syncing every row, so an admin's edit on the Document Checklist
+         * Types screen for anything NOT in this list still survives a
+         * reseed.
+         */
+        $syncDescriptions = ['packing_list', 'item_summary', 'export_invoice', 'purchase_bills', 'bank_docs', 'buyer_docs', 'insurance'];
+
+        foreach ($rows as $row) {
+            if (! in_array($row['code'], $syncDescriptions, true)) {
+                continue;
+            }
+
+            DocumentChecklistType::query()->where('code', $row['code'])->update([
+                'description'    => $row['description'] ?? null,
+                'variant_labels' => $row['variant_labels'] ?? null,
+            ]);
+        }
 
         $this->command?->info('Document checklist types seeded ('.count($rows).' rows).');
     }
