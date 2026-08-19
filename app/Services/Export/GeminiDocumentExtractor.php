@@ -183,20 +183,20 @@ class GeminiDocumentExtractor
                 'status_or_remarks'  => 'Any status line or short note on the document',
             ],
             'leo_copy' => [
-                'leo_number'         => 'LEO / Let Export Order number',
+                'leo_number'         => 'LEO / Let Export Order number (e.g. 15/274)',
                 'leo_date'           => 'LEO date as YYYY-MM-DD',
-                'shipping_bill_no'   => 'Shipping bill number if printed',
+                'shipping_bill_no'   => 'Shipping bill number (SB No) if printed',
                 'invoice_no'         => 'Export invoice number if printed',
-                'port_of_loading'    => 'Port of loading if printed',
-                'status_or_remarks'  => 'Any status line or short note on the LEO copy',
+                'port_of_loading'    => 'Port of loading if printed (e.g. Nhava Sheva / INNSA1)',
+                'status_or_remarks'  => 'Any status such as LET EXPORT / LEO granted / cleared for export',
             ],
             'assessed_copy' => [
-                'assessed_ref_no'    => 'Assessed copy / customs assessment reference if printed',
-                'assessed_date'      => 'Assessment date as YYYY-MM-DD',
-                'shipping_bill_no'   => 'Shipping bill number if printed',
-                'invoice_no'         => 'Export invoice number if printed',
-                'examiner_or_office' => 'Examining officer / customs office name if printed',
-                'status_or_remarks'  => 'Any status line such as Passed for stuffing / Examined',
+                'assessed_ref_no'    => 'Assessed / ICEGATE tracking id if printed (e.g. SB2108…), else shipping bill number',
+                'assessed_date'      => 'Assessment or shipping bill date as YYYY-MM-DD',
+                'shipping_bill_no'   => 'Shipping bill number (SB No) if printed',
+                'invoice_no'         => 'Export invoice number if printed (e.g. EXP…)',
+                'examiner_or_office' => 'Customs office / port name if printed (e.g. JNCH Nhava Sheva)',
+                'status_or_remarks'  => 'Any status such as Assessed Copy / Passed for stuffing / Examined',
             ],
             'bl_final' => [
                 'bl_number'          => 'Bill of Lading number',
@@ -216,21 +216,22 @@ class GeminiDocumentExtractor
                 'status_or_remarks'  => 'Any status line or short note on the CLP',
             ],
             'measurement_copy' => [
-                'measurement_ref'    => 'Measurement copy reference if printed',
-                'document_date'      => 'Document date as YYYY-MM-DD',
-                'container_no'       => 'Container number if printed',
-                'cbm_or_volume'      => 'CBM / volume if printed',
-                'gross_weight'       => 'Gross weight if printed',
-                'status_or_remarks'  => 'Any status line or short note',
+                'measurement_ref'    => 'Certificate of Measurement number (e.g. 21649)',
+                'document_date'      => 'Dock / measurement date as YYYY-MM-DD',
+                'shipping_bill_no'   => 'Ship bill / shipping bill number if printed',
+                'packages'           => 'Number of packages / cartons if printed',
+                'cbm_or_volume'      => 'Total CBM / M3 volume if printed (e.g. 3.536)',
+                'dimensions'         => 'Carton dimensions LxWxH in cm if printed',
+                'status_or_remarks'  => 'Shipper / measurer / any short note',
             ],
             'insurance' => [
-                'policy_or_cert_no'  => 'Insurance policy / certificate number',
-                'document_date'      => 'Certificate / policy date as YYYY-MM-DD',
-                'bl_number'          => 'Bill of lading number if printed',
+                'policy_or_cert_no'  => 'Insurance certificate / policy number (e.g. C003114995)',
+                'document_date'      => 'Certificate issue date as YYYY-MM-DD',
+                'bl_number'          => 'Bill of lading / BL number if printed',
                 'bl_date'            => 'Bill of lading date as YYYY-MM-DD if printed; if only one date appears on the certificate, use that same date here',
-                'insured_amount'     => 'Insured amount / sum insured if printed',
-                'insurer_name'       => 'Insurance company name if printed',
-                'status_or_remarks'  => 'Any status line or short note',
+                'insured_amount'     => 'Amount insured with currency if printed',
+                'insurer_name'       => 'Insurance company name if printed (e.g. Tata AIG)',
+                'status_or_remarks'  => 'Invoice no / conveyance / any short note',
             ],
             'payment_received' => [
                 'swift_or_ref_no'    => 'Swift / UTR / payment reference number',
@@ -285,10 +286,10 @@ class GeminiDocumentExtractor
         $context = match ($typeCode) {
             'cha_checklist' => 'This is an Indian export CHA checklist / customs filing checklist received from the Clearing House Agent after documents were uploaded to the customs website.',
             'e_sanchit_docs' => 'This is an Indian ICEGATE e-Sanchit document pack (export invoice / packing list / declaration) on the exporter letterhead, signed and stamped for customs upload.',
-            'assessed_copy' => 'This is an Indian customs Assessed Copy / examination copy emailed after goods are examined and passed for stuffing.',
-            'leo_copy' => 'This is an Indian customs LEO (Let Export Order) copy — the final customs permission to export, showing LEO number and date.',
+            'assessed_copy' => 'This is an Indian Customs EDI / ICEGATE Assessed Copy (Shipping Bill Summary), watermarked ASSESSED COPY, after goods are assessed / passed for stuffing.',
+            'leo_copy' => 'This is an Indian Customs EDI / ICEGATE LET EXPORT (LEO) copy — the final Let Export Order, showing LEO number and date.',
             'clp' => 'This is a Container Load Plan (CLP) received from the CHA for an export shipment.',
-            'measurement_copy' => 'This is a measurement / volume copy for an export container or cargo.',
+            'measurement_copy' => 'This is a Certificate of Measurement / measurement copy (volume CBM of cartons) for an export shipment, often from a measurement company like NMMC.',
             'bl_final' => 'This is a final ocean Bill of Lading (B/L) for an export shipment.',
             'insurance' => 'This is a marine cargo insurance certificate / policy for an export shipment.',
             'payment_received' => 'This is a Swift / payment advice showing foreign inward remittance from the buyer.',
@@ -440,18 +441,21 @@ PROMPT;
 
             case 'measurement_copy':
                 $reference = $nullIfBlank($fields['measurement_ref'] ?? null)
-                    ?? $nullIfBlank($fields['container_no'] ?? null);
+                    ?? $nullIfBlank($fields['shipping_bill_no'] ?? null);
                 if ($date = $nullIfBlank($fields['document_date'] ?? null)) {
                     $remarksParts[] = 'Date: '.$date;
                 }
-                if ($container = $nullIfBlank($fields['container_no'] ?? null)) {
-                    $remarksParts[] = 'Container: '.$container;
+                if ($sb = $nullIfBlank($fields['shipping_bill_no'] ?? null)) {
+                    $remarksParts[] = 'SB: '.$sb;
+                }
+                if ($pkgs = $nullIfBlank($fields['packages'] ?? null)) {
+                    $remarksParts[] = 'Pkgs: '.$pkgs;
                 }
                 if ($cbm = $nullIfBlank($fields['cbm_or_volume'] ?? null)) {
                     $remarksParts[] = 'CBM: '.$cbm;
                 }
-                if ($gw = $nullIfBlank($fields['gross_weight'] ?? null)) {
-                    $remarksParts[] = 'GW: '.$gw;
+                if ($dims = $nullIfBlank($fields['dimensions'] ?? null)) {
+                    $remarksParts[] = 'Dims: '.$dims;
                 }
                 if ($note = $nullIfBlank($fields['status_or_remarks'] ?? null)) {
                     $remarksParts[] = $note;

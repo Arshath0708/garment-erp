@@ -248,6 +248,18 @@ Route::middleware('auth')->group(function () {
             ->name('documents.packing-list');
         Route::get('documents/{document}/bill-of-lading-draft', [ExportDocumentController::class, 'billOfLadingDraftPdf'])
             ->name('documents.bl-draft');
+        Route::get('documents/{document}/export-invoice/{variant}', [ExportDocumentController::class, 'exportInvoicePdf'])
+            ->name('documents.export-invoice');
+        Route::get('documents/{document}/item-summary/{variant}', [ExportDocumentController::class, 'itemSummaryPdf'])
+            ->name('documents.item-summary');
+        Route::get('documents/{document}/purchase-bills/{variant}', [ExportDocumentController::class, 'purchaseBillsPdf'])
+            ->name('documents.purchase-bills');
+        Route::get('documents/{document}/vgm/{variant}', [ExportDocumentController::class, 'vgmPdf'])
+            ->name('documents.vgm');
+        Route::get('documents/{document}/bank-docs/{variant}', [ExportDocumentController::class, 'bankDocsPdf'])
+            ->name('documents.bank-docs');
+        Route::get('documents/{document}/buyer-docs/{variant}', [ExportDocumentController::class, 'buyerDocsPdf'])
+            ->name('documents.buyer-docs');
 
         Route::resource('documents', ExportDocumentController::class)
             ->parameters(['documents' => 'document'])
