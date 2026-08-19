@@ -137,7 +137,7 @@ return [
         ],
 
         'Export' => [
-            'packing'         => ['label' => 'Packing',           'built' => false],
+            'packing'         => ['label' => 'Packing',           'built' => true],
             // Phase 1 built: the Export Document header + 26-row checklist
             // tracker (raise from OC, upload/generate/manual per row). The
             // document-generation logic behind "generate"/"export" (Packing
@@ -146,13 +146,13 @@ return [
         ],
 
         'Finance' => [
-            'purchase-bill'    => ['label' => 'Purchase Bills',    'built' => false],
-            'debit-note'       => ['label' => 'Debit Notes',       'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
-            'payment'          => ['label' => 'Supplier Payments', 'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
+            'purchase-bill'    => ['label' => 'Purchase Bills',    'built' => true],
+            'debit-note'       => ['label' => 'Debit Notes',       'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
+            'payment'          => ['label' => 'Supplier Payments', 'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
             // Money coming IN from the buyer. "Foreign Payments" read as money
             // going out; the key stays, the label says which direction.
-            'foreign-payment'  => ['label' => 'Buyer Receipts',    'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => false],
-            'agent-commission' => ['label' => 'Agent Commission',  'built' => false],
+            'foreign-payment'  => ['label' => 'Buyer Receipts',    'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
+            'agent-commission' => ['label' => 'Agent Commission',  'built' => true],
         ],
 
         /*
@@ -160,8 +160,8 @@ return [
          * only — nothing is ever created or edited on it. That is a report.
          */
         'Reports' => [
-            'outstanding' => ['label' => 'Outstanding', 'actions' => ['view', 'export'], 'built' => false],
-            'report'      => ['label' => 'Reports',     'actions' => ['view', 'export'], 'built' => false],
+            'outstanding' => ['label' => 'Outstanding', 'actions' => ['view', 'export'], 'built' => true],
+            'report'      => ['label' => 'Reports',     'actions' => ['view', 'export'], 'built' => true],
         ],
 
         /*

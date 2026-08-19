@@ -37,7 +37,7 @@
                 <td style="width:50%">
                     <div class="lbl">To (Bank)</div>
                     <strong>{{ $company->bank_name ?: '—' }}</strong>
-                    @if($company->bank_account_no)<div>A/c No: {{ $company->bank_account_no }}</div>@endif
+                    @if($company->bank_account_number)<div>A/c No: {{ $company->bank_account_number }}</div>@endif
                     @if($company->bank_ifsc)<div>IFSC: {{ $company->bank_ifsc }}</div>@endif
                     @if($company->bank_swift)<div>SWIFT: {{ $company->bank_swift }}</div>@endif
                 </td>
@@ -100,7 +100,7 @@
             At <strong>sight</strong> of this FIRST Bill of Exchange (Second of the same tenor and date being unpaid),
             pay to the order of <strong>{{ $company->bank_name ?: '________' }}</strong>
             the sum of <strong>{{ $document->currency?->iso_code ?? '' }}
-            {{ ucwords(\App\Support\NumberToWords::indian($total)) }} Only</strong>
+            {{ ucwords(\App\Support\NumberToWords::indian($total, $document->currency?->iso_code ?? 'INR')) }} Only</strong>
             ({{ $document->currency?->iso_code ?? '' }} {{ number_format($total, 2) }}).
         </div>
 

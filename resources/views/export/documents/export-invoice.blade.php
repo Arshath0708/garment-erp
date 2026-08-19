@@ -164,7 +164,7 @@
 
     <div class="small" style="margin-top:6px">
         Amount in words: {{ $document->currency?->iso_code ?? '' }}
-        {{ ucwords(\App\Support\NumberToWords::indian($grandTotal ?? $totalTaxable)) }} Only
+        {{ ucwords(\App\Support\NumberToWords::indian($grandTotal ?? $totalTaxable, $document->currency?->iso_code ?? 'INR')) }} Only
     </div>
 
     <table class="frame" style="margin-top:10px">
@@ -173,7 +173,7 @@
                 <div class="small">
                     <div class="lbl">Bank Details</div>
                     @if($company->bank_name){{ $company->bank_name }}<br>@endif
-                    @if($company->bank_account_no)A/c No: {{ $company->bank_account_no }}<br>@endif
+                    @if($company->bank_account_number)A/c No: {{ $company->bank_account_number }}<br>@endif
                     @if($company->bank_ifsc)IFSC: {{ $company->bank_ifsc }}<br>@endif
                     @if($company->bank_swift)SWIFT: {{ $company->bank_swift }}@endif
                 </div>

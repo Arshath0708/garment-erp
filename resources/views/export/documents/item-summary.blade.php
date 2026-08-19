@@ -91,7 +91,7 @@
             </tfoot>
         </table>
 
-    @elseif($variant === 'split-by-description-price-band-aa-ab')
+    @elseif(str_starts_with($variant, 'split-by-description-price-band'))
         {{-- Format B: Split by Description & Price Band --}}
         @php
             $grouped = $document->items->groupBy(fn ($item) => ($item->description ?? 'Other').' @ '.number_format((float) $item->price, 2));

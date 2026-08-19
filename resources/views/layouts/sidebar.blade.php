@@ -242,7 +242,12 @@
                     <li class="nav-header">Export</li>
 
                     @can('packing.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-boxes"></i><p>Packing</p></a></li>
+                        <li class="nav-item">
+                            <a href="{{ route('export.packing.index') }}"
+                               class="nav-link {{ request()->routeIs('export.packing.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-boxes"></i><p>Packing</p>
+                            </a>
+                        </li>
                     @endcan
                     @can('export-document.view')
                         <li class="nav-item">
@@ -269,19 +274,44 @@
                     <li class="nav-header">Finance</li>
 
                     @can('purchase-bill.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-receipt"></i><p>Purchase Bills</p></a></li>
+                        <li class="nav-item">
+                            <a href="{{ route('finance.purchase-bills.index') }}"
+                               class="nav-link {{ request()->routeIs('finance.purchase-bills.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-receipt"></i><p>Purchase Bills</p>
+                            </a>
+                        </li>
                     @endcan
                     @can('debit-note.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-file-earmark-minus"></i><p>Debit Notes</p></a></li>
+                        <li class="nav-item">
+                            <a href="{{ route('finance.debit-notes.index') }}"
+                               class="nav-link {{ request()->routeIs('finance.debit-notes.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-file-earmark-minus"></i><p>Debit Notes</p>
+                            </a>
+                        </li>
                     @endcan
                     @can('payment.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-cash-coin"></i><p>Supplier Payments</p></a></li>
+                        <li class="nav-item">
+                            <a href="{{ route('finance.supplier-payments.index') }}"
+                               class="nav-link {{ request()->routeIs('finance.supplier-payments.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-cash-coin"></i><p>Supplier Payments</p>
+                            </a>
+                        </li>
                     @endcan
                     @can('foreign-payment.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-currency-exchange"></i><p>Buyer Receipts</p></a></li>
+                        <li class="nav-item">
+                            <a href="{{ route('finance.buyer-receipts.index') }}"
+                               class="nav-link {{ request()->routeIs('finance.buyer-receipts.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-currency-exchange"></i><p>Buyer Receipts</p>
+                            </a>
+                        </li>
                     @endcan
                     @can('agent-commission.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-cash-stack"></i><p>Agent Commission</p></a></li>
+                        <li class="nav-item">
+                            <a href="{{ route('finance.agent-commission.index') }}"
+                               class="nav-link {{ request()->routeIs('finance.agent-commission.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-cash-stack"></i><p>Agent Commission</p>
+                            </a>
+                        </li>
                     @endcan
                 @endif
 
@@ -293,10 +323,20 @@
                     <li class="nav-header">Reports</li>
 
                     @can('outstanding.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-hourglass-split"></i><p>Outstanding</p></a></li>
+                        <li class="nav-item">
+                            <a href="{{ route('reports.outstanding.index') }}"
+                               class="nav-link {{ request()->routeIs('reports.outstanding.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-hourglass-split"></i><p>Outstanding</p>
+                            </a>
+                        </li>
                     @endcan
                     @can('report.view')
-                        <li class="nav-item"><a href="#" class="nav-link soon"><i class="nav-icon bi bi-bar-chart-line"></i><p>Reports</p></a></li>
+                        <li class="nav-item">
+                            <a href="{{ route('reports.index') }}"
+                               class="nav-link {{ request()->routeIs('reports.*') && !request()->routeIs('reports.outstanding.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-bar-chart-line"></i><p>Reports</p>
+                            </a>
+                        </li>
                     @endcan
                 @endif
 

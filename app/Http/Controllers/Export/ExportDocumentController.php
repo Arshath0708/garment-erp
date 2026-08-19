@@ -239,6 +239,7 @@ class ExportDocumentController extends Controller implements HasMiddleware
             'raw-data-all-details'                         => 'Raw Data (All Details)',
             'split-by-description-price-band'              => 'Split by Description & Price Band',
             'split-by-description-price-band-aa-ab'        => 'Split by Description & Price Band',
+            'split-by-description-price-band-aaab'         => 'Split by Description & Price Band',
             'supplier-wise-split'                          => 'Supplier-wise Split',
         ];
 
