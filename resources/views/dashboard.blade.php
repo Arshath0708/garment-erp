@@ -4,7 +4,7 @@
     {{-- Top Statistics Cards --}}
     <div class="row">
         {{-- Card 1: Inquiries --}}
-        <div class="col-md-6 col-12 mb-3">
+        <div class="col-xl-4 col-md-6 col-12 mb-3">
             <div class="small-box text-bg-primary">
                 <div class="inner">
                     <h3>{{ number_format($inquiryCount) }}</h3>
@@ -22,19 +22,91 @@
         </div>
 
         {{-- Card 2: Order Confirmations --}}
-        <div class="col-md-6 col-12 mb-3">
+        <div class="col-xl-4 col-md-6 col-12 mb-3">
             <div class="small-box text-bg-success">
                 <div class="inner">
                     <h3>{{ number_format($orderConfirmationCount) }}</h3>
                     <p>Order Confirmations</p>
                 </div>
                 <i class="small-box-icon bi bi-cart-check-fill"></i>
-                @can('order_confirmation.view')
+                @can('order-confirmation.view')
                     <a href="{{ route('sales.order-confirmations.index') }}" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover">
                         View Order Confirmations <i class="bi bi-arrow-right-circle-fill ms-1"></i>
                     </a>
                 @else
                     <span class="small-box-footer link-light opacity-75">All Confirmations</span>
+                @endcan
+            </div>
+        </div>
+
+        {{-- Card 3: Purchase Orders --}}
+        <div class="col-xl-4 col-md-6 col-12 mb-3">
+            <div class="small-box text-bg-info">
+                <div class="inner">
+                    <h3>{{ number_format($purchaseOrderCount) }}</h3>
+                    <p>Purchase Orders</p>
+                </div>
+                <i class="small-box-icon bi bi-cart3"></i>
+                @can('purchase-order.view')
+                    <a href="{{ route('procurement.purchase-orders.index') }}" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover">
+                        View Purchase Orders <i class="bi bi-arrow-right-circle-fill ms-1"></i>
+                    </a>
+                @else
+                    <span class="small-box-footer link-light opacity-75">All Purchase Orders</span>
+                @endcan
+            </div>
+        </div>
+
+        {{-- Card 4: Open Shipments --}}
+        <div class="col-xl-4 col-md-6 col-12 mb-3">
+            <div class="small-box text-bg-warning">
+                <div class="inner">
+                    <h3>{{ number_format($openShipmentCount) }}</h3>
+                    <p>Open Shipments</p>
+                </div>
+                <i class="small-box-icon bi bi-truck"></i>
+                @can('export-document.view')
+                    <a href="{{ route('export.documents.index') }}" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover">
+                        View Export Documents <i class="bi bi-arrow-right-circle-fill ms-1"></i>
+                    </a>
+                @else
+                    <span class="small-box-footer link-light opacity-75">All Shipments</span>
+                @endcan
+            </div>
+        </div>
+
+        {{-- Card 5: Buyer Outstanding --}}
+        <div class="col-xl-4 col-md-6 col-12 mb-3">
+            <div class="small-box text-bg-danger">
+                <div class="inner">
+                    <h3>{{ number_format($buyerOutstanding, 2) }}</h3>
+                    <p>Buyer Outstanding</p>
+                </div>
+                <i class="small-box-icon bi bi-cash-stack"></i>
+                @can('outstanding.view')
+                    <a href="{{ route('reports.outstanding.index') }}" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover">
+                        View Outstanding <i class="bi bi-arrow-right-circle-fill ms-1"></i>
+                    </a>
+                @else
+                    <span class="small-box-footer link-light opacity-75">Across Export Documents</span>
+                @endcan
+            </div>
+        </div>
+
+        {{-- Card 6: Supplier Outstanding --}}
+        <div class="col-xl-4 col-md-6 col-12 mb-3">
+            <div class="small-box text-bg-dark">
+                <div class="inner">
+                    <h3>{{ number_format($supplierOutstanding, 2) }}</h3>
+                    <p>Supplier Outstanding</p>
+                </div>
+                <i class="small-box-icon bi bi-building"></i>
+                @can('outstanding.view')
+                    <a href="{{ route('reports.outstanding.index') }}" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover">
+                        View Outstanding <i class="bi bi-arrow-right-circle-fill ms-1"></i>
+                    </a>
+                @else
+                    <span class="small-box-footer link-light opacity-75">Across Purchase Orders</span>
                 @endcan
             </div>
         </div>
@@ -47,7 +119,7 @@
             <div class="card card-primary card-outline mb-4">
                 <div class="card-header border-0 d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0">
-                        <i class="bi bi-graph-up-arrow me-1"></i>Order Flow Trend (6 Months)
+                        <i class="bi bi-graph-up-arrow me-1"></i>Pipeline Trend (6 Months)
                     </h3>
                 </div>
                 <div class="card-body">
@@ -95,6 +167,14 @@
                         {
                             name: 'Order Confirmations',
                             data: @json($ocSeriesData)
+                        },
+                        {
+                            name: 'Purchase Orders',
+                            data: @json($poSeriesData)
+                        },
+                        {
+                            name: 'Export Documents',
+                            data: @json($exportDocSeriesData)
                         }
                     ],
                     chart: {
@@ -103,7 +183,7 @@
                         toolbar: { show: false },
                         fontFamily: 'inherit'
                     },
-                    colors: ['#0d6efd', '#198754'],
+                    colors: ['#0d6efd', '#198754', '#fd7e14', '#6f42c1'],
                     dataLabels: { enabled: false },
                     stroke: { curve: 'smooth', width: 2 },
                     fill: {

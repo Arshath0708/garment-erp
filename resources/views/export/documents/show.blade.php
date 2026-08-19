@@ -155,22 +155,12 @@
 
             {{-- ================= Generate Documents ================= --}}
             <div class="tab-pane fade" id="tab-generate" role="tabpanel">
-                <p class="text-body-secondary small mb-3">
-                    Every system-generated document for this shipment, one clearly separated section each, in checklist order.
-                    Each format inside a section gets its own status and its own Generate button. "Not built yet" means the
-                    checklist tracks that format but the system has no template for it yet — record it manually from the
-                    Checklist tab in the meantime.
-                </p>
-
                 @php
-                    $groupLabelByCode = collect($generatorGroups)
-                        ->flatMap(fn ($codes, $group) => collect($codes)->mapWithKeys(fn ($code) => [$code => $group]));
-
-                    $groupAccent = [
-                        'Packing & Item Docs'        => 'primary',
-                        'Invoicing & Customs Filing' => 'info',
-                        'Shipping Line'               => 'warning',
-                        'Bank & Buyer Docs'          => 'success',
+                    $groupMeta = [
+                        'Packing & Item Docs'        => ['accent' => 'primary', 'icon' => 'bi-box-seam'],
+                        'Invoicing & Customs Filing' => ['accent' => 'info',    'icon' => 'bi-receipt'],
+                        'Shipping Line'              => ['accent' => 'warning', 'icon' => 'bi-truck'],
+                        'Bank & Buyer Docs'          => ['accent' => 'success', 'icon' => 'bi-bank'],
                     ];
 
                     $typeIcons = [
@@ -190,83 +180,117 @@
                         ->map(fn ($entries) => $entries->first()->type)
                         ->sortBy('sort_order')
                         ->keys();
+
+                    $typesByCode = $orderedCodes->mapWithKeys(fn ($code) => [$code => $generatedEntries->get($code)->first()->type]);
                 @endphp
 
-                <div class="accordion" id="generateAccordion">
-                    @foreach($orderedCodes as $code)
+                <div class="gd-summary d-flex flex-wrap align-items-center gap-3 mb-4">
+                    <div class="gd-summary-ring flex-shrink-0" style="--pct: {{ $generatedTotal ? round((($generatedTotal - $generatedPending) / $generatedTotal) * 100) : 0 }}">
+                        <span>{{ $generatedTotal - $generatedPending }}/{{ $generatedTotal }}</span>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Document generation progress</div>
+                        <div class="text-body-secondary small">
+                            {{ $generatedPending }} format{{ $generatedPending === 1 ? '' : 's' }} still pending across {{ $orderedCodes->count() }} document types.
+                            "Not built yet" formats need to be recorded manually from the <strong>Checklist</strong> tab.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="gd-groups d-flex flex-column gap-4">
+                    @foreach($generatorGroups as $groupLabel => $codesInGroup)
                         @php
-                            $entries = $generatedEntries->get($code);
-                            $type = $entries->first()->type;
-                            $accent = $groupAccent[$groupLabelByCode[$code] ?? ''] ?? 'secondary';
-                            $icon = $typeIcons[$code] ?? 'bi-file-earmark';
-                            $panelId = 'gen-'.$code;
+                            $codesPresent = collect($codesInGroup)->filter(fn ($c) => $orderedCodes->contains($c))->values();
+                            if ($codesPresent->isEmpty()) continue;
+                            $meta = $groupMeta[$groupLabel] ?? ['accent' => 'secondary', 'icon' => 'bi-folder'];
                         @endphp
 
-                        {{-- No data-bs-parent — each document's panel opens/closes independently, so more than one can stay open at once. --}}
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button {{ $loop->first ? '' : 'collapsed' }} border-start border-4 border-{{ $accent }}"
-                                        type="button" data-bs-toggle="collapse" data-bs-target="#{{ $panelId }}"
-                                        aria-expanded="{{ $loop->first ? 'true' : 'false' }}" aria-controls="{{ $panelId }}">
-                                    <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 w-100">
-                                        <div>
-                                            @if($groupLabelByCode[$code] ?? null)
-                                                <div class="small text-uppercase text-body-secondary fw-semibold mb-1" style="letter-spacing:.04em;">
-                                                    {{ $groupLabelByCode[$code] }}
-                                                </div>
-                                            @endif
-                                            <div class="fs-5 fw-semibold mb-1"><i class="bi {{ $icon }} me-2 text-{{ $accent }}"></i>{{ $type->name }}</div>
-                                            @if($type->description)
-                                                <div class="text-body-secondary small fw-normal" style="max-width:640px">{{ $type->description }}</div>
-                                            @endif
-                                        </div>
-                                        <span class="badge text-bg-light text-body-secondary flex-shrink-0">
-                                            {{ $entries->where('status', 'generated')->count() }} / {{ $entries->count() }} generated
-                                        </span>
-                                    </div>
-                                </button>
-                            </h2>
-                            <div id="{{ $panelId }}" class="accordion-collapse collapse {{ $loop->first ? 'show' : '' }}">
-                                <div class="accordion-body">
-                                    <div class="row g-3">
-                                        @foreach($entries as $i => $entry)
-                                            <div class="col-md-6 col-lg-4">
-                                                <div class="border rounded p-3 h-100 d-flex flex-column justify-content-between gap-2">
-                                                    <div>
-                                                        <div class="fw-semibold small mb-1">
-                                                            @if($entry->variantLabel())
-                                                                <span class="text-{{ $accent }}">{{ chr(65 + $i) }}.</span> {{ $entry->variantLabel() }}
-                                                            @else
-                                                                Standard Format
-                                                            @endif
-                                                        </div>
-                                                        <span class="badge text-bg-{{ $entry->statusColor() }}">{{ $entry->statusLabel() }}</span>
-                                                        @if($entry->status === 'generated')
-                                                            <div class="small text-success mt-1">
-                                                                <i class="bi bi-check-circle me-1"></i>{{ $entry->generated_at?->format('d M Y, H:i') }}
-                                                                @if($entry->hasFile())
-                                                                    &middot; <a href="{{ $entry->fileUrl() }}" target="_blank" rel="noopener">View</a>
+                        <section class="gd-group">
+                            <div class="gd-group-heading d-flex align-items-center gap-2 mb-3">
+                                <span class="gd-group-dot bg-{{ $meta['accent'] }}"><i class="bi {{ $meta['icon'] }}"></i></span>
+                                <h6 class="mb-0 text-uppercase fw-semibold small text-body-secondary" style="letter-spacing:.05em">{{ $groupLabel }}</h6>
+                            </div>
+
+                            <div class="d-flex flex-column gap-3">
+                                @foreach($codesPresent as $code)
+                                    @php
+                                        $entries = $generatedEntries->get($code);
+                                        $type = $typesByCode[$code];
+                                        $accent = $meta['accent'];
+                                        $icon = $typeIcons[$code] ?? 'bi-file-earmark';
+                                        $panelId = 'gen-'.$code;
+                                        $done = $entries->where('status', 'generated')->count();
+                                        $total = $entries->count();
+                                        $complete = $total > 0 && $done === $total;
+                                    @endphp
+
+                                    @php $isFirstCard = $loop->parent->first && $loop->first; @endphp
+                                    <div class="gd-card">
+                                        <button class="gd-card-header" type="button" data-bs-toggle="collapse"
+                                                data-bs-target="#{{ $panelId }}"
+                                                aria-expanded="{{ $isFirstCard ? 'true' : 'false' }}" aria-controls="{{ $panelId }}">
+                                            <span class="gd-card-icon bg-{{ $accent }}-subtle text-{{ $accent }}"><i class="bi {{ $icon }}"></i></span>
+                                            <span class="gd-card-title">
+                                                <span class="d-block fw-semibold">{{ $type->name }}</span>
+                                                @if($type->description)
+                                                    <span class="d-block text-body-secondary small fw-normal">{{ $type->description }}</span>
+                                                @endif
+                                            </span>
+                                            <span class="gd-card-status badge {{ $complete ? 'text-bg-success-subtle text-success' : 'text-bg-light text-body-secondary' }}">
+                                                @if($complete)<i class="bi bi-check-circle-fill me-1"></i>@endif
+                                                {{ $done }} / {{ $total }} generated
+                                            </span>
+                                            <i class="bi bi-chevron-down gd-card-chevron"></i>
+                                        </button>
+
+                                        <div id="{{ $panelId }}" class="collapse {{ $isFirstCard ? 'show' : '' }}">
+                                            <div class="gd-card-body">
+                                                <div class="gd-format-grid">
+                                                    @foreach($entries as $i => $entry)
+                                                        <div class="gd-format {{ $entry->status === 'generated' ? 'is-done' : '' }}">
+                                                            <div class="gd-format-label">
+                                                                @if($entry->variantLabel())
+                                                                    <span class="gd-format-letter text-{{ $accent }}">{{ chr(65 + $i) }}.</span> {{ $entry->variantLabel() }}
+                                                                @else
+                                                                    Standard Format
                                                                 @endif
                                                             </div>
-                                                        @endif
-                                                    </div>
-                                                    <div>
-                                                        @if($canGenerate && isset($generatorRoutes[$code]))
-                                                            <a href="{{ $generatorRoutes[$code]($entry->variant_code) }}"
-                                                               class="btn btn-sm btn-outline-primary w-100" target="_blank">
-                                                                <i class="bi bi-file-earmark-pdf me-1"></i> Generate
-                                                            </a>
-                                                        @elseif(! isset($generatorRoutes[$code]))
-                                                            <span class="badge text-bg-light text-body-secondary d-block py-2">Not built yet</span>
-                                                        @endif
-                                                    </div>
+
+                                                            <span class="badge text-bg-{{ $entry->statusColor() }} gd-format-badge">{{ $entry->statusLabel() }}</span>
+
+                                                            @if($entry->status === 'generated')
+                                                                <div class="small text-body-secondary mt-1 mb-2">
+                                                                    <i class="bi bi-clock-history me-1"></i>{{ $entry->generated_at?->format('d M Y, H:i') }}
+                                                                </div>
+                                                            @endif
+
+                                                            <div class="mt-auto d-flex gap-2 pt-2">
+                                                                @if($canGenerate && isset($generatorRoutes[$code]))
+                                                                    <a href="{{ $generatorRoutes[$code]($entry->variant_code) }}"
+                                                                       class="btn btn-sm {{ $entry->status === 'generated' ? 'btn-outline-secondary' : 'btn-'.$accent }} flex-fill"
+                                                                       target="_blank">
+                                                                        <i class="bi bi-file-earmark-pdf me-1"></i>
+                                                                        {{ $entry->status === 'generated' ? 'Regenerate' : 'Generate' }}
+                                                                    </a>
+                                                                    @if($entry->hasFile())
+                                                                        <a href="{{ $entry->fileUrl() }}" target="_blank" rel="noopener"
+                                                                           class="btn btn-sm btn-outline-secondary" title="View generated file">
+                                                                            <i class="bi bi-eye"></i>
+                                                                        </a>
+                                                                    @endif
+                                                                @elseif(! isset($generatorRoutes[$code]))
+                                                                    <span class="badge text-bg-light text-body-secondary d-block py-2 w-100">Not built yet</span>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
                                                 </div>
                                             </div>
-                                        @endforeach
+                                        </div>
                                     </div>
-                                </div>
+                                @endforeach
                             </div>
-                        </div>
+                        </section>
                     @endforeach
                 </div>
             </div>
@@ -512,6 +536,141 @@
             </div>
         </div>
     </x-ui.card>
+
+    @push('styles')
+    <style>
+        /* ---- Generate Documents tab ------------------------------------- */
+        .gd-summary-ring {
+            --pct: 0;
+            --size: 3.25rem;
+            width: var(--size);
+            height: var(--size);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .7rem;
+            font-weight: 600;
+            color: var(--bs-body-color);
+            background:
+                radial-gradient(closest-side, var(--bs-body-bg) 72%, transparent 73% 100%),
+                conic-gradient(var(--bs-primary) calc(var(--pct) * 1%), var(--bs-secondary-bg) 0);
+        }
+
+        .gd-group-dot {
+            width: 1.75rem;
+            height: 1.75rem;
+            border-radius: .5rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: .85rem;
+            flex-shrink: 0;
+        }
+
+        .gd-card {
+            border: 1px solid var(--bs-border-color);
+            border-radius: .75rem;
+            background: var(--bs-body-bg);
+            overflow: hidden;
+            transition: box-shadow .15s ease, border-color .15s ease;
+        }
+
+        .gd-card:hover {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .05);
+        }
+
+        .gd-card-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: .875rem;
+            padding: .9rem 1.1rem;
+            background: transparent;
+            border: 0;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .gd-card-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: .6rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .gd-card-title {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .gd-card-status {
+            flex-shrink: 0;
+            font-weight: 500;
+        }
+
+        .gd-card-chevron {
+            flex-shrink: 0;
+            color: var(--bs-secondary-color);
+            transition: transform .2s ease;
+        }
+
+        .gd-card-header[aria-expanded="true"] .gd-card-chevron {
+            transform: rotate(180deg);
+        }
+
+        .gd-card-body {
+            padding: 0 1.1rem 1.1rem;
+            border-top: 1px solid var(--bs-border-color-translucent);
+            padding-top: 1rem;
+        }
+
+        .gd-format-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: .75rem;
+        }
+
+        .gd-format {
+            border: 1px solid var(--bs-border-color);
+            border-radius: .6rem;
+            padding: .85rem;
+            display: flex;
+            flex-direction: column;
+            background: var(--bs-tertiary-bg, rgba(0, 0, 0, .015));
+            transition: border-color .15s ease;
+        }
+
+        .gd-format.is-done {
+            border-color: var(--bs-success-border-subtle, #a3cfbb);
+        }
+
+        .gd-format-label {
+            font-weight: 600;
+            font-size: .85rem;
+            margin-bottom: .4rem;
+        }
+
+        .gd-format-letter {
+            font-weight: 700;
+        }
+
+        @media (max-width: 575.98px) {
+            .gd-card-header {
+                flex-wrap: wrap;
+            }
+
+            .gd-card-status {
+                order: 3;
+            }
+        }
+    </style>
+    @endpush
 
     @push('scripts')
     <script>
