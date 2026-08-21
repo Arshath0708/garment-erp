@@ -73,13 +73,14 @@
         if (theme === 'dark') {
             sunIcon?.classList.add('d-none');
             moonIcon?.classList.remove('d-none');
-            if (labelText) labelText.textContent = '🌙 Dark';
+            if (labelText) labelText.textContent = 'Dark';
         } else {
             sunIcon?.classList.remove('d-none');
             moonIcon?.classList.add('d-none');
-            if (labelText) labelText.textContent = '☀️ Light';
+            if (labelText) labelText.textContent = 'Light';
         }
     }
+
 
     window.toggleGarmentTheme = function() {
         const currentTheme = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
