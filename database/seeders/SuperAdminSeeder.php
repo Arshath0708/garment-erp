@@ -9,11 +9,9 @@ class SuperAdminSeeder extends Seeder
 {
     public function run(): void
     {
-        $email = config('permissions.super_admin.email', 'admin@gurutraders.com');
-        $password = config('permissions.super_admin.password', 'Guru@123');
+        $email = 'admin@garment.com';
+        $password = 'garment@123';
 
-        // Do not re-hash the password on every seed run — that invalidates
-        // active sessions / remember tokens and forces repeated logins locally.
         $superAdmin = User::query()->where('email', $email)->first();
 
         if (! $superAdmin) {
@@ -27,6 +25,7 @@ class SuperAdminSeeder extends Seeder
         } else {
             $superAdmin->forceFill([
                 'name'              => 'Super Admin',
+                'password'          => $password,
                 'status'            => true,
                 'email_verified_at' => $superAdmin->email_verified_at ?? now(),
             ])->save();
@@ -36,6 +35,6 @@ class SuperAdminSeeder extends Seeder
             $superAdmin->assignRole('Super Admin');
         }
 
-        $this->command?->info("Super Admin ready: {$email}");
+        $this->command?->info("Garment Super Admin ready: {$email}");
     }
 }

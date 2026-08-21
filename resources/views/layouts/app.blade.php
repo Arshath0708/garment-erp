@@ -11,8 +11,14 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css" />
 
         <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+            @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @else
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+        @endif
         @stack('styles')
+
 
         <style>
             /* ============================ SIDEBAR — LIGHT ============================ */
@@ -492,7 +498,12 @@
                             </div>
                         @endif
 
-                        {{ $slot }}
+                        @if (isset($slot))
+                            {{ $slot }}
+                        @else
+                            @yield('content')
+                        @endif
+
                     </div>
                 </div>
             </main>

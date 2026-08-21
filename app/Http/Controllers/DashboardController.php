@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\ExportDocument;
+use App\Models\GarmentStyle;
 use App\Models\Inquiry;
 use App\Models\OrderConfirmation;
+use App\Models\ProductionOrder;
 use App\Models\PurchaseOrder;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -16,10 +18,14 @@ class DashboardController extends Controller
      */
     public function index(Request $request): View
     {
+        $styleCount = GarmentStyle::count();
+        $productionOrderCount = ProductionOrder::count();
         $inquiryCount = Inquiry::count();
         $orderConfirmationCount = OrderConfirmation::count();
         $purchaseOrderCount = PurchaseOrder::count();
         $openShipmentCount = ExportDocument::where('status', '!=', 'closed')->count();
+        $recentProductionOrders = ProductionOrder::with(['garmentStyle', 'buyer'])->orderByDesc('id')->take(5)->get();
+
 
         // Same computation ReportsController::outstanding() uses.
         $supplierOutstanding = PurchaseOrder::with('items:id,purchase_order_id,amount')->get()
@@ -81,6 +87,9 @@ class DashboardController extends Controller
         }
 
         return view('dashboard', [
+            'styleCount' => $styleCount,
+            'productionOrderCount' => $productionOrderCount,
+            'recentProductionOrders' => $recentProductionOrders,
             'inquiryCount' => $inquiryCount,
             'orderConfirmationCount' => $orderConfirmationCount,
             'purchaseOrderCount' => $purchaseOrderCount,
@@ -95,5 +104,6 @@ class DashboardController extends Controller
             'inquiryStatusLabels' => $inquiryStatusLabels,
             'inquiryStatusData' => $inquiryStatusData,
         ]);
+
     }
 }

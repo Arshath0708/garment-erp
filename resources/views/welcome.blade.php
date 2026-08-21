@@ -3,296 +3,236 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Guru Traders ERP</title>
+    <title>Garment ERP — Production & Order Management Suite</title>
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style>
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --accent: #06b6d4;
-            --bg-dark: #0f172a;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
-            color: #f8fafc;
-            overflow-x: hidden;
-        }
-        h1, h2, h3, .brand-logo {
-            font-family: 'Outfit', sans-serif;
-        }
-        
-        /* Navbar Glassmorphism */
-        .navbar-glass {
-            background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            transition: all 0.3s ease;
-        }
-        .navbar-brand {
-            font-weight: 800;
-            font-size: 1.5rem;
-            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        /* Hero Section */
-        .hero {
-            position: relative;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            padding-top: 80px; /* Offset for navbar */
-            overflow: hidden;
-        }
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(37, 99, 235, 0.15) 0%, rgba(15, 23, 42, 0) 50%);
-            animation: pulse-glow 15s infinite alternate;
-            z-index: -1;
-        }
-        @keyframes pulse-glow {
-            0% { transform: scale(1); opacity: 0.8; }
-            100% { transform: scale(1.1); opacity: 1; }
-        }
-        
-        .hero-title {
-            font-size: 4.5rem;
-            font-weight: 800;
-            line-height: 1.1;
-            margin-bottom: 1.5rem;
-            background: linear-gradient(to right, #ffffff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            opacity: 0;
-            transform: translateY(30px);
-            animation: fadeUp 1s ease forwards 0.2s;
-        }
-        .hero-subtitle {
-            font-size: 1.25rem;
-            color: #94a3b8;
-            margin-bottom: 2.5rem;
-            opacity: 0;
-            transform: translateY(30px);
-            animation: fadeUp 1s ease forwards 0.4s;
-        }
-        
-        /* Buttons */
-        .btn-glow {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-            border: none;
-            color: white;
-            padding: 1rem 2.5rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 50px;
-            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
-            transition: all 0.3s ease;
-            opacity: 0;
-            transform: translateY(30px);
-            animation: fadeUp 1s ease forwards 0.6s;
-        }
-        .btn-glow:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 35px rgba(6, 182, 212, 0.5);
-            color: white;
-        }
-        .btn-outline-glow {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 1rem 2.5rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 50px;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(5px);
-            opacity: 0;
-            transform: translateY(30px);
-            animation: fadeUp 1s ease forwards 0.8s;
-        }
-        .btn-outline-glow:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.5);
-            color: white;
-            transform: translateY(-3px);
-        }
-
-        /* Floating Element Graphic */
-        .hero-visual {
-            position: relative;
-            z-index: 2;
-            opacity: 0;
-            animation: fadeUp 1s ease forwards 0.8s;
-        }
-        .glass-card {
-            background: rgba(30, 41, 59, 0.7);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 24px;
-            padding: 2rem;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-            transform: perspective(1000px) rotateY(-15deg) rotateX(10deg);
-            transition: transform 0.5s ease;
-        }
-        .glass-card:hover {
-            transform: perspective(1000px) rotateY(0deg) rotateX(0deg);
-        }
-        .stats-badge {
-            background: rgba(56, 189, 248, 0.1);
-            color: #38bdf8;
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            opacity: 0;
-            animation: fadeUp 1s ease forwards;
-        }
-
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Abstract shapes */
-        .shape-1, .shape-2 {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            z-index: -1;
-        }
-        .shape-1 {
-            width: 400px;
-            height: 400px;
-            background: rgba(37, 99, 235, 0.3);
-            top: -100px;
-            right: -100px;
-        }
-        .shape-2 {
-            width: 300px;
-            height: 300px;
-            background: rgba(168, 85, 247, 0.2);
-            bottom: -50px;
-            left: -50px;
-        }
-        
-        @media (max-width: 991px) {
-            .hero-title { font-size: 3rem; }
-            .glass-card { transform: none; margin-top: 3rem; }
-            .glass-card:hover { transform: none; }
-        }
-    </style>
 </head>
-<body>
+<body class="garment-erp-theme" x-data="{ demoModalOpen: false }">
 
-    <!-- Nav -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-glass fixed-top">
-        <div class="container">
-            <a class="navbar-brand brand-logo" href="#">Guru Traders ERP</a>
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+    <!-- Public Navigation Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background: rgba(11, 15, 25, 0.9); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.08);">
+        <div class="container px-lg-4">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+                <div class="bg-primary rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                    <i class="bi bi-layers-fill text-white fs-5"></i>
+                </div>
+                <span class="fw-bold fs-5 text-white" style="font-family: 'Outfit', sans-serif;">Garment ERP</span>
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#publicNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
-            <div class="collapse navbar-collapse" id="navMenu">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center gap-3">
+            <div class="collapse navbar-collapse" id="publicNav">
+                <ul class="navbar-nav me-auto ms-lg-4 mb-2 mb-lg-0 gap-lg-2">
+                    <li class="nav-item"><a class="nav-link text-white-50" href="#overview">Overview</a></li>
+                    <li class="nav-item"><a class="nav-link text-white-50" href="#workflow">Order Journey</a></li>
+                    <li class="nav-item"><a class="nav-link text-white-50" href="#value-prop">Value Proposition</a></li>
+                </ul>
+                <div class="d-flex align-items-center gap-3">
                     @if (Route::has('login'))
                         @auth
-                            <li class="nav-item">
-                                <a href="{{ url('/dashboard') }}" class="btn btn-outline-light rounded-pill px-4">Dashboard</a>
-                            </li>
+                            <a href="{{ url('/dashboard') }}" class="btn btn-erp-primary"><i class="bi bi-speedometer2 me-1"></i> Open ERP Dashboard</a>
                         @else
-                            <li class="nav-item">
-                                <a href="{{ route('login') }}" class="nav-link text-white fw-medium">Log in</a>
-                            </li>
+                            <a href="{{ route('login') }}" class="btn btn-outline-light rounded-pill px-4">Sign In</a>
                             @if (Route::has('register'))
-                                <li class="nav-item">
-                                    <a href="{{ route('register') }}" class="btn btn-light rounded-pill px-4 text-dark fw-bold shadow-sm">Get Started</a>
-                                </li>
+                                <a href="{{ route('register') }}" class="btn btn-primary rounded-pill px-4 fw-bold">Create Account</a>
                             @endif
                         @endauth
                     @endif
-                </ul>
+                    <button class="btn btn-erp-secondary" @click="demoModalOpen = true">Request Demo</button>
+                </div>
             </div>
         </div>
     </nav>
 
-    <!-- Hero -->
-    <main class="hero">
-        <div class="shape-1"></div>
-        <div class="shape-2"></div>
-        
-        <div class="container relative">
-            <div class="row align-items-center">
-                <!-- Text Content -->
-                <div class="col-lg-6 text-center text-lg-start">
-                    <div class="stats-badge">
-                        <span class="spinner-grow spinner-grow-sm text-info" role="status"></span>
-                        Guru Traders ERP
+    <!-- Hero Section -->
+    <header id="overview" class="garment-hero">
+        <div class="hero-glow-blob blob-1"></div>
+        <div class="hero-glow-blob blob-2"></div>
+        <div class="container relative z-1">
+            <div class="row align-items-center g-5 min-vh-75">
+                <div class="col-lg-7 text-center text-lg-start">
+                    <div class="erp-badge erp-badge-primary mb-3">
+                        <i class="bi bi-cpu-fill"></i> GARMENT MANUFACTURING SUITE
                     </div>
-                    <h1 class="hero-title">Intelligent ERP for<br>Modern Trading.</h1>
-                    <p class="hero-subtitle">Optimize your supply chain, oversee advanced metrics, and manage customers effortlessly through one beautiful, unified platform designed for true scalability.</p>
-                    
-                    <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start">
+                    <h1 class="display-4 fw-extrabold text-white mb-3" style="font-family: 'Outfit', sans-serif; line-height: 1.15;">
+                        One Single Order ID.<br>
+                        <span style="background: linear-gradient(135deg, #60a5fa 0%, #38bdf8 50%, #818cf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                            From Style Creation to Container Dispatch.
+                        </span>
+                    </h1>
+                    <p class="section-desc mb-4">
+                        Garment ERP is a specialized apparel manufacturing platform designed to track the complete order lifecycle. Connect buyer POs, tech packs, dynamic BOM costing, floor production stages, multi-location inventory, and document OCR verification under one unified system.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-lg-start mb-4">
                         @if (Route::has('login'))
                             @auth
-                                <a href="{{ url('/dashboard') }}" class="btn btn-glow">Access Dashboard</a>
+                                <a href="{{ url('/dashboard') }}" class="btn btn-erp-primary btn-lg">
+                                    <i class="bi bi-speedometer2 me-1"></i> Go to ERP Application
+                                </a>
                             @else
-                                <a href="{{ route('login') }}" class="btn btn-glow">Sign In Now</a>
+                                <a href="{{ route('login') }}" class="btn btn-erp-primary btn-lg">
+                                    <i class="bi bi-box-arrow-in-right me-1"></i> Sign In to ERP
+                                </a>
                                 @if (Route::has('register'))
-                                    <a href="{{ route('register') }}" class="btn btn-outline-glow">Create Account</a>
+                                    <a href="{{ route('register') }}" class="btn btn-erp-secondary btn-lg">
+                                        Create Free Account
+                                    </a>
                                 @endif
                             @endauth
                         @endif
                     </div>
                 </div>
 
-                <!-- Visual Content -->
-                <div class="col-lg-6 d-none d-lg-block">
-                    <div class="hero-visual pl-5">
-                        <div class="glass-card">
-                            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
-                                <div>
-                                    <h4 class="mb-0 fw-bold">Live Sales Overview</h4>
-                                    <small class="text-secondary">Real-time synchronization</small>
-                                </div>
-                                <div class="bg-primary bg-opacity-25 p-2 rounded-3 text-primary">
-                                    <i class="bi bi-graph-up h4 mb-0"></i>
-                                </div>
+                <!-- Product Preview Visual Card -->
+                <div class="col-lg-5">
+                    <div class="erp-card p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="fw-bold text-white small"><i class="bi bi-layers-fill text-primary me-1"></i> Order Progress Console</div>
+                            <span class="erp-badge erp-badge-success">PO-2026-8841</span>
+                        </div>
+                        <div class="p-3 rounded-3 mb-3" style="background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.08);">
+                            <div class="text-muted small">Garment Style Reference</div>
+                            <div class="fw-bold text-white fs-6">ST-9042 — Men's Casual Woven Shirt</div>
+                            <div class="text-info small">12,500 Pcs • Target: 2026-09-15</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between text-muted small mb-1">
+                                <span>Stitching Stage Yield</span>
+                                <span>6,200 / 12,500 Pcs (49.6%)</span>
                             </div>
-                            
-                            <!-- Fake Chart Lines -->
-                            <div class="d-flex align-items-end gap-2 mt-4" style="height: 120px;">
-                                <div class="bg-primary rounded-top w-100" style="height: 40%; opacity: 0.5;"></div>
-                                <div class="bg-info rounded-top w-100" style="height: 65%; opacity: 0.7;"></div>
-                                <div class="bg-primary rounded-top w-100" style="height: 50%; opacity: 0.5;"></div>
-                                <div class="bg-info rounded-top w-100" style="height: 85%; opacity: 0.8;"></div>
-                                <div class="bg-primary rounded-top w-100" style="height: 70%; opacity: 0.6;"></div>
-                                <div class="bg-info rounded-top w-100" style="height: 100%; box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);"></div>
+                            <div class="progress" style="height: 8px; background: rgba(255,255,255,0.1);">
+                                <div class="progress-bar bg-primary" style="width: 49.6%;"></div>
                             </div>
-                            
-                            <div class="mt-4 pt-3 border-top border-secondary d-flex justify-content-between text-muted small fw-bolder">
-                                <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span>
+                        </div>
+
+                        <div class="row g-2 text-center text-white-50 small">
+                            <div class="col-4 p-2 rounded" style="background: rgba(255,255,255,0.03);">
+                                <div class="text-muted" style="font-size:0.7rem;">CUTTING</div>
+                                <div class="fw-bold text-success">100%</div>
+                            </div>
+                            <div class="col-4 p-2 rounded" style="background: rgba(255,255,255,0.03);">
+                                <div class="text-muted" style="font-size:0.7rem;">STITCHING</div>
+                                <div class="fw-bold text-warning">49.6%</div>
+                            </div>
+                            <div class="col-4 p-2 rounded" style="background: rgba(255,255,255,0.03);">
+                                <div class="text-muted" style="font-size:0.7rem;">QC & PACK</div>
+                                <div class="fw-bold text-info">32.8%</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </main>
+    </header>
+
+    <!-- Workflow Section -->
+    <section id="workflow" class="py-5" style="background: rgba(15, 23, 42, 0.6);">
+        <div class="container px-lg-4">
+            <div class="text-center max-w-700 mx-auto mb-5">
+                <span class="section-tag">Connected Order Journey</span>
+                <h2 class="section-title">The Complete Apparel Manufacturing Workflow</h2>
+                <p class="section-desc mx-auto">
+                    Instead of disconnected departmental silos, Garment ERP tracks every stage under one central order ID.
+                </p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="erp-card p-4 h-100">
+                        <div class="text-primary fs-3 mb-2"><i class="bi bi-scissors"></i></div>
+                        <h5 class="fw-bold text-white mb-2">1. Style & Tech Pack</h5>
+                        <p class="text-muted small mb-0">Define style numbers, fabric composition, colorways, measurement charts, and construction specs.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="erp-card p-4 h-100">
+                        <div class="text-info fs-3 mb-2"><i class="bi bi-calculator"></i></div>
+                        <h5 class="fw-bold text-white mb-2">2. Dynamic BOM & Costing</h5>
+                        <p class="text-muted small mb-0">Automate material requirement calculations ($\text{Qty} \times \text{Consumption}$) and calculate target gross margins.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="erp-card p-4 h-100">
+                        <div class="text-warning fs-3 mb-2"><i class="bi bi-gear-wide-connected"></i></div>
+                        <h5 class="fw-bold text-white mb-2">3. Floor Manufacturing</h5>
+                        <p class="text-muted small mb-0">Monitor live output across Cutting, Stitching, Finishing, Quality Check, Packing, and Container Dispatch.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Value Proposition Section -->
+    <section id="value-prop" class="py-5">
+        <div class="container px-lg-4">
+            <div class="row g-5 align-items-center">
+                <div class="col-lg-6">
+                    <span class="section-tag">Exception-Based Management</span>
+                    <h2 class="section-title">Designed for Fast Factory Decision-Making</h2>
+                    <p class="section-desc mb-4">
+                        Stop searching through dozens of screens. Garment ERP highlights delays, material shortages, and quantity mismatches so floor managers can take instant corrective action.
+                    </p>
+                    <ul class="list-unstyled text-white-50 small mb-4">
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Single Buyer Sales Order ID tracking across all departments</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Multi-location warehouse inventory (Tirupur, Bangalore, Mumbai, Delhi, Dubai)</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Document OCR verification comparing invoice quantities against ERP orders</li>
+                    </ul>
+                </div>
+                <div class="col-lg-6">
+                    <div class="erp-card p-4">
+                        <h5 class="fw-bold text-white mb-3"><i class="bi bi-shield-check text-success me-2"></i> Production-Ready Enterprise Platform</h5>
+                        <p class="text-muted small mb-4">Ready to test the system? Log in using your credentials or request a live demonstration.</p>
+                        <div class="d-flex gap-3">
+                            <a href="{{ route('login') }}" class="btn btn-erp-primary w-100">Sign In Now</a>
+                            <button class="btn btn-erp-secondary w-100" @click="demoModalOpen = true">Request Demo</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-4 border-top border-secondary border-opacity-25" style="background: rgba(11, 15, 25, 0.95);">
+        <div class="container px-lg-4 d-flex flex-column flex-md-row justify-content-between align-items-center text-muted small">
+            <div>&copy; 2026 Garment ERP. All rights reserved.</div>
+            <div class="d-flex gap-3 mt-2 mt-md-0">
+                <a href="{{ route('login') }}" class="text-white-50 text-decoration-none">Sign In</a>
+                <a href="#" class="text-white-50 text-decoration-none" @click.prevent="demoModalOpen = true">Request Demo</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Demo Request Modal -->
+    <div class="modal fade" id="demoModal" tabindex="-1" :class="{ 'show d-block': demoModalOpen }" style="background: rgba(0,0,0,0.7);" x-show="demoModalOpen" x-transition>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content erp-card text-white p-4" style="background: #0f172a; border: 1px solid rgba(59, 130, 246, 0.3);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">Request Garment ERP Demo</h5>
+                    <button type="button" class="btn-close btn-close-white" @click="demoModalOpen = false"></button>
+                </div>
+                <form @submit.prevent="demoModalOpen = false; alert('Thank you! A specialist will contact you shortly.');">
+                    <div class="mb-3">
+                        <label class="text-muted small">Full Name</label>
+                        <input type="text" class="erp-input" placeholder="e.g. Rahul Sharma" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small">Company / Garment Unit</label>
+                        <input type="text" class="erp-input" placeholder="e.g. Apex Apparel Exports" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="text-muted small">Phone / WhatsApp</label>
+                        <input type="tel" class="erp-input" placeholder="+91 98765 43210" required>
+                    </div>
+                    <button type="submit" class="btn btn-erp-primary w-100">Submit Request</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>

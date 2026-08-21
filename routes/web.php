@@ -3,6 +3,9 @@
 use App\Http\Controllers\Masters\BuyerController;
 use App\Http\Controllers\Masters\AgentController;
 use App\Http\Controllers\Masters\CategoryController;
+use App\Http\Controllers\Masters\GarmentStyleController;
+use App\Http\Controllers\Manufacturing\ManufacturingController;
+
 use App\Http\Controllers\Masters\DocumentFormatController;
 use App\Http\Controllers\Masters\FobValueController;
 use App\Http\Controllers\Masters\GeoController;
@@ -24,7 +27,9 @@ use App\Http\Controllers\Sales\InquiryController;
 use App\Http\Controllers\Sales\OrderConfirmationController;
 use App\Http\Controllers\UserManagement\PermissionController;
 use App\Http\Controllers\UserManagement\RoleController;
+use App\Http\Controllers\UserManagement\UserController;
 use App\Http\Controllers\DashboardController;
+
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'));
@@ -69,6 +74,10 @@ Route::middleware('auth')->group(function () {
         Route::patch('categories/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])
             ->name('categories.toggle-status');
         Route::resource('categories', CategoryController::class);
+        Route::get('bom', [\App\Http\Controllers\Masters\BOMController::class, 'index'])->name('bom.index');
+        Route::resource('styles', GarmentStyleController::class);
+
+
 
         // Declared before the resource so "check-code" is not swallowed by
         // products/{product}.
@@ -220,6 +229,22 @@ Route::middleware('auth')->group(function () {
         Route::resource('inward-entries', InwardEntryController::class)
             ->parameters(['inward-entries' => 'inwardEntry']);
     });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Manufacturing & Production Tracking
+    |--------------------------------------------------------------------------
+    */
+    Route::get('manufacturing', [ManufacturingController::class, 'index'])->name('manufacturing.index');
+    Route::get('manufacturing/create', [ManufacturingController::class, 'create'])->name('manufacturing.create');
+    Route::post('manufacturing', [ManufacturingController::class, 'store'])->name('manufacturing.store');
+    Route::get('manufacturing/{order}', [ManufacturingController::class, 'show'])->name('manufacturing.show');
+    Route::get('manufacturing/{order}/edit', [ManufacturingController::class, 'edit'])->name('manufacturing.edit');
+    Route::put('manufacturing/{order}', [ManufacturingController::class, 'update'])->name('manufacturing.update');
+    Route::delete('manufacturing/{order}', [ManufacturingController::class, 'destroy'])->name('manufacturing.destroy');
+    Route::post('manufacturing/{order}/update-stage', [ManufacturingController::class, 'updateStage'])->name('manufacturing.update-stage');
+
+
 
     /*
     |--------------------------------------------------------------------------

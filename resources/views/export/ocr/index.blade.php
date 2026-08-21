@@ -20,7 +20,46 @@
             </div>
         @endunless
 
+        <!-- Section 12: OCR ERP Mismatch Verification Checker -->
+        <div class="card shadow-sm border-0 mb-4 bg-body border-start border-warning border-4 p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold mb-0 text-warning"><i class="bi bi-shield-exclamation me-2"></i> OCR Document Mismatch & ERP Order Verification Desk</h6>
+                <span class="badge bg-warning text-dark">Rule 12: Exception Checker</span>
+            </div>
+            <p class="text-body-secondary small mb-3">
+                OCR acts as an automated <strong>ERP Compliance Checker</strong>. When an invoice or BL is uploaded, extracted quantities and buyer names are compared directly against the ERP Sales Order.
+            </p>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="p-3 bg-body-tertiary rounded border">
+                        <div class="fw-bold small mb-2 text-primary"><i class="bi bi-file-earmark-spreadsheet me-1"></i> ERP Sales Order Reference: PO-2026-8841</div>
+                        <div class="row g-2 small">
+                            <div class="col-6">Buyer Name: <strong>ABC Fashion Ltd.</strong></div>
+                            <div class="col-6 text-end">Order Qty: <strong>10,000 pcs</strong></div>
+                            <div class="col-6">Style #: <strong>ST-9042</strong></div>
+                            <div class="col-6 text-end">PO Amount: <strong>$85,000.00</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 bg-body-tertiary rounded border">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold small text-info"><i class="bi bi-stars me-1"></i> OCR Document Extracted Data</span>
+                            <span class="badge bg-danger">1 Mismatch Detected</span>
+                        </div>
+                        <div class="row g-2 small">
+                            <div class="col-6">Doc Buyer: <strong>ABC Fashion Limited</strong> <span class="badge bg-success small">Match</span></div>
+                            <div class="col-6 text-end">Doc Qty: <strong class="text-danger">10,500 pcs</strong> <span class="badge bg-warning text-dark">Mismatch</span></div>
+                            <div class="col-6">Doc Style: <strong>ST-9042</strong> <span class="badge bg-success small">Match</span></div>
+                            <div class="col-6 text-end">Doc Amount: <strong>$85,000.00</strong> <span class="badge bg-success small">Match</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         @if($documents->isEmpty())
+
             <x-ui.empty-state icon="bi-stars"
                               title="No Export Document to attach OCR to"
                               message="Raise an Export Document from a confirmed Order Confirmation first, then come back here." />

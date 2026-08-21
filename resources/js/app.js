@@ -1,4 +1,6 @@
 import './bootstrap';
+import './garment-erp';
+
 
 // Exposed on window, not just imported for its side effects — the inline
 // tooltip-init script in layouts/app.blade.php calls `new bootstrap.Tooltip()`
