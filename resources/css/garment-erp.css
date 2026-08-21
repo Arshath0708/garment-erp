@@ -27,9 +27,10 @@
 body.garment-erp-theme {
     background-color: var(--erp-bg);
     color: var(--erp-text-main);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Lora', 'Playfair Display', Georgia, Cambria, "Times New Roman", Times, serif;
     overflow-x: hidden;
 }
+
 
 /* ==================== PAGE CONTENT HEADERS ==================== */
 [data-bs-theme="dark"] .app-content-header h3,

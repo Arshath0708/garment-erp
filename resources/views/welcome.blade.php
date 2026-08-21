@@ -8,7 +8,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
@@ -19,8 +19,8 @@
 
     <style>
         :root {
-            --font-heading: 'Outfit', sans-serif;
-            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --font-heading: 'Playfair Display', Georgia, serif;
+            --font-body: 'Lora', Georgia, serif;
             --bg-dark: #030712;
             --surface-card: rgba(15, 23, 42, 0.75);
             --border-glow: rgba(56, 189, 248, 0.2);
@@ -34,6 +34,7 @@
             background-color: var(--bg-dark);
             color: #f1f5f9;
             overflow-x: hidden;
+
             background-image: 
                 radial-gradient(circle at 50% 0%, rgba(30, 27, 75, 0.65) 0%, rgba(3, 7, 18, 0.96) 70%),
                 radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.1) 0%, transparent 40%),
