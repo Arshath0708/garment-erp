@@ -35,9 +35,9 @@
             color: #f1f5f9;
             overflow-x: hidden;
             background-image: 
-                radial-gradient(circle at 50% 0%, rgba(30, 27, 75, 0.6) 0%, rgba(3, 7, 18, 0.95) 70%),
-                radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
-                radial-gradient(circle at 15% 70%, rgba(129, 140, 248, 0.08) 0%, transparent 40%);
+                radial-gradient(circle at 50% 0%, rgba(30, 27, 75, 0.65) 0%, rgba(3, 7, 18, 0.96) 70%),
+                radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 15% 70%, rgba(129, 140, 248, 0.1) 0%, transparent 40%);
             background-attachment: fixed;
         }
 
@@ -54,20 +54,75 @@
             transition: all 0.3s ease;
         }
 
-        /* Glowing Badges & Cards */
+        /* Glowing Floating Cards */
         .glass-card {
             background: var(--surface-card);
             backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 20px;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-            transition: transform 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s ease, box-shadow 0.4s ease, opacity 0.6s ease;
         }
 
         .glass-card:hover {
             border-color: rgba(56, 189, 248, 0.4);
-            box-shadow: 0 25px 60px rgba(56, 189, 248, 0.15);
-            transform: translateY(-4px);
+            box-shadow: 0 25px 60px rgba(56, 189, 248, 0.2);
+            transform: translateY(-8px) scale(1.01);
+        }
+
+        /* Continuous Floating Levitation Animation */
+        .floating-element {
+            animation: floatingLevitate 5s infinite ease-in-out;
+        }
+
+        .floating-element-delay-1 {
+            animation: floatingLevitate 6.5s infinite ease-in-out 1s;
+        }
+
+        .floating-element-delay-2 {
+            animation: floatingLevitate 7s infinite ease-in-out 2s;
+        }
+
+        @keyframes floatingLevitate {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-12px) rotate(0.5deg);
+            }
+        }
+
+        /* Floating Background Ambient Particles */
+        .bg-floating-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.5;
+            animation: orbFloat 14s ease-in-out infinite alternate;
+        }
+
+        .orb-1 {
+            top: 20%;
+            left: 10%;
+            width: 280px;
+            height: 280px;
+            background: rgba(56, 189, 248, 0.15);
+        }
+
+        .orb-2 {
+            top: 60%;
+            right: 12%;
+            width: 320px;
+            height: 320px;
+            background: rgba(129, 140, 248, 0.15);
+            animation-delay: -7s;
+        }
+
+        @keyframes orbFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(40px, -50px) scale(1.2); }
         }
 
         /* Futuristic Flow Pipeline */
@@ -113,28 +168,33 @@
             z-index: 3;
             background: rgba(15, 23, 42, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 16px;
-            padding: 24px;
+            border-radius: 20px;
+            padding: 28px 24px;
             text-align: center;
             transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-            animation: nodeEntrance 0.8s ease-out backwards;
+            animation: floatingLevitate 6s ease-in-out infinite;
         }
+
+        .flow-node:nth-child(1) { animation-delay: 0s; }
+        .flow-node:nth-child(2) { animation-delay: 1.5s; }
+        .flow-node:nth-child(3) { animation-delay: 3s; }
+        .flow-node:nth-child(4) { animation-delay: 4.5s; }
 
         .flow-node:hover {
             border-color: var(--cyan-glow);
-            box-shadow: 0 0 30px rgba(56, 189, 248, 0.25);
-            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 0 35px rgba(56, 189, 248, 0.3);
+            transform: scale(1.06) translateY(-10px);
         }
 
         .flow-node .node-icon {
-            width: 56px;
-            height: 56px;
-            margin: 0 auto 16px;
-            border-radius: 14px;
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 18px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             background: rgba(56, 189, 248, 0.1);
             color: var(--cyan-glow);
             border: 1px solid rgba(56, 189, 248, 0.2);
@@ -144,24 +204,19 @@
         .flow-node:hover .node-icon {
             background: var(--cyan-glow);
             color: #030712;
-            box-shadow: 0 0 20px var(--cyan-glow);
+            box-shadow: 0 0 25px var(--cyan-glow);
         }
 
-        /* Staggered Node Entrance Animations */
-        .flow-node:nth-child(1) { animation-delay: 0.1s; }
-        .flow-node:nth-child(2) { animation-delay: 0.25s; }
-        .flow-node:nth-child(3) { animation-delay: 0.4s; }
-        .flow-node:nth-child(4) { animation-delay: 0.55s; }
+        /* Scroll Reveal Floating Class */
+        .reveal-on-scroll {
+            opacity: 0;
+            transform: translateY(45px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
 
-        @keyframes nodeEntrance {
-            from {
-                opacity: 0;
-                transform: translateY(30px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+        .reveal-on-scroll.is-visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         /* Hero Text Gradient */
@@ -183,7 +238,7 @@
             color: #ffffff;
             border: none;
             border-radius: 50px;
-            padding: 12px 32px;
+            padding: 14px 36px;
             font-weight: 600;
             font-family: var(--font-heading);
             letter-spacing: 0.5px;
@@ -195,7 +250,7 @@
             background: linear-gradient(135deg, #38bdf8 0%, #3b82f6 100%);
             color: #ffffff;
             box-shadow: 0 15px 35px rgba(56, 189, 248, 0.5);
-            transform: translateY(-2px);
+            transform: translateY(-3px);
         }
 
         .btn-futuristic-outline {
@@ -203,7 +258,7 @@
             color: #f1f5f9;
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 50px;
-            padding: 12px 32px;
+            padding: 14px 36px;
             font-weight: 600;
             font-family: var(--font-heading);
             transition: all 0.3s ease;
@@ -213,7 +268,36 @@
             background: rgba(255, 255, 255, 0.1);
             color: #ffffff;
             border-color: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
+            transform: translateY(-3px);
+        }
+
+        /* Floating Capsule Widget at Bottom Right */
+        .floating-capsule {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            z-index: 999;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 50px;
+            padding: 10px 22px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #ffffff;
+            text-decoration: none;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: floatingLevitate 4s ease-in-out infinite;
+        }
+
+        .floating-capsule:hover {
+            background: #0284c7;
+            color: #ffffff;
+            border-color: #38bdf8;
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 20px 45px rgba(56, 189, 248, 0.4);
         }
 
         /* Glowing Live Status Pills */
@@ -224,7 +308,7 @@
             background: rgba(56, 189, 248, 0.1);
             border: 1px solid rgba(56, 189, 248, 0.25);
             color: var(--cyan-glow);
-            padding: 6px 16px;
+            padding: 6px 18px;
             border-radius: 30px;
             font-size: 0.825rem;
             font-weight: 600;
@@ -248,6 +332,17 @@
     </style>
 </head>
 <body>
+
+    <!-- Background Ambient Orbs -->
+    <div class="bg-floating-orb orb-1"></div>
+    <div class="bg-floating-orb orb-2"></div>
+
+    <!-- Floating Capsule Quick Access Button -->
+    <a href="{{ url('/dashboard') }}" class="floating-capsule d-none d-md-flex">
+        <span class="live-dot"></span>
+        <span class="fw-bold font-heading small">Open ERP Console</span>
+        <i class="bi bi-arrow-right-short fs-5"></i>
+    </a>
 
     <!-- Header Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top glass-nav py-3">
@@ -289,11 +384,11 @@
     </nav>
 
     <!-- Hero Section -->
-    <section id="overview" class="pt-5 mt-5 min-vh-100 d-flex align-items-center relative">
+    <section id="overview" class="pt-5 mt-5 min-vh-100 d-flex align-items-center relative z-1">
         <div class="container px-lg-4 py-5">
             <div class="row align-items-center g-5">
                 
-                <div class="col-lg-7 text-center text-lg-start">
+                <div class="col-lg-7 text-center text-lg-start reveal-on-scroll">
                     <div class="live-pill mb-4">
                         <span class="live-dot"></span> Apparel Manufacturing Suite
                     </div>
@@ -327,9 +422,9 @@
                     </div>
                 </div>
 
-                <!-- Product Preview Widget -->
-                <div class="col-lg-5">
-                    <div class="glass-card p-4">
+                <!-- Product Preview Floating Widget -->
+                <div class="col-lg-5 reveal-on-scroll">
+                    <div class="glass-card p-4 floating-element">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <div class="d-flex align-items-center gap-2">
                                 <i class="bi bi-cpu text-info fs-5"></i>
@@ -382,10 +477,10 @@
     </section>
 
     <!-- Futuristic Order Flow Pipeline Section -->
-    <section id="order-flow" class="py-5 my-5 relative">
+    <section id="order-flow" class="py-5 my-5 relative z-1">
         <div class="container px-lg-4">
             
-            <div class="text-center mb-5">
+            <div class="text-center mb-5 reveal-on-scroll">
                 <div class="live-pill mb-3">
                     <span class="live-dot"></span> Futuristic Order Stream
                 </div>
@@ -396,7 +491,7 @@
             </div>
 
             <!-- Animated Pipeline Grid -->
-            <div class="flow-container">
+            <div class="flow-container reveal-on-scroll">
                 <div class="flow-pipeline-track d-none d-lg-block"></div>
                 <div class="flow-pipeline-pulse d-none d-lg-block"></div>
 
@@ -449,12 +544,12 @@
     </section>
 
     <!-- Features Highlight Section -->
-    <section id="features" class="py-5 mb-5">
+    <section id="features" class="py-5 mb-5 relative z-1">
         <div class="container px-lg-4">
             <div class="row g-4">
                 
-                <div class="col-md-4">
-                    <div class="glass-card p-4 h-100">
+                <div class="col-md-4 reveal-on-scroll">
+                    <div class="glass-card p-4 h-100 floating-element-delay-1">
                         <div class="rounded-3 p-3 mb-3 d-inline-block" style="background: rgba(56, 189, 248, 0.1); color: var(--cyan-glow);">
                             <i class="bi bi-shield-check fs-3"></i>
                         </div>
@@ -463,8 +558,8 @@
                     </div>
                 </div>
 
-                <div class="col-md-4">
-                    <div class="glass-card p-4 h-100">
+                <div class="col-md-4 reveal-on-scroll">
+                    <div class="glass-card p-4 h-100 floating-element-delay-2">
                         <div class="rounded-3 p-3 mb-3 d-inline-block" style="background: rgba(129, 140, 248, 0.1); color: var(--indigo-glow);">
                             <i class="bi bi-exclamation-triangle fs-3"></i>
                         </div>
@@ -473,8 +568,8 @@
                     </div>
                 </div>
 
-                <div class="col-md-4">
-                    <div class="glass-card p-4 h-100">
+                <div class="col-md-4 reveal-on-scroll">
+                    <div class="glass-card p-4 h-100 floating-element">
                         <div class="rounded-3 p-3 mb-3 d-inline-block" style="background: rgba(52, 211, 153, 0.1); color: var(--emerald-glow);">
                             <i class="bi bi-palette fs-3"></i>
                         </div>
@@ -488,7 +583,7 @@
     </section>
 
     <!-- Footer -->
-    <footer class="py-4 border-top border-secondary border-opacity-25" style="background: rgba(3, 7, 18, 0.95);">
+    <footer class="py-4 border-top border-secondary border-opacity-25 relative z-1" style="background: rgba(3, 7, 18, 0.95);">
         <div class="container px-lg-4 d-flex flex-column flex-md-row justify-content-between align-items-center text-white-50 small">
             <div>&copy; 2026 Garment ERP Suite. Next-Generation Apparel Manufacturing.</div>
             <div class="d-flex gap-4 mt-3 mt-md-0">
@@ -497,6 +592,25 @@
             </div>
         </div>
     </footer>
+
+    <!-- Scroll Reveal JavaScript Observer -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                    }
+                });
+            }, {
+                threshold: 0.15
+            });
+
+            document.querySelectorAll('.reveal-on-scroll').forEach(el => {
+                observer.observe(el);
+            });
+        });
+    </script>
 
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         <!-- Vite JS -->
