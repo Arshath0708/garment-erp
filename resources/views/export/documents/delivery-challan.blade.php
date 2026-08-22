@@ -130,32 +130,92 @@
 
     @php
         $grouped = $document->items->groupBy(fn ($item) => $item->product?->category?->name ?? 'Items');
+        $sizeHeaders = [];
+        foreach ($document->items as $item) {
+            foreach ($item->colours as $colour) {
+                foreach ($colour->sizes as $sizeRow) {
+                    $label = strtoupper(trim((string) $sizeRow->size));
+                    if ($label !== '') {
+                        $sizeHeaders[$label] = true;
+                    }
+                }
+            }
+        }
+        $sizeHeaders = array_keys($sizeHeaders);
+        $preferred = ['S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL'];
+        usort($sizeHeaders, function ($a, $b) use ($preferred) {
+            $ia = array_search($a, $preferred, true);
+            $ib = array_search($b, $preferred, true);
+            $ia = $ia === false ? 100 : $ia;
+            $ib = $ib === false ? 100 : $ib;
+            return $ia <=> $ib ?: strcmp($a, $b);
+        });
+        $hasSizes = $sizeHeaders !== [];
     @endphp
 
     <table class="items" style="margin-top:10px">
         <thead>
             <tr>
                 <th style="width:6%">SR. NO.</th>
-                <th>DESCRIPTION</th>
-                <th style="width:12%">HSN</th>
-                <th style="width:10%" class="text-center">QTY</th>
-                <th style="width:14%" class="text-center">UNIT QTY CODE</th>
+                <th>DESCRIPTION / SKU</th>
+                <th style="width:10%">HSN</th>
+                @if($hasSizes)
+                    @foreach ($sizeHeaders as $size)
+                        <th class="text-center">{{ $size }}</th>
+                    @endforeach
+                @endif
+                <th style="width:10%" class="text-center">TOTAL QTY</th>
+                <th style="width:10%" class="text-center">UNIT</th>
             </tr>
         </thead>
         <tbody>
-            @php $sr = 0; @endphp
+            @php $sr = 0; $grand = 0; $sizeGrand = array_fill_keys($sizeHeaders, 0); @endphp
             @foreach($grouped as $category => $items)
-                <tr class="cat-row"><td colspan="5">{{ strtoupper($category) }}</td></tr>
+                <tr class="cat-row"><td colspan="{{ 4 + ($hasSizes ? count($sizeHeaders) : 0) }}">{{ strtoupper($category) }}</td></tr>
                 @foreach($items as $item)
+                    @php
+                        $bySize = array_fill_keys($sizeHeaders, 0);
+                        foreach ($item->colours as $colour) {
+                            foreach ($colour->sizes as $sizeRow) {
+                                $label = strtoupper(trim((string) $sizeRow->size));
+                                if (isset($bySize[$label])) {
+                                    $bySize[$label] += (int) $sizeRow->qty;
+                                }
+                            }
+                        }
+                        $lineTotal = $hasSizes ? array_sum($bySize) : (int) $item->qty;
+                        if ($lineTotal === 0) {
+                            $lineTotal = (int) $item->qty;
+                        }
+                        $grand += $lineTotal;
+                        foreach ($bySize as $k => $v) {
+                            $sizeGrand[$k] += $v;
+                        }
+                    @endphp
                     <tr>
                         <td class="text-center">{{ ++$sr }}</td>
                         <td>{{ $item->design_no ? "{$item->design_no} — " : '' }}{{ $item->description }}</td>
                         <td>{{ $item->product?->hsn_code ?? '—' }}</td>
-                        <td class="text-center">{{ $item->qty }}</td>
+                        @if($hasSizes)
+                            @foreach ($sizeHeaders as $size)
+                                <td class="text-center">{{ $bySize[$size] ?: '—' }}</td>
+                            @endforeach
+                        @endif
+                        <td class="text-center">{{ $lineTotal }}</td>
                         <td class="text-center">{{ $item->unit ?? '—' }}</td>
                     </tr>
                 @endforeach
             @endforeach
+            <tr>
+                <td colspan="{{ $hasSizes ? 3 : 3 }}" style="text-align:right;font-weight:bold">TOTAL</td>
+                @if($hasSizes)
+                    @foreach ($sizeHeaders as $size)
+                        <td class="text-center" style="font-weight:bold">{{ $sizeGrand[$size] ?: '—' }}</td>
+                    @endforeach
+                @endif
+                <td class="text-center" style="font-weight:bold">{{ $grand }}</td>
+                <td></td>
+            </tr>
         </tbody>
     </table>
 

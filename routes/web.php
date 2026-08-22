@@ -243,6 +243,7 @@ Route::middleware('auth')->group(function () {
     Route::put('manufacturing/{order}', [ManufacturingController::class, 'update'])->name('manufacturing.update');
     Route::delete('manufacturing/{order}', [ManufacturingController::class, 'destroy'])->name('manufacturing.destroy');
     Route::post('manufacturing/{order}/update-stage', [ManufacturingController::class, 'updateStage'])->name('manufacturing.update-stage');
+    Route::get('manufacturing/{order}/job-work-challan', [ManufacturingController::class, 'jobWorkChallanPdf'])->name('manufacturing.job-work-challan');
 
 
 
