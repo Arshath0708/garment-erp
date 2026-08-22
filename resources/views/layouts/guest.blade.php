@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css" />
-    <title>{{ config('app.name', 'Guru Traders ERP') }}</title>
+    <title>{{ config('app.name', 'Garment ERP') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         body.modern-login {
@@ -189,9 +189,10 @@
                 <div class="auth-logo" style="z-index:2;margin-bottom:1.25rem;">
                     <x-brand-logo :size="56" />
                 </div>
-                <h1>Guru Traders ERP</h1>
-                <p>Enterprise Resource Planning made simple. Manage your sales, products, and customers effortlessly.</p>
+                <h1>Garment ERP</h1>
+                <p>Next-Gen Garment & Apparel Manufacturing Enterprise Suite. Streamline styles, floor yields, purchase orders, and export documentation effortlessly.</p>
             </div>
+
 
             <div class="auth-form">
                 {{ $slot }}

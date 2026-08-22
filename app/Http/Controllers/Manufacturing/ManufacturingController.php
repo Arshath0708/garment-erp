@@ -25,7 +25,8 @@ class ManufacturingController extends Controller
 
     public function create(): View
     {
-        $styles = GarmentStyle::query()->where('status', 'Active')->get();
+        $styles = GarmentStyle::query()->whereIn('status', ['active', 'Active'])->get();
+
         $salesOrders = OrderConfirmation::query()->orderByDesc('id')->get();
 
         return view('manufacturing.create', compact('styles', 'salesOrders'));
@@ -61,7 +62,8 @@ class ManufacturingController extends Controller
 
     public function edit(ProductionOrder $order): View
     {
-        $styles = GarmentStyle::query()->where('status', 'Active')->get();
+        $styles = GarmentStyle::query()->whereIn('status', ['active', 'Active'])->get();
+
         $salesOrders = OrderConfirmation::query()->orderByDesc('id')->get();
         $order->load(['garmentStyle', 'buyer', 'orderConfirmation']);
 

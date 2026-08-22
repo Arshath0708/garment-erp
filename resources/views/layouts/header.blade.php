@@ -10,19 +10,8 @@
             <li class="nav-item d-none d-md-block">
                 <a href="{{ route('dashboard') }}" class="nav-link fw-semibold">Dashboard</a>
             </li>
-            <li class="nav-item d-none d-lg-block">
-                <a href="{{ route('masters.styles.index') }}" class="nav-link"><i class="bi bi-scissors me-1 text-primary"></i> Style Management</a>
-            </li>
-            <li class="nav-item d-none d-lg-block">
-                <a href="{{ route('sales.order-confirmations.index') }}" class="nav-link"><i class="bi bi-cart-check me-1 text-success"></i> Sales Orders</a>
-            </li>
-            <li class="nav-item d-none d-lg-block">
-                <a href="{{ route('manufacturing.index') }}" class="nav-link"><i class="bi bi-gear-wide-connected me-1 text-warning"></i> Manufacturing</a>
-            </li>
-            <li class="nav-item d-none d-lg-block">
-                <a href="{{ route('export.ocr.index') }}" class="nav-link"><i class="bi bi-stars me-1 text-info"></i> OCR Documents</a>
-            </li>
         </ul>
+
         <!-- End navbar links -->
 
         <!-- Start navbar links (Right) -->

@@ -33,8 +33,9 @@ class GarmentStyleController extends Controller
 
     public function create(): View
     {
-        $buyers = Buyer::query()->where('status', 'Active')->orderBy('company_name')->get();
-        $categories = Category::query()->where('status', 'Active')->orderBy('name')->get();
+        $buyers = Buyer::query()->whereIn('status', ['active', 'Active'])->orderBy('company_name')->get();
+        $categories = Category::query()->whereIn('status', ['active', 'Active'])->orderBy('name')->get();
+
 
         return view('masters.styles.create', compact('buyers', 'categories'));
     }
@@ -76,8 +77,9 @@ class GarmentStyleController extends Controller
 
     public function edit(GarmentStyle $style): View
     {
-        $buyers = Buyer::query()->where('status', 'Active')->orderBy('company_name')->get();
-        $categories = Category::query()->where('status', 'Active')->orderBy('name')->get();
+        $buyers = Buyer::query()->whereIn('status', ['active', 'Active'])->orderBy('company_name')->get();
+        $categories = Category::query()->whereIn('status', ['active', 'Active'])->orderBy('name')->get();
+
 
         return view('masters.styles.edit', compact('style', 'buyers', 'categories'));
     }

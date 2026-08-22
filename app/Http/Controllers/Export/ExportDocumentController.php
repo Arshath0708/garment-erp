@@ -59,10 +59,11 @@ class ExportDocumentController extends Controller implements HasMiddleware
 
         return view('export.documents.index', [
             'documents' => $documents,
-            'buyers'    => Buyer::active()->orderBy('company_name')->get()->pluck('label', 'id'),
+            'buyers'    => Buyer::query()->whereIn('status', ['active', 'Active'])->orderBy('company_name')->get()->pluck('label', 'id'),
             'statuses'  => ExportDocument::STATUSES,
             'filters'   => $request->only('search', 'status', 'buyer_id', 'sort', 'direction'),
         ]);
+
     }
 
     public function show(ExportDocument $document): View

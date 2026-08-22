@@ -10,7 +10,9 @@
 --}}
 <div style="
     display:inline-block;width:{{ $size }}px;height:{{ $size }}px;line-height:{{ $size }}px;
-    background-color:#1d4ed8;border-radius:{{ (int) round($size * 0.25) }}px;
-    color:#ffffff;font-family:Arial, Helvetica, sans-serif;font-weight:700;
+    background:linear-gradient(135deg, #2563eb, #1d4ed8);border-radius:{{ (int) round($size * 0.25) }}px;
+    color:#ffffff;font-family:'Source Sans 3', Arial, sans-serif;font-weight:800;
     font-size:{{ (int) round($size * 0.38) }}px;letter-spacing:.5px;text-align:center;
-">GT</div>
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+">GE</div>
+

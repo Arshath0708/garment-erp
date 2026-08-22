@@ -6,9 +6,7 @@
     <title>Garment ERP — Next-Gen Apparel Manufacturing Suite</title>
 
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
@@ -19,9 +17,12 @@
 
     <style>
         :root {
-            --font-heading: 'Playfair Display', Georgia, serif;
-            --font-body: 'Lora', Georgia, serif;
+            --font-heading: 'Source Sans 3', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-body: 'Source Sans 3', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             --bg-dark: #030712;
+
+
+
             --surface-card: rgba(15, 23, 42, 0.75);
             --border-glow: rgba(56, 189, 248, 0.2);
             --cyan-glow: #38bdf8;

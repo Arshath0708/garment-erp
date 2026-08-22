@@ -2,6 +2,12 @@
     <x-slot name="header">Export Documents</x-slot>
 
     <x-ui.card title="Export Documents" variant="primary">
+        <x-slot name="actions">
+            <a href="{{ route('sales.order-confirmations.index') }}" class="btn btn-sm btn-primary">
+                <i class="bi bi-plus-circle me-1"></i> Raise from Order Confirmation
+            </a>
+        </x-slot>
+
         <form method="GET" class="row g-2 align-items-end mb-3">
             <div class="col-md-4">
                 <label class="form-label small text-body-secondary mb-1">Search</label>

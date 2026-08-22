@@ -30,9 +30,10 @@ return [
     | Override in .env for anything other than local development.
     */
     'super_admin' => [
-        'email'    => env('SUPER_ADMIN_EMAIL', 'admin@gurutraders.com'),
-        'password' => env('SUPER_ADMIN_PASSWORD', 'Guru@123'),
+        'email'    => env('SUPER_ADMIN_EMAIL', 'admin@garment.com'),
+        'password' => env('SUPER_ADMIN_PASSWORD', 'garment@123'),
     ],
+
 
     /*
     |--------------------------------------------------------------------------
