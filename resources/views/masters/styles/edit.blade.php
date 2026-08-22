@@ -89,14 +89,38 @@
                     </div>
                 </div>
 
+                <!-- DYNAMIC SIZE & QUANTITY MATRIX REPEATER -->
+                <div class="card bg-body-tertiary border mb-4">
+                    <div class="card-header bg-body d-flex justify-content-between align-items-center py-3">
+                        <div>
+                            <h6 class="fw-bold mb-0"><i class="bi bi-rulers me-2 text-primary"></i> Size & Quantity Breakdown Matrix</h6>
+                            <small class="text-body-secondary">Add unlimited size breakdown entries. Click (+) to add more sizes.</small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary" id="addSizeRowBtn">
+                            <i class="bi bi-plus-circle me-1"></i> Add Size
+                        </button>
+                    </div>
+                    <div class="card-body p-3">
+                        <div id="sizeRowsContainer">
+                            {{-- Rows dynamically populated by JS below --}}
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-2">
+                            <span class="fw-semibold text-body-secondary small">Calculated Total Target Batch Quantity:</span>
+                            <span class="fs-6 fw-bold text-primary" id="calculatedTotalQty">{{ number_format($style->target_qty) }} pcs</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row g-3 mb-4">
-                    <div class="col-md-6">
+                    <div class="col-md-6 d-none">
                         <label class="form-label fw-semibold">Size Range</label>
-                        <input type="text" name="sizes" class="form-control" value="{{ old('sizes', $style->sizes) }}">
+                        <input type="text" name="sizes" id="hiddenSizesInput" class="form-control" value="{{ old('sizes', $style->sizes) }}">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Target Batch Quantity (pcs) <span class="text-danger">*</span></label>
-                        <input type="number" name="target_qty" class="form-control" value="{{ old('target_qty', $style->target_qty) }}" required>
+                        <input type="number" name="target_qty" id="targetQtyInput" class="form-control" value="{{ old('target_qty', $style->target_qty) }}" required>
+                        <small class="text-body-secondary">Auto-calculated from size breakdown sum above.</small>
                     </div>
                 </div>
 
@@ -122,4 +146,133 @@
             </form>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const container = document.getElementById('sizeRowsContainer');
+        const addBtn = document.getElementById('addSizeRowBtn');
+        const totalQtyEl = document.getElementById('calculatedTotalQty');
+        const targetQtyInput = document.getElementById('targetQtyInput');
+        const hiddenSizesInput = document.getElementById('hiddenSizesInput');
+
+        const rawSizesString = @json($style->sizes ?? '');
+        const currentTargetQty = parseInt(@json($style->target_qty ?? 0), 10) || 0;
+        const defaultSizes = ['M', 'L', 'XL', '2XL', 'S', 'XS', '3XL'];
+
+        function createRow(sizeName = '', sizeQty = 0) {
+            const row = document.createElement('div');
+            row.className = 'row g-2 align-items-center mb-2 size-row';
+            row.innerHTML = `
+                <div class="col-md-5">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-body">Size</span>
+                        <input type="text" name="size_names[]" class="form-control form-control-sm size-name-input" placeholder="e.g. M, L, XL, 38, 40" value="${sizeName}" required>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-body">Quantity</span>
+                        <input type="number" name="size_qtys[]" class="form-control form-control-sm size-qty-input" placeholder="e.g. 100" value="${sizeQty}" min="0" required>
+                        <span class="input-group-text bg-body">pcs</span>
+                    </div>
+                </div>
+                <div class="col-md-2 d-flex gap-1">
+                    <button type="button" class="btn btn-sm btn-outline-primary btn-add-row" title="Add Another Size">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" title="Remove Size">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            return row;
+        }
+
+        function recalculateTotals() {
+            let total = 0;
+            const sizeSummaries = [];
+            container.querySelectorAll('.size-row').forEach(row => {
+                const name = row.querySelector('.size-name-input')?.value.trim() || '';
+                const qty = parseInt(row.querySelector('.size-qty-input')?.value, 10) || 0;
+                total += qty;
+                if (name) {
+                    sizeSummaries.push(qty > 0 ? `${name} (${qty} pcs)` : name);
+                }
+            });
+
+            if (totalQtyEl) totalQtyEl.textContent = total.toLocaleString() + ' pcs';
+            if (targetQtyInput) targetQtyInput.value = total;
+            if (hiddenSizesInput) hiddenSizesInput.value = sizeSummaries.join(', ');
+        }
+
+        function parseExistingSizes() {
+            if (!rawSizesString) {
+                container.appendChild(createRow('M', currentTargetQty || 100));
+                return;
+            }
+
+            const parts = rawSizesString.split(',').map(s => s.trim()).filter(Boolean);
+            if (parts.length === 0) {
+                container.appendChild(createRow('M', currentTargetQty || 100));
+                return;
+            }
+
+            parts.forEach(part => {
+                const match = part.match(/^(.+?)\s*\((?:(\d+)(?:\s*pcs)?)?\)$/i);
+                if (match) {
+                    const name = match[1].trim();
+                    const qty = parseInt(match[2], 10) || 0;
+                    container.appendChild(createRow(name, qty));
+                } else {
+                    const splitQty = Math.floor(currentTargetQty / parts.length);
+                    container.appendChild(createRow(part, splitQty > 0 ? splitQty : 100));
+                }
+            });
+        }
+
+        function suggestNextSize() {
+            const existing = Array.from(container.querySelectorAll('.size-name-input')).map(i => i.value.trim().toUpperCase());
+            for (let s of defaultSizes) {
+                if (!existing.includes(s)) return s;
+            }
+            return 'Custom Size';
+        }
+
+        addBtn?.addEventListener('click', function () {
+            const nextSize = suggestNextSize();
+            const newRow = createRow(nextSize, 100);
+            container.appendChild(newRow);
+            recalculateTotals();
+        });
+
+        container?.addEventListener('click', function (e) {
+            if (e.target.closest('.btn-add-row')) {
+                const nextSize = suggestNextSize();
+                const newRow = createRow(nextSize, 100);
+                e.target.closest('.size-row').after(newRow);
+                recalculateTotals();
+            } else if (e.target.closest('.btn-remove-row')) {
+                const rows = container.querySelectorAll('.size-row');
+                if (rows.length > 1) {
+                    e.target.closest('.size-row').remove();
+                    recalculateTotals();
+                } else {
+                    alert('At least one size entry is required.');
+                }
+            }
+        });
+
+        container?.addEventListener('input', function (e) {
+            if (e.target.classList.contains('size-qty-input') || e.target.classList.contains('size-name-input')) {
+                recalculateTotals();
+            }
+        });
+
+        parseExistingSizes();
+        recalculateTotals();
+    });
+    </script>
+    @endpush
 </x-app-layout>
+

@@ -58,9 +58,27 @@ class GarmentStyleController extends Controller
             'logo'         => ['nullable', 'image', 'max:2048'],
         ]);
 
-        if ($request->hasFile('logo')) {
-            $path = $request->file('logo')->store('styles/logos', 'public');
-            $validated['logo_path'] = $path;
+        if ($request->has('size_names') && is_array($request->input('size_names'))) {
+            $sizeNames = $request->input('size_names', []);
+            $sizeQtys = $request->input('size_qtys', []);
+            $formattedSizes = [];
+            $totalQty = 0;
+
+            foreach ($sizeNames as $i => $name) {
+                $trimmedName = trim((string) $name);
+                $qty = (int) ($sizeQtys[$i] ?? 0);
+                if ($trimmedName !== '') {
+                    $formattedSizes[] = $qty > 0 ? "{$trimmedName} ({$qty} pcs)" : $trimmedName;
+                    $totalQty += $qty;
+                }
+            }
+
+            if (!empty($formattedSizes)) {
+                $validated['sizes'] = implode(', ', $formattedSizes);
+            }
+            if ($totalQty > 0) {
+                $validated['target_qty'] = $totalQty;
+            }
         }
 
         GarmentStyle::create($validated);
@@ -107,7 +125,31 @@ class GarmentStyleController extends Controller
             $validated['logo_path'] = $path;
         }
 
+        if ($request->has('size_names') && is_array($request->input('size_names'))) {
+            $sizeNames = $request->input('size_names', []);
+            $sizeQtys = $request->input('size_qtys', []);
+            $formattedSizes = [];
+            $totalQty = 0;
+
+            foreach ($sizeNames as $i => $name) {
+                $trimmedName = trim((string) $name);
+                $qty = (int) ($sizeQtys[$i] ?? 0);
+                if ($trimmedName !== '') {
+                    $formattedSizes[] = $qty > 0 ? "{$trimmedName} ({$qty} pcs)" : $trimmedName;
+                    $totalQty += $qty;
+                }
+            }
+
+            if (!empty($formattedSizes)) {
+                $validated['sizes'] = implode(', ', $formattedSizes);
+            }
+            if ($totalQty > 0) {
+                $validated['target_qty'] = $totalQty;
+            }
+        }
+
         $style->update($validated);
+
 
         return redirect()->route('masters.styles.index')->with('success', 'Garment Style updated successfully!');
     }

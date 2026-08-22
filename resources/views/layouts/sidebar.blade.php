@@ -101,36 +101,12 @@
                 <!-- 4. PLANNING & PRODUCTION -->
                 <li class="nav-header">MANUFACTURING PROCESSES</li>
                 <li class="nav-item">
-
                     <a href="{{ route('manufacturing.index') }}" class="nav-link {{ request()->routeIs('manufacturing.*') ? 'active' : '' }}">
                         <i class="nav-icon bi bi-diagram-3-fill"></i>
                         <p>Production Planning</p>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="{{ route('manufacturing.index') }}" class="nav-link">
-                        <i class="nav-icon bi bi-scissors text-warning"></i>
-                        <p>Cutting Process</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('manufacturing.index') }}" class="nav-link">
-                        <i class="nav-icon bi bi-printer text-info"></i>
-                        <p>Printing & Embroidery</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('manufacturing.index') }}" class="nav-link">
-                        <i class="nav-icon bi bi-gear-wide-connected text-primary"></i>
-                        <p>Stitching Process</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('manufacturing.index') }}" class="nav-link">
-                        <i class="nav-icon bi bi-shield-check text-success"></i>
-                        <p>Finishing & Quality Control</p>
-                    </a>
-                </li>
+
 
                 <!-- 5. INVENTORY & JOB WORK -->
                 <li class="nav-header">INVENTORY & JOB WORK</li>

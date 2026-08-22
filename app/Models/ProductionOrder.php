@@ -129,6 +129,25 @@ class ProductionOrder extends Model
     }
 
     /**
+     * Automatic stage balances (e.g. 1000 Cutting - 500 Stitching = 500 WIP in Cutting).
+     */
+    public function pendingCuttingQty(): int
+    {
+        return max(0, $this->cutting_qty - $this->stitching_qty);
+    }
+
+    public function pendingStitchingQty(): int
+    {
+        return max(0, $this->stitching_qty - $this->finishing_qty);
+    }
+
+    public function pendingFinishingQty(): int
+    {
+        return max(0, $this->finishing_qty - $this->packing_qty);
+    }
+
+
+    /**
      * @return array{breakdown: array<string, array<string, int>>, totals: array<string, int>}
      */
     public static function parseSizePayload(?array $sizes): array
