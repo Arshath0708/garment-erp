@@ -27,13 +27,15 @@
             <i class="bi bi-arrow-right"></i>
             <div class="px-3 py-2 bg-primary bg-opacity-50 rounded text-white"><strong class="text-white">3. Cutting</strong></div>
             <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-primary bg-opacity-50 rounded text-white"><strong class="text-white">4. Stitching</strong></div>
+            <div class="px-3 py-2 bg-info bg-opacity-25 rounded text-info"><strong class="text-info">4. Printing / Embroidery</strong></div>
             <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-warning bg-opacity-25 rounded text-warning"><strong class="text-warning">5. Finishing</strong></div>
+            <div class="px-3 py-2 bg-primary bg-opacity-50 rounded text-white"><strong class="text-white">5. Stitching</strong></div>
             <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-success bg-opacity-25 rounded text-success"><strong class="text-success">6. Quality Check</strong></div>
+            <div class="px-3 py-2 bg-warning bg-opacity-25 rounded text-warning"><strong class="text-warning">6. Finishing</strong></div>
             <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-info bg-opacity-25 rounded text-info"><strong class="text-info">7. Packing & Dispatch</strong></div>
+            <div class="px-3 py-2 bg-success bg-opacity-25 rounded text-success"><strong class="text-success">7. Quality Check</strong></div>
+            <i class="bi bi-arrow-right"></i>
+            <div class="px-3 py-2 bg-info bg-opacity-25 rounded text-info"><strong class="text-info">8. Packing & Dispatch</strong></div>
         </div>
     </div>
 
@@ -55,36 +57,70 @@
                             <div class="col-6 text-end">Target Date: <strong>{{ $order->target_date ? $order->target_date->format('Y-m-d') : 'N/A' }}</strong></div>
                             <div class="col-6">Total Order Qty: <strong class="text-primary">{{ number_format($order->total_qty) }} pcs</strong></div>
                             <div class="col-6 text-end">Dispatch Qty: <strong class="text-success">{{ number_format($order->dispatch_qty) }} pcs</strong></div>
+                            @if($order->job_work_type && $order->job_work_type !== 'in_house')
+                                <div class="col-12">Job work: <strong>{{ $order->jobWorkTypeLabel() }}</strong>
+                                    @if($order->jobber) · {{ $order->jobber->company_name }} @endif
+                                </div>
+                            @endif
                         </div>
 
                         <!-- Stage Breakdown Metrics -->
                         <div class="p-3 bg-body-tertiary rounded mb-3">
                             <div class="row g-2 text-center small">
-                                <div class="col-2 border-end">
+                                <div class="col border-end">
                                     <div class="text-body-secondary">Cutting</div>
                                     <div class="fw-bold">{{ number_format($order->cutting_qty) }}</div>
                                 </div>
-                                <div class="col-2 border-end">
+                                <div class="col border-end">
+                                    <div class="text-body-secondary">Print / Emb</div>
+                                    <div class="fw-bold">{{ number_format($order->printing_qty) }}</div>
+                                </div>
+                                <div class="col border-end">
                                     <div class="text-body-secondary">Stitching</div>
                                     <div class="fw-bold">{{ number_format($order->stitching_qty) }}</div>
                                 </div>
-                                <div class="col-2 border-end">
+                                <div class="col border-end">
                                     <div class="text-body-secondary">Finishing</div>
                                     <div class="fw-bold">{{ number_format($order->finishing_qty) }}</div>
                                 </div>
-                                <div class="col-2 border-end">
+                                <div class="col border-end">
                                     <div class="text-body-secondary">QC Pass</div>
                                     <div class="fw-bold text-success">{{ number_format($order->qc_passed_qty) }}</div>
                                 </div>
-                                <div class="col-2 border-end">
+                                <div class="col border-end">
                                     <div class="text-body-secondary">Packing</div>
                                     <div class="fw-bold">{{ number_format($order->packing_qty) }}</div>
                                 </div>
-                                <div class="col-2">
+                                <div class="col">
                                     <div class="text-body-secondary">Dispatch</div>
                                     <div class="fw-bold text-primary">{{ number_format($order->dispatch_qty) }}</div>
                                 </div>
                             </div>
+                            @php $cutSizes = $order->size_breakdown['cutting'] ?? []; @endphp
+                            @if(collect($cutSizes)->sum() > 0)
+                                <div class="table-responsive mt-3">
+                                    <table class="table table-sm table-bordered mb-0 small">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-body-secondary fw-normal">Cutting sizes</th>
+                                                @foreach (\App\Models\ProductionOrder::SIZES as $size)
+                                                    <th class="text-center">{{ $size }}</th>
+                                                @endforeach
+                                                <th class="text-center">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td></td>
+                                                @foreach (\App\Models\ProductionOrder::SIZES as $size)
+                                                    <td class="text-center">{{ number_format((int) ($cutSizes[$size] ?? 0)) }}</td>
+                                                @endforeach
+                                                <td class="text-center fw-bold">{{ number_format($order->stageSizeTotal('cutting')) }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @endif
                         </div>
 
                         @php
@@ -109,6 +145,9 @@
                             </form>
                         </div>
                         <div class="d-flex gap-2">
+                            <a href="{{ route('manufacturing.job-work-challan', $order) }}" class="btn btn-sm btn-outline-primary" title="Size-wise job-work delivery challan">
+                                <i class="bi bi-file-earmark-pdf me-1"></i> Challan
+                            </a>
                             <a href="{{ route('manufacturing.edit', $order) }}" class="btn btn-sm btn-outline-secondary">
                                 <i class="bi bi-pencil-square me-1"></i> Edit Order
                             </a>
@@ -121,9 +160,8 @@
                 </div>
             </div>
 
-            <!-- Update Stage Modal -->
             <div class="modal fade" id="updateStageModal{{ $order->id }}" tabindex="-1">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-xl">
                     <div class="modal-content">
                         <form action="{{ route('manufacturing.update-stage', $order) }}" method="POST">
                             @csrf
@@ -136,6 +174,7 @@
                                     <label class="form-label fw-semibold">Current Active Stage</label>
                                     <select name="current_stage" class="form-select">
                                         <option value="Cutting" {{ $order->current_stage == 'Cutting' ? 'selected' : '' }}>Cutting</option>
+                                        <option value="Printing" {{ $order->current_stage == 'Printing' ? 'selected' : '' }}>Printing / Embroidery</option>
                                         <option value="Stitching" {{ $order->current_stage == 'Stitching' ? 'selected' : '' }}>Stitching</option>
                                         <option value="Finishing" {{ $order->current_stage == 'Finishing' ? 'selected' : '' }}>Finishing</option>
                                         <option value="Quality Check" {{ $order->current_stage == 'Quality Check' ? 'selected' : '' }}>Quality Check</option>
@@ -143,36 +182,7 @@
                                         <option value="Dispatch" {{ $order->current_stage == 'Dispatch' ? 'selected' : '' }}>Dispatch</option>
                                     </select>
                                 </div>
-                                <div class="row g-2 mb-3">
-                                    <div class="col-6">
-                                        <label class="form-label small">Cutting Qty</label>
-                                        <input type="number" name="cutting_qty" class="form-control" value="{{ $order->cutting_qty }}">
-                                    </div>
-                                    <div class="col-6">
-                                        <label class="form-label small">Stitching Qty</label>
-                                        <input type="number" name="stitching_qty" class="form-control" value="{{ $order->stitching_qty }}">
-                                    </div>
-                                </div>
-                                <div class="row g-2 mb-3">
-                                    <div class="col-6">
-                                        <label class="form-label small">Finishing Qty</label>
-                                        <input type="number" name="finishing_qty" class="form-control" value="{{ $order->finishing_qty }}">
-                                    </div>
-                                    <div class="col-6">
-                                        <label class="form-label small">QC Passed Qty</label>
-                                        <input type="number" name="qc_passed_qty" class="form-control" value="{{ $order->qc_passed_qty }}">
-                                    </div>
-                                </div>
-                                <div class="row g-2 mb-3">
-                                    <div class="col-6">
-                                        <label class="form-label small">Packing Qty</label>
-                                        <input type="number" name="packing_qty" class="form-control" value="{{ $order->packing_qty }}">
-                                    </div>
-                                    <div class="col-6">
-                                        <label class="form-label small">Dispatch Qty</label>
-                                        <input type="number" name="dispatch_qty" class="form-control" value="{{ $order->dispatch_qty }}">
-                                    </div>
-                                </div>
+                                @include('manufacturing._size_matrix', ['order' => $order])
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

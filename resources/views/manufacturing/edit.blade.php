@@ -89,37 +89,56 @@
                     </div>
                 </div>
 
-                <!-- Stage Quantities Grid -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Job work type</label>
+                        <select name="job_work_type" class="form-select">
+                            @foreach (\App\Models\ProductionOrder::JOB_WORK_TYPES as $value => $label)
+                                <option value="{{ $value }}" @selected(old('job_work_type', $order->job_work_type) === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Jobber (challan “M/S”)</label>
+                        <select name="jobber_id" class="form-select">
+                            <option value="">— Own floor / none —</option>
+                            @foreach ($jobbers as $jobber)
+                                <option value="{{ $jobber->id }}" @selected((string) old('jobber_id', $order->jobber_id) === (string) $jobber->id)>
+                                    {{ $jobber->company_name }} ({{ $jobber->display_code }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Place of supply</label>
+                        <input type="text" name="place_of_supply" class="form-control" value="{{ old('place_of_supply', $order->place_of_supply) }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Challan no.</label>
+                        <input type="text" name="challan_no" class="form-control" value="{{ old('challan_no', $order->challan_no) }}" placeholder="e.g. VD-DC-3236">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Driver name</label>
+                        <input type="text" name="driver_name" class="form-control" value="{{ old('driver_name', $order->driver_name) }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Vehicle no.</label>
+                        <input type="text" name="vehicle_no" class="form-control" value="{{ old('vehicle_no', $order->vehicle_no) }}">
+                    </div>
+                </div>
+
                 <div class="p-3 bg-body-tertiary border rounded mb-4">
-                    <h6 class="fw-bold mb-3 text-primary"><i class="bi bi-bar-chart-steps me-1"></i> Process Stage Yield Quantities (pcs)</h6>
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label small fw-semibold">Cutting Qty</label>
-                            <input type="number" name="cutting_qty" class="form-control" value="{{ old('cutting_qty', $order->cutting_qty) }}">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-semibold">Stitching Qty</label>
-                            <input type="number" name="stitching_qty" class="form-control" value="{{ old('stitching_qty', $order->stitching_qty) }}">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-semibold">Finishing Qty</label>
-                            <input type="number" name="finishing_qty" class="form-control" value="{{ old('finishing_qty', $order->finishing_qty) }}">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-semibold">QC Passed Qty</label>
-                            <input type="number" name="qc_passed_qty" class="form-control" value="{{ old('qc_passed_qty', $order->qc_passed_qty) }}">
-                        </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-grid-3x3-gap me-1"></i> Size-wise stage qty (S–5XL)</h6>
+                        <a href="{{ route('manufacturing.job-work-challan', $order) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-file-earmark-pdf me-1"></i> Job Work Delivery Challan
+                        </a>
+                    </div>
+                    @include('manufacturing._size_matrix', ['order' => $order])
+                    <div class="row mt-3">
                         <div class="col-md-4">
-                            <label class="form-label small fw-semibold">QC Rejected Qty</label>
+                            <label class="form-label small fw-semibold">QC Rejected Qty (not size-split)</label>
                             <input type="number" name="qc_rejected_qty" class="form-control" value="{{ old('qc_rejected_qty', $order->qc_rejected_qty) }}">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold">Packing Qty</label>
-                            <input type="number" name="packing_qty" class="form-control" value="{{ old('packing_qty', $order->packing_qty) }}">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold">Dispatch Qty</label>
-                            <input type="number" name="dispatch_qty" class="form-control" value="{{ old('dispatch_qty', $order->dispatch_qty) }}">
                         </div>
                     </div>
                 </div>
