@@ -66,36 +66,55 @@
 
                         <!-- Stage Breakdown Metrics -->
                         <div class="p-3 bg-body-tertiary rounded mb-3">
-                            <div class="row g-2 text-center small">
+                            <div class="row g-2 text-center small mb-2">
                                 <div class="col border-end">
                                     <div class="text-body-secondary">Cutting</div>
                                     <div class="fw-bold">{{ number_format($order->cutting_qty) }}</div>
+                                    @if($order->pendingCuttingQty() > 0)
+                                        <span class="badge bg-warning bg-opacity-25 text-dark mt-1" style="font-size: 0.7rem;">Bal: {{ number_format($order->pendingCuttingQty()) }}</span>
+                                    @endif
                                 </div>
                                 <div class="col border-end">
                                     <div class="text-body-secondary">Print / Emb</div>
                                     <div class="fw-bold">{{ number_format($order->printing_qty) }}</div>
+                                    @if($order->pendingPrintingQty() > 0)
+                                        <span class="badge bg-warning bg-opacity-25 text-dark mt-1" style="font-size: 0.7rem;">Bal: {{ number_format($order->pendingPrintingQty()) }}</span>
+                                    @endif
                                 </div>
                                 <div class="col border-end">
                                     <div class="text-body-secondary">Stitching</div>
                                     <div class="fw-bold">{{ number_format($order->stitching_qty) }}</div>
+                                    @if($order->pendingStitchingQty() > 0)
+                                        <span class="badge bg-warning bg-opacity-25 text-dark mt-1" style="font-size: 0.7rem;">Bal: {{ number_format($order->pendingStitchingQty()) }}</span>
+                                    @endif
                                 </div>
                                 <div class="col border-end">
                                     <div class="text-body-secondary">Finishing</div>
                                     <div class="fw-bold">{{ number_format($order->finishing_qty) }}</div>
+                                    @if($order->pendingFinishingQty() > 0)
+                                        <span class="badge bg-warning bg-opacity-25 text-dark mt-1" style="font-size: 0.7rem;">Bal: {{ number_format($order->pendingFinishingQty()) }}</span>
+                                    @endif
                                 </div>
                                 <div class="col border-end">
                                     <div class="text-body-secondary">QC Pass</div>
                                     <div class="fw-bold text-success">{{ number_format($order->qc_passed_qty) }}</div>
+                                    @if($order->pendingQcQty() > 0)
+                                        <span class="badge bg-warning bg-opacity-25 text-dark mt-1" style="font-size: 0.7rem;">Bal: {{ number_format($order->pendingQcQty()) }}</span>
+                                    @endif
                                 </div>
                                 <div class="col border-end">
                                     <div class="text-body-secondary">Packing</div>
                                     <div class="fw-bold">{{ number_format($order->packing_qty) }}</div>
+                                    @if($order->pendingPackingQty() > 0)
+                                        <span class="badge bg-warning bg-opacity-25 text-dark mt-1" style="font-size: 0.7rem;">Bal: {{ number_format($order->pendingPackingQty()) }}</span>
+                                    @endif
                                 </div>
                                 <div class="col">
                                     <div class="text-body-secondary">Dispatch</div>
                                     <div class="fw-bold text-primary">{{ number_format($order->dispatch_qty) }}</div>
                                 </div>
                             </div>
+
                             @php $cutSizes = $order->size_breakdown['cutting'] ?? []; @endphp
                             @if(collect($cutSizes)->sum() > 0)
                                 <div class="table-responsive mt-3">
@@ -111,7 +130,7 @@
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td></td>
+                                                <td class="fw-semibold">Cut Output</td>
                                                 @foreach (\App\Models\ProductionOrder::SIZES as $size)
                                                     <td class="text-center">{{ number_format((int) ($cutSizes[$size] ?? 0)) }}</td>
                                                 @endforeach
@@ -122,6 +141,7 @@
                                 </div>
                             @endif
                         </div>
+
 
                         @php
                             $completedPct = min(100, round(($order->dispatch_qty / max(1, $order->total_qty)) * 100));

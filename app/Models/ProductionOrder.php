@@ -129,11 +129,17 @@ class ProductionOrder extends Model
     }
 
     /**
-     * Automatic stage balances (e.g. 1000 Cutting - 500 Stitching = 500 WIP in Cutting).
+     * Automatic stage balances (e.g. 5000 Cutting - 2500 Stitching = 2500 WIP remaining in Cutting).
      */
     public function pendingCuttingQty(): int
     {
-        return max(0, $this->cutting_qty - $this->stitching_qty);
+        $nextWorked = max($this->printing_qty, $this->stitching_qty);
+        return max(0, $this->cutting_qty - $nextWorked);
+    }
+
+    public function pendingPrintingQty(): int
+    {
+        return max(0, $this->printing_qty - $this->stitching_qty);
     }
 
     public function pendingStitchingQty(): int
@@ -143,8 +149,57 @@ class ProductionOrder extends Model
 
     public function pendingFinishingQty(): int
     {
-        return max(0, $this->finishing_qty - $this->packing_qty);
+        return max(0, $this->finishing_qty - ($this->qc_passed_qty + $this->qc_rejected_qty));
     }
+
+    public function pendingQcQty(): int
+    {
+        return max(0, $this->qc_passed_qty - $this->packing_qty);
+    }
+
+    public function pendingPackingQty(): int
+    {
+        return max(0, $this->packing_qty - $this->dispatch_qty);
+    }
+
+    /**
+     * Overall stage WIP balance helper.
+     */
+    public function stageWipBalance(string $stage): int
+    {
+        return match ($stage) {
+            'cutting'   => $this->pendingCuttingQty(),
+            'printing'  => $this->pendingPrintingQty(),
+            'stitching' => $this->pendingStitchingQty(),
+            'finishing' => $this->pendingFinishingQty(),
+            'qc'        => $this->pendingQcQty(),
+            'packing'   => $this->pendingPackingQty(),
+            default     => 0,
+        };
+    }
+
+    /**
+     * Size-level WIP balance remaining in previous stage.
+     */
+    public function sizeWipBalance(string $stage, string $size): int
+    {
+        $current = $this->sizeQty($stage, $size);
+        $nextStageKey = match ($stage) {
+            'cutting'   => $this->printing_qty > 0 ? 'printing' : 'stitching',
+            'printing'  => 'stitching',
+            'stitching' => 'finishing',
+            'finishing' => 'qc',
+            'qc'        => 'packing',
+            'packing'   => 'dispatch',
+            default     => null,
+        };
+
+        if (!$nextStageKey) return $current;
+
+        $nextQty = $this->sizeQty($nextStageKey, $size);
+        return max(0, $current - $nextQty);
+    }
+
 
 
     /**
