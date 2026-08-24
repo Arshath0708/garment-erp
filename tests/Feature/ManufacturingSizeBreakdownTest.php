@@ -126,7 +126,44 @@ class ManufacturingSizeBreakdownTest extends TestCase
                 ],
             ])
             ->assertRedirect(route('manufacturing.edit', $order))
-            ->assertSessionHasErrors('sizes.stitching');
+            ->assertSessionHasErrors(['sizes.stitching', 'sizes.stitching.S']);
+    }
+
+    public function test_same_size_cannot_exceed_previous_stage(): void
+    {
+        $user = User::factory()->create();
+        $style = GarmentStyle::create([
+            'style_number' => 'ST-SIZE-5',
+            'name'         => 'Size Cap Tee',
+            'status'       => 'Active',
+            'target_qty'   => 50,
+        ]);
+        $order = ProductionOrder::create([
+            'order_number'     => 'PO-SIZE-5',
+            'garment_style_id' => $style->id,
+            'total_qty'        => 50,
+            'target_date'      => now()->addDays(10),
+            'current_stage'    => 'Cutting',
+            'status'           => 'In Progress',
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('manufacturing.edit', $order))
+            ->put(route('manufacturing.update', $order), [
+                'order_number'     => 'PO-SIZE-5',
+                'garment_style_id' => $style->id,
+                'total_qty'        => 50,
+                'target_date'      => now()->addDays(10)->format('Y-m-d'),
+                'current_stage'    => 'Printing',
+                'status'           => 'In Progress',
+                'job_work_type'    => 'in_house',
+                'sizes'            => [
+                    'cutting'  => ['S' => 12, 'M' => 8, 'L' => 11, 'XL' => 16],
+                    'printing' => ['S' => 15, 'M' => 8, 'L' => 11, 'XL' => 10],
+                ],
+            ])
+            ->assertRedirect(route('manufacturing.edit', $order))
+            ->assertSessionHasErrors('sizes.printing.S');
     }
 
     public function test_damage_cannot_exceed_stage_qty(): void

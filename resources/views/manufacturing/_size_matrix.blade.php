@@ -33,6 +33,7 @@
                             <input type="number" min="0" step="1"
                                    name="{{ $inputName }}[{{ $key }}][{{ $size }}]"
                                    class="form-control form-control-sm text-center js-size-qty"
+                                   data-size="{{ $size }}"
                                    value="{{ old("{$inputName}.{$key}.{$size}", $order?->sizeQty($key, $size) ?? 0) }}">
                         </td>
                     @endforeach
@@ -48,8 +49,8 @@
         </tbody>
     </table>
 </div>
-<p class="form-text mb-0 mt-2">S–5XL is good pcs at that stage. <strong>Total Damage</strong> is pieces lost there (not size-wise). Next stage cannot exceed previous good pcs (total − damage).</p>
-<div class="alert alert-danger py-2 small mt-2 mb-0 d-none js-stage-flow-error" role="alert"></div>
+<p class="form-text mb-0 mt-2">Each size cannot exceed the same size in the previous stage (Cutting S=12 → Printing S max 12). <strong>Total Damage</strong> is one number per stage. Next stage total also cannot exceed previous total − damage.</p>
+<div class="alert alert-danger py-2 small mt-2 mb-0 d-none js-stage-flow-error" role="alert" style="white-space: pre-line"></div>
 
 @once
 <script>
@@ -77,6 +78,7 @@
         var orderQtyInput = wrap.closest('form') && wrap.closest('form').querySelector('[name="total_qty"]');
         var prevGood = orderQtyInput ? (parseInt(orderQtyInput.value, 10) || 0) : Infinity;
         var prevLabel = 'order qty';
+        var prevSizes = {};
 
         rows.forEach(function (row) {
             var total = garmentStageRowTotal(row);
@@ -106,13 +108,25 @@
                 });
             }
 
+            row.querySelectorAll('.js-size-qty').forEach(function (input) {
+                var size = input.getAttribute('data-size');
+                var qty = parseInt(input.value, 10) || 0;
+                if (prevSizes[size] !== undefined && qty > prevSizes[size]) {
+                    messages.push(label + ' ' + size + ' (' + qty + ') cannot exceed ' + prevLabel + ' ' + size + ' (' + prevSizes[size] + ').');
+                    input.classList.add('is-invalid');
+                }
+            });
+
             prevGood = Math.max(0, total - damage);
             prevLabel = label;
+            row.querySelectorAll('.js-size-qty').forEach(function (input) {
+                prevSizes[input.getAttribute('data-size')] = parseInt(input.value, 10) || 0;
+            });
         });
 
         if (errorBox) {
             if (messages.length) {
-                errorBox.textContent = messages[0];
+                errorBox.textContent = messages.join('\n');
                 errorBox.classList.remove('d-none');
             } else {
                 errorBox.textContent = '';

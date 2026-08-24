@@ -169,6 +169,7 @@ class ProductionOrder extends Model
 
     /**
      * Next stage cannot exceed previous stage’s good pcs (qty − damage).
+     * Each size cannot exceed the same size on the previous filled stage.
      * Damage cannot exceed that stage’s own qty.
      *
      * @param  array<string, array<string, int>>  $breakdown
@@ -179,6 +180,7 @@ class ProductionOrder extends Model
         $errors = [];
         $prevGood = max(0, $orderQty);
         $prevLabel = 'order qty';
+        $prevSizes = [];
 
         foreach (self::STAGE_KEYS as $key => $meta) {
             $total = 0;
@@ -200,8 +202,19 @@ class ProductionOrder extends Model
                 $errors["sizes.{$key}"] = "{$label} qty ({$total}) cannot exceed {$prevLabel} good pcs ({$prevGood}). Damaged pieces cannot move to the next stage.";
             }
 
+            foreach (self::SIZES as $size) {
+                $qty = (int) ($breakdown[$key][$size] ?? 0);
+                $prevSizeQty = $prevSizes[$size] ?? null;
+                if ($prevSizeQty !== null && $qty > $prevSizeQty) {
+                    $errors["sizes.{$key}.{$size}"] = "{$label} {$size} ({$qty}) cannot exceed {$prevLabel} {$size} ({$prevSizeQty}). That size was not cut / processed earlier.";
+                }
+            }
+
             $prevGood = max(0, $total - $dmg);
             $prevLabel = $label;
+            foreach (self::SIZES as $size) {
+                $prevSizes[$size] = (int) ($breakdown[$key][$size] ?? 0);
+            }
         }
 
         return $errors;
