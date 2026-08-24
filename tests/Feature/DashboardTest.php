@@ -29,6 +29,7 @@ class DashboardTest extends TestCase
         $response->assertSee('Dashboard');
         $response->assertSee('Total Inquiries');
         $response->assertSee('Order Confirmations');
+        $response->assertSee(route('manufacturing.index', ['stage' => 'Printing']), false);
     }
 
     public function test_dashboard_displays_zero_state_when_no_records_exist(): void
@@ -73,5 +74,21 @@ class DashboardTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewHas('inquiryCount', 1);
         $response->assertViewHas('orderConfirmationCount', 1);
+    }
+
+    public function test_dashboard_stage_cards_keep_the_clicked_manufacturing_step(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee(route('manufacturing.index', ['stage' => 'Cutting']), false)
+            ->assertSee(route('manufacturing.index', ['stage' => 'Stitching']), false);
+
+        $this->actingAs($user)
+            ->get(route('manufacturing.index', ['stage' => 'Printing']))
+            ->assertOk()
+            ->assertSee('data-pipeline-stage="Printing"', false);
     }
 }

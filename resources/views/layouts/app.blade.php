@@ -559,6 +559,14 @@
                 sidebar.addEventListener('collapsed.lte.push-menu', describe);
                 describe();
             }
+
+            var sidebarWrap = document.querySelector('.sidebar-wrapper');
+            if (sidebarWrap) {
+                var activeLink = sidebarWrap.querySelector('.nav-link.active');
+                if (activeLink) {
+                    activeLink.scrollIntoView({ block: 'center', inline: 'nearest' });
+                }
+            }
         });
         </script>
 

@@ -29,24 +29,33 @@
     @endif
 
     <!-- Manufacturing Stage Pipeline Guide -->
+    @php
+        $activePipeline = request('stage');
+        $pipelineSteps = [
+            ['label' => '1. Buyer Sales Order', 'href' => route('sales.order-confirmations.index'), 'key' => 'sales'],
+            ['label' => '2. Style & BOM', 'href' => route('masters.styles.index'), 'key' => 'bom'],
+            ['label' => '3. Cutting', 'href' => route('manufacturing.index', ['stage' => 'Cutting']), 'key' => 'Cutting'],
+            ['label' => '4. Printing / Embroidery', 'href' => route('manufacturing.index', ['stage' => 'Printing']), 'key' => 'Printing'],
+            ['label' => '5. Stitching', 'href' => route('manufacturing.index', ['stage' => 'Stitching']), 'key' => 'Stitching'],
+            ['label' => '6. Finishing', 'href' => route('manufacturing.index', ['stage' => 'Finishing']), 'key' => 'Finishing'],
+            ['label' => '7. Quality Check', 'href' => route('manufacturing.index', ['stage' => 'Quality Check']), 'key' => 'Quality Check'],
+            ['label' => '8. Packing & Dispatch', 'href' => route('manufacturing.index', ['stage' => 'Packing']), 'key' => 'Packing'],
+        ];
+    @endphp
     <div class="card shadow-sm border-0 mb-4 bg-dark text-white p-3">
         <div class="text-uppercase text-info fw-bold small mb-2"><i class="bi bi-diagram-3-fill me-1"></i> Garment Manufacturing Order Pipeline</div>
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 text-center text-white-50 small">
-            <div class="px-3 py-2 bg-secondary bg-opacity-25 rounded"><strong class="text-white">1. Buyer Sales Order</strong></div>
-            <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-secondary bg-opacity-25 rounded"><strong class="text-white">2. Style & BOM</strong></div>
-            <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-primary bg-opacity-50 rounded text-white"><strong class="text-white">3. Cutting</strong></div>
-            <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-info bg-opacity-25 rounded text-info"><strong class="text-info">4. Printing / Embroidery</strong></div>
-            <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-primary bg-opacity-50 rounded text-white"><strong class="text-white">5. Stitching</strong></div>
-            <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-warning bg-opacity-25 rounded text-warning"><strong class="text-warning">6. Finishing</strong></div>
-            <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-success bg-opacity-25 rounded text-success"><strong class="text-success">7. Quality Check</strong></div>
-            <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-info bg-opacity-25 rounded text-info"><strong class="text-info">8. Packing & Dispatch</strong></div>
+            @foreach ($pipelineSteps as $i => $step)
+                @if($i > 0)
+                    <i class="bi bi-arrow-right"></i>
+                @endif
+                @php $isActive = $activePipeline !== null && $activePipeline !== '' && $activePipeline === $step['key']; @endphp
+                <a href="{{ $step['href'] }}"
+                   data-pipeline-stage="{{ $step['key'] }}"
+                   class="px-3 py-2 rounded text-decoration-none {{ $isActive ? 'bg-info text-dark fw-bold' : 'bg-secondary bg-opacity-25 text-white' }}">
+                    {{ $step['label'] }}
+                </a>
+            @endforeach
         </div>
     </div>
 
