@@ -22,8 +22,9 @@
 
         <style>
             body, html, input, button, select, textarea, h1, h2, h3, h4, h5, h6, .navbar-brand, .brand-text {
-                font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+                font-family: 'Source Sans 3', sans-serif;
             }
+
 
 
 
