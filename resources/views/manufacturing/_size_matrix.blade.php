@@ -49,7 +49,7 @@
         </tbody>
     </table>
 </div>
-<p class="form-text mb-0 mt-2">Each size cannot exceed the same size in the previous stage (Cutting S=12 → Printing S max 12). <strong>Total Damage</strong> is one number per stage. Next stage total also cannot exceed previous total − damage.</p>
+<p class="form-text mb-0 mt-2">Select <strong>Current Active Stage</strong> first, then enter that stage’s sizes. Later stages stay locked (Printing selected → Stitching cannot be typed). Each size cannot exceed the same size in the previous stage. <strong>Total Damage</strong> is one number per stage.</p>
 <div class="alert alert-danger py-2 small mt-2 mb-0 d-none js-stage-flow-error" role="alert" style="white-space: pre-line"></div>
 
 @once
@@ -71,6 +71,48 @@
         return input ? (parseInt(input.value, 10) || 0) : 0;
     }
 
+    function garmentSelectedStageKey(form) {
+        var sel = form && form.querySelector('[name="current_stage"]');
+        if (!sel) return 'cutting';
+        var v = sel.value || '';
+        if (v === 'Printing' || v === 'Printing / Embroidery') return 'printing';
+        if (v === 'Stitching') return 'stitching';
+        if (v === 'Finishing') return 'finishing';
+        if (v === 'Quality Check') return 'qc_passed';
+        if (v === 'Packing') return 'packing';
+        if (v === 'Dispatch') return 'dispatch';
+        return 'cutting';
+    }
+
+    function garmentApplyStageLock(wrap) {
+        var selected = garmentSelectedStageKey(wrap.closest('form'));
+        var pastSelected = false;
+        garmentStageGridRows(wrap).forEach(function (row) {
+            var lock = pastSelected;
+            if (row.getAttribute('data-stage-key') === selected) {
+                pastSelected = true;
+            }
+            row.querySelectorAll('.js-size-qty, .js-stage-damage').forEach(function (input) {
+                input.readOnly = lock;
+                input.classList.toggle('bg-body-secondary', lock);
+                input.title = lock
+                    ? 'Select this stage as Current Active Stage first, then enter quantities.'
+                    : '';
+            });
+            row.classList.toggle('opacity-75', lock);
+        });
+    }
+
+    function garmentRowSnapshot(row) {
+        var now = [];
+        row.querySelectorAll('.js-size-qty').forEach(function (input) {
+            now.push(String(parseInt(input.value, 10) || 0));
+        });
+        var dmg = row.querySelector('.js-stage-damage');
+        now.push(String(dmg ? (parseInt(dmg.value, 10) || 0) : 0));
+        return now.join(',');
+    }
+
     function garmentValidateStageFlow(wrap) {
         var errorBox = wrap.querySelector('.js-stage-flow-error');
         var rows = garmentStageGridRows(wrap);
@@ -79,6 +121,8 @@
         var prevGood = orderQtyInput ? (parseInt(orderQtyInput.value, 10) || 0) : Infinity;
         var prevLabel = 'order qty';
         var prevSizes = {};
+
+        garmentApplyStageLock(wrap);
 
         rows.forEach(function (row) {
             var total = garmentStageRowTotal(row);
@@ -143,13 +187,57 @@
         if (wrap) garmentValidateStageFlow(wrap);
     });
 
+    document.addEventListener('change', function (e) {
+        if (!e.target.matches('[name="current_stage"]')) return;
+        var form = e.target.closest('form');
+        var wrap = form && form.querySelector('.js-stage-grid-wrap');
+        if (wrap) garmentValidateStageFlow(wrap);
+    });
+
     document.addEventListener('submit', function (e) {
         var wrap = e.target.querySelector('.js-stage-grid-wrap');
         if (!wrap) return;
+        var selected = garmentSelectedStageKey(e.target);
+        var pastSelected = false;
+        var blocked = [];
+        garmentStageGridRows(wrap).forEach(function (row) {
+            var isLater = pastSelected;
+            if (row.getAttribute('data-stage-key') === selected) {
+                pastSelected = true;
+            }
+            if (!isLater) return;
+            if (garmentRowSnapshot(row) !== (row.getAttribute('data-initial-qty') || '')) {
+                blocked.push(row.getAttribute('data-stage-label'));
+                row.querySelectorAll('.js-size-qty, .js-stage-damage').forEach(function (el) {
+                    el.classList.add('is-invalid');
+                });
+            }
+        });
+        if (blocked.length) {
+            e.preventDefault();
+            var errorBox = wrap.querySelector('.js-stage-flow-error');
+            if (errorBox) {
+                errorBox.textContent = blocked.map(function (label) {
+                    return 'Select ' + label + ' as Current Active Stage first, then enter ' + label + ' quantities.';
+                }).join('\n');
+                errorBox.classList.remove('d-none');
+            }
+            wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
         if (!garmentValidateStageFlow(wrap)) {
             e.preventDefault();
             wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.js-stage-grid-wrap').forEach(function (wrap) {
+            garmentStageGridRows(wrap).forEach(function (row) {
+                row.setAttribute('data-initial-qty', garmentRowSnapshot(row));
+            });
+            garmentValidateStageFlow(wrap);
+        });
     });
 </script>
 @endonce

@@ -96,7 +96,7 @@ class ManufacturingController extends Controller
         $style = GarmentStyle::findOrFail($validated['garment_style_id']);
         $validated['buyer_id'] = $style->buyer_id;
 
-        $parsed = $this->validatedSizeBreakdown($request, (int) $validated['total_qty']);
+        $parsed = $this->validatedSizeBreakdown($request, (int) $validated['total_qty'], $order);
         $validated['size_breakdown'] = $parsed['breakdown'];
         $validated = array_merge($validated, $parsed['totals']);
         $validated['qc_rejected_qty'] = $parsed['breakdown']['qc_passed']['damage'] ?? $validated['qc_rejected_qty'] ?? 0;
@@ -127,7 +127,7 @@ class ManufacturingController extends Controller
             'damage.*'        => ['nullable', 'integer', 'min:0'],
         ]);
 
-        $parsed = $this->validatedSizeBreakdown($request, (int) $order->total_qty);
+        $parsed = $this->validatedSizeBreakdown($request, (int) $order->total_qty, $order);
 
         $order->update([
             'current_stage'   => $validated['current_stage'],
@@ -224,10 +224,14 @@ class ManufacturingController extends Controller
     /**
      * @return array{breakdown: array<string, array<string, int>>, totals: array<string, int>}
      */
-    private function validatedSizeBreakdown(Request $request, int $orderQty): array
+    private function validatedSizeBreakdown(Request $request, int $orderQty, ?ProductionOrder $order = null): array
     {
         $parsed = ProductionOrder::parseSizePayload($request->input('sizes'), $request->input('damage'));
-        $errors = ProductionOrder::stageFlowErrors($parsed['breakdown'], $orderQty);
+        $currentStage = $request->input('current_stage', $order?->current_stage ?? 'Cutting');
+        $errors = array_merge(
+            ProductionOrder::stageFlowErrors($parsed['breakdown'], $orderQty),
+            ProductionOrder::stageSelectionErrors($parsed['breakdown'], $currentStage, $order?->size_breakdown)
+        );
 
         if ($errors !== []) {
             throw ValidationException::withMessages($errors);

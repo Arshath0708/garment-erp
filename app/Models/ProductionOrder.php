@@ -162,12 +162,9 @@ class ProductionOrder extends Model
         return $rows;
     }
 
-    /**
-     * Size-breakdown key for the order’s current active stage label.
-     */
-    public function currentStageKey(): string
+    public static function stageKeyFromLabel(?string $label): string
     {
-        return match ($this->current_stage) {
+        return match ($label) {
             'Printing', 'Printing / Embroidery' => 'printing',
             'Stitching'                         => 'stitching',
             'Finishing'                         => 'finishing',
@@ -176,6 +173,14 @@ class ProductionOrder extends Model
             'Dispatch'                          => 'dispatch',
             default                             => 'cutting',
         };
+    }
+
+    /**
+     * Size-breakdown key for the order’s current active stage label.
+     */
+    public function currentStageKey(): string
+    {
+        return self::stageKeyFromLabel($this->current_stage);
     }
 
     /**
@@ -273,6 +278,53 @@ class ProductionOrder extends Model
             $prevLabel = $label;
             foreach (self::SIZES as $size) {
                 $prevSizes[$size] = (int) ($breakdown[$key][$size] ?? 0);
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Qty / damage for a later stage can only be entered after that stage is
+     * selected as Current Active Stage. Existing later-stage numbers may stay.
+     *
+     * @param  array<string, array<string, int>>  $breakdown
+     * @param  array<string, mixed>|null  $existingBreakdown
+     * @return array<string, string>
+     */
+    public static function stageSelectionErrors(array $breakdown, ?string $currentStageLabel, ?array $existingBreakdown = null): array
+    {
+        $keys = array_keys(self::STAGE_KEYS);
+        $activeIdx = array_search(self::stageKeyFromLabel($currentStageLabel), $keys, true);
+        if ($activeIdx === false) {
+            $activeIdx = 0;
+        }
+
+        $errors = [];
+        foreach ($keys as $idx => $key) {
+            if ($idx <= $activeIdx) {
+                continue;
+            }
+
+            $changed = false;
+            foreach (self::SIZES as $size) {
+                $posted = (int) ($breakdown[$key][$size] ?? 0);
+                $existing = (int) ($existingBreakdown[$key][$size] ?? 0);
+                if ($posted !== $existing) {
+                    $changed = true;
+                    break;
+                }
+            }
+
+            if (! $changed) {
+                $postedDamage = (int) ($breakdown[$key]['damage'] ?? 0);
+                $existingDamage = (int) ($existingBreakdown[$key]['damage'] ?? 0);
+                $changed = $postedDamage !== $existingDamage;
+            }
+
+            if ($changed) {
+                $label = self::STAGE_KEYS[$key]['label'];
+                $errors["sizes.{$key}"] = "Select {$label} as Current Active Stage first, then enter {$label} quantities.";
             }
         }
 

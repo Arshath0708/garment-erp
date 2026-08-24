@@ -33,7 +33,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">Current Active Stage <span class="text-danger">*</span></label>
-                        <select name="current_stage" class="form-select" required>
+                        <select name="current_stage" class="form-select js-current-stage" required>
                             <option value="Cutting" {{ old('current_stage', $order->current_stage) == 'Cutting' ? 'selected' : '' }}>Cutting</option>
                             <option value="Printing" {{ old('current_stage', $order->current_stage) == 'Printing' ? 'selected' : '' }}>Printing</option>
                             <option value="Stitching" {{ old('current_stage', $order->current_stage) == 'Stitching' ? 'selected' : '' }}>Stitching</option>

@@ -187,7 +187,7 @@
                             <div class="modal-body">
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">Current Active Stage</label>
-                                    <select name="current_stage" class="form-select">
+                                    <select name="current_stage" class="form-select js-current-stage">
                                         <option value="Cutting" {{ $order->current_stage == 'Cutting' ? 'selected' : '' }}>Cutting</option>
                                         <option value="Printing" {{ $order->current_stage == 'Printing' ? 'selected' : '' }}>Printing / Embroidery</option>
                                         <option value="Stitching" {{ $order->current_stage == 'Stitching' ? 'selected' : '' }}>Stitching</option>

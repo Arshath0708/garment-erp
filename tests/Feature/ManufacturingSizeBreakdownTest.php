@@ -155,6 +155,95 @@ class ManufacturingSizeBreakdownTest extends TestCase
         $this->assertStringContainsString('>47<', $html);
     }
 
+    public function test_cannot_enter_stitching_while_current_stage_is_printing(): void
+    {
+        $user = User::factory()->create();
+        $style = GarmentStyle::create([
+            'style_number' => 'ST-SIZE-7',
+            'name'         => 'Stage Lock Tee',
+            'status'       => 'Active',
+            'target_qty'   => 50,
+        ]);
+        $order = ProductionOrder::create([
+            'order_number'     => 'PO-SIZE-7',
+            'garment_style_id' => $style->id,
+            'total_qty'        => 50,
+            'target_date'      => now()->addDays(10),
+            'current_stage'    => 'Printing',
+            'status'           => 'In Progress',
+            'job_work_type'    => 'in_house',
+            'cutting_qty'      => 47,
+            'printing_qty'     => 39,
+            'size_breakdown'   => [
+                'cutting'  => ['S' => 12, 'M' => 8, 'L' => 11, 'XL' => 16, 'damage' => 3],
+                'printing' => ['S' => 10, 'M' => 7, 'L' => 10, 'XL' => 12, 'damage' => 1],
+            ],
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('manufacturing.index'))
+            ->post(route('manufacturing.update-stage', $order), [
+                'current_stage' => 'Printing',
+                'sizes'         => [
+                    'cutting'   => ['S' => 12, 'M' => 8, 'L' => 11, 'XL' => 16],
+                    'printing'  => ['S' => 10, 'M' => 7, 'L' => 10, 'XL' => 12],
+                    'stitching' => ['S' => 9, 'M' => 6, 'L' => 9, 'XL' => 11],
+                ],
+                'damage' => [
+                    'cutting'   => 3,
+                    'printing'  => 1,
+                    'stitching' => 4,
+                ],
+            ])
+            ->assertRedirect(route('manufacturing.index'))
+            ->assertSessionHasErrors('sizes.stitching');
+
+        $order->refresh();
+        $this->assertSame(0, $order->stitching_qty);
+        $this->assertSame('Printing', $order->current_stage);
+    }
+
+    public function test_stitching_qty_saves_after_stitching_stage_is_selected(): void
+    {
+        $user = User::factory()->create();
+        $style = GarmentStyle::create([
+            'style_number' => 'ST-SIZE-8',
+            'name'         => 'Stage Unlock Tee',
+            'status'       => 'Active',
+            'target_qty'   => 50,
+        ]);
+        $order = ProductionOrder::create([
+            'order_number'     => 'PO-SIZE-8',
+            'garment_style_id' => $style->id,
+            'total_qty'        => 50,
+            'target_date'      => now()->addDays(10),
+            'current_stage'    => 'Printing',
+            'status'           => 'In Progress',
+            'job_work_type'    => 'in_house',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('manufacturing.update-stage', $order), [
+                'current_stage' => 'Stitching',
+                'sizes'         => [
+                    'cutting'   => ['S' => 12, 'M' => 8, 'L' => 11, 'XL' => 16],
+                    'printing'  => ['S' => 10, 'M' => 7, 'L' => 10, 'XL' => 12],
+                    'stitching' => ['S' => 9, 'M' => 6, 'L' => 9, 'XL' => 11],
+                ],
+                'damage' => [
+                    'cutting'   => 3,
+                    'printing'  => 1,
+                    'stitching' => 4,
+                ],
+            ])
+            ->assertRedirect();
+
+        $order->refresh();
+        $this->assertSame('Stitching', $order->current_stage);
+        $this->assertSame(35, $order->stitching_qty);
+        $this->assertSame(4, $order->stageDamage('stitching'));
+    }
+
     public function test_stitching_qty_cannot_exceed_cutting_good_pcs(): void
     {
         $user = User::factory()->create();
