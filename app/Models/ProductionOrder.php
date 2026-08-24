@@ -131,15 +131,69 @@ class ProductionOrder extends Model
     }
 
     /**
+     * Stages that already have size qty or damage entered.
+     *
+     * @return list<array{key: string, label: string, sizes: array<string, int>, total: int, damage: int}>
+     */
+    public function filledStageRows(): array
+    {
+        $rows = [];
+        foreach (self::STAGE_KEYS as $key => $meta) {
+            $total = $this->stageSizeTotal($key);
+            $damage = $this->stageDamage($key);
+            if ($total === 0 && $damage === 0) {
+                continue;
+            }
+
+            $sizes = [];
+            foreach (self::SIZES as $size) {
+                $sizes[$size] = $this->sizeQty($key, $size);
+            }
+
+            $rows[] = [
+                'key'    => $key,
+                'label'  => $meta['label'],
+                'sizes'  => $sizes,
+                'total'  => $total,
+                'damage' => $damage,
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Size-breakdown key for the order’s current active stage label.
+     */
+    public function currentStageKey(): string
+    {
+        return match ($this->current_stage) {
+            'Printing', 'Printing / Embroidery' => 'printing',
+            'Stitching'                         => 'stitching',
+            'Finishing'                         => 'finishing',
+            'Quality Check'                     => 'qc_passed',
+            'Packing'                           => 'packing',
+            'Dispatch'                          => 'dispatch',
+            default                             => 'cutting',
+        };
+    }
+
+    /**
      * Which size row to print on a job-work challan (what we are sending out).
+     * In-house / unspecified: the current active stage. Job-work still sends
+     * the previous stage’s goods (cut pieces to the printer, etc.).
      */
     public function challanStageKey(): string
     {
+        if (! $this->job_work_type || $this->job_work_type === 'in_house') {
+            return $this->currentStageKey();
+        }
+
         return match ($this->job_work_type) {
             'printing', 'embroidery' => 'cutting',
             'stitching'              => 'printing',
             'finishing'              => 'stitching',
-            default                  => 'cutting',
+            default                  => $this->currentStageKey(),
         };
     }
 

@@ -147,22 +147,29 @@ class ManufacturingController extends Controller
     {
         $order->load(['garmentStyle', 'buyer', 'orderConfirmation', 'jobber']);
         $company = CompanyProfile::current();
-        $stageKey = $order->challanStageKey();
         $sizes = ProductionOrder::SIZES;
-        $row = [];
-        $total = 0;
-        foreach ($sizes as $size) {
-            $qty = $order->sizeQty($stageKey, $size);
-            $row[$size] = $qty;
-            $total += $qty;
-        }
+        $stageRows = $order->filledStageRows();
 
-        if ($total === 0) {
-            $total = (int) $order->{ProductionOrder::STAGE_KEYS[$stageKey]['qty_column']};
+        if ($stageRows === []) {
+            $stageKey = $order->challanStageKey();
+            $sizesMap = [];
+            $total = 0;
+            foreach ($sizes as $size) {
+                $qty = $order->sizeQty($stageKey, $size);
+                $sizesMap[$size] = $qty;
+                $total += $qty;
+            }
+            $stageRows = [[
+                'key'    => $stageKey,
+                'label'  => ProductionOrder::STAGE_KEYS[$stageKey]['label'] ?? $stageKey,
+                'sizes'  => $sizesMap,
+                'total'  => $total,
+                'damage' => $order->stageDamage($stageKey),
+            ]];
         }
 
         $pdf = Pdf::loadView('manufacturing.job-work-challan', compact(
-            'order', 'company', 'sizes', 'row', 'total', 'stageKey'
+            'order', 'company', 'sizes', 'stageRows'
         ))->setPaper('a4', 'landscape');
 
         $filename = 'Job-Work-Challan-'.$order->order_number.'.pdf';

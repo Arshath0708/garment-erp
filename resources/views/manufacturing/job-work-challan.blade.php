@@ -61,7 +61,6 @@
     @php
         $style = $order->garmentStyle;
         $sku = $style ? trim($style->style_number.' '.$style->name) : $order->order_number;
-        $stageLabel = \App\Models\ProductionOrder::STAGE_KEYS[$stageKey]['label'] ?? $stageKey;
     @endphp
 
     <table class="grid">
@@ -73,29 +72,31 @@
                     <th>{{ $size }}</th>
                 @endforeach
                 <th>Total</th>
+                <th>Dmg</th>
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>{{ $style?->style_number ?: '1' }}</td>
-                <td class="sku">{{ $sku }}<br><span style="font-size:9px;color:#555">{{ $stageLabel }} · Buyer {{ $order->buyer?->company_name ?: '—' }}</span></td>
-                @foreach ($sizes as $size)
-                    <td>{{ (int) ($row[$size] ?? 0) }}</td>
-                @endforeach
-                <td><strong>{{ (int) $total }}</strong></td>
-            </tr>
-            <tr>
-                <td colspan="2" style="text-align:right"><strong>Total</strong></td>
-                @foreach ($sizes as $size)
-                    <td><strong>{{ (int) ($row[$size] ?? 0) }}</strong></td>
-                @endforeach
-                <td><strong>{{ (int) $total }}</strong></td>
-            </tr>
+            @foreach ($stageRows as $i => $row)
+                <tr>
+                    <td>{{ $i === 0 ? ($style?->style_number ?: '1') : '' }}</td>
+                    <td class="sku">
+                        @if($i === 0)
+                            {{ $sku }}<br>
+                        @endif
+                        <span style="font-size:9px;color:#555">{{ $row['label'] }} · Buyer {{ $order->buyer?->company_name ?: '—' }}</span>
+                    </td>
+                    @foreach ($sizes as $size)
+                        <td>{{ (int) ($row['sizes'][$size] ?? 0) }}</td>
+                    @endforeach
+                    <td><strong>{{ (int) $row['total'] }}</strong></td>
+                    <td>{{ (int) ($row['damage'] ?? 0) }}</td>
+                </tr>
+            @endforeach
         </tbody>
     </table>
 
     <p style="font-size:9px;color:#555;margin-top:8px">
-        Size-wise quantities for job work (printing / embroidery / stitching). Goods sent from our floor; our responsibility ceases as soon as the goods leave our premises.
+        Size-wise quantities for every stage that has been entered (Cutting, Printing / Embroidery, Stitching, and so on). Goods sent from our floor; our responsibility ceases as soon as the goods leave our premises.
     </p>
 
     <table class="foot">

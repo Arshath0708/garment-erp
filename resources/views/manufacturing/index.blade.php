@@ -107,13 +107,13 @@
                                     <div class="fw-bold text-primary">{{ number_format($order->dispatch_qty) }}</div>
                                 </div>
                             </div>
-                            @php $cutSizes = $order->size_breakdown['cutting'] ?? []; @endphp
-                            @if($order->stageSizeTotal('cutting') > 0)
+                            @php $stageRows = $order->filledStageRows(); @endphp
+                            @if($stageRows !== [])
                                 <div class="table-responsive mt-3">
                                     <table class="table table-sm table-bordered mb-0 small">
                                         <thead>
                                             <tr>
-                                                <th class="text-body-secondary fw-normal">Cutting sizes</th>
+                                                <th class="text-body-secondary fw-normal">Stage sizes</th>
                                                 @foreach (\App\Models\ProductionOrder::SIZES as $size)
                                                     <th class="text-center">{{ $size }}</th>
                                                 @endforeach
@@ -122,14 +122,16 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr>
-                                                <td></td>
-                                                @foreach (\App\Models\ProductionOrder::SIZES as $size)
-                                                    <td class="text-center">{{ number_format((int) ($cutSizes[$size] ?? 0)) }}</td>
-                                                @endforeach
-                                                <td class="text-center fw-bold">{{ number_format($order->stageSizeTotal('cutting')) }}</td>
-                                                <td class="text-center text-danger">{{ number_format($order->stageDamage('cutting')) }}</td>
-                                            </tr>
+                                            @foreach ($stageRows as $row)
+                                                <tr>
+                                                    <td class="fw-semibold">{{ $row['label'] }}</td>
+                                                    @foreach (\App\Models\ProductionOrder::SIZES as $size)
+                                                        <td class="text-center">{{ number_format($row['sizes'][$size] ?? 0) }}</td>
+                                                    @endforeach
+                                                    <td class="text-center fw-bold">{{ number_format($row['total']) }}</td>
+                                                    <td class="text-center text-danger">{{ number_format($row['damage']) }}</td>
+                                                </tr>
+                                            @endforeach
                                         </tbody>
                                     </table>
                                 </div>
