@@ -39,8 +39,18 @@ class Product extends Model
         'fabric_width_inch',
         'description',
         'status',
+        'item_kind',
+        'qty_on_hand',
         'remarks',
         'comments',
+    ];
+
+    public const KINDS = [
+        'fabric'    => 'Fabric',
+        'accessory' => 'Accessory / Trim',
+        'thread'    => 'Thread',
+        'label'     => 'Label / Packaging',
+        'other'     => 'Other',
     ];
 
     /**
@@ -52,6 +62,7 @@ class Product extends Model
             'fabric_length_mtr' => 'decimal:3',
             'fabric_width_inch' => 'decimal:3',
             'sq_mtr_per_unit'   => 'decimal:4',
+            'qty_on_hand'       => 'decimal:3',
         ];
     }
 
@@ -84,6 +95,11 @@ class Product extends Model
     public function bomItems(): HasMany
     {
         return $this->hasMany(ProductBomItem::class)->orderBy('sort_order');
+    }
+
+    public function styleMaterials(): HasMany
+    {
+        return $this->hasMany(GarmentStyleMaterial::class);
     }
 
     /**

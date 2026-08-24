@@ -42,4 +42,9 @@ class GarmentStyle extends Model
     {
         return $this->hasMany(ProductionOrder::class);
     }
+
+    public function materials(): HasMany
+    {
+        return $this->hasMany(GarmentStyleMaterial::class)->orderBy('sort_order');
+    }
 }

@@ -135,6 +135,12 @@
                 <!-- 5. INVENTORY & JOB WORK -->
                 <li class="nav-header">INVENTORY & JOB WORK</li>
                 <li class="nav-item">
+                    <a href="{{ route('inventory.index') }}" class="nav-link {{ request()->routeIs('inventory.*') ? 'active' : '' }}">
+                        <i class="nav-icon bi bi-boxes"></i>
+                        <p>Fabric &amp; Accessory Stock</p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ route('procurement.purchase-orders.index') }}" class="nav-link {{ request()->routeIs('procurement.*') ? 'active' : '' }}">
                         <i class="nav-icon bi bi-cart-plus"></i>
                         <p>Fabric & Trims PO / Inward</p>

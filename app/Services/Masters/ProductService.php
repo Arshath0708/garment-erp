@@ -112,6 +112,10 @@ class ProductService
      */
     public function canDelete(Product $product): array
     {
+        if ($product->styleMaterials()->exists()) {
+            return ['allowed' => false, 'reason' => 'This item is used on a garment style BOM.'];
+        }
+
         return ['allowed' => true, 'reason' => null];
     }
 }

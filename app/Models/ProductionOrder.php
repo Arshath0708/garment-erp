@@ -95,6 +95,11 @@ class ProductionOrder extends Model
         return $this->belongsTo(Supplier::class, 'jobber_id');
     }
 
+    public function materials(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductionOrderMaterial::class);
+    }
+
     /**
      * Qty for one stage + size. Missing keys read as 0.
      */

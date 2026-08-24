@@ -137,6 +137,8 @@
                     @include('manufacturing._size_matrix', ['order' => $order])
                 </div>
 
+                @include('manufacturing._material_plan', ['planRows' => $planRows ?? [], 'order' => $order])
+
                 <div class="mb-4">
                     <label class="form-label fw-semibold">Planning & Floor Notes</label>
                     <textarea name="notes" class="form-control" rows="3">{{ old('notes', $order->notes) }}</textarea>

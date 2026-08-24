@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Buyer;
 use App\Models\Category;
 use App\Models\GarmentStyle;
+use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -37,7 +38,9 @@ class GarmentStyleController extends Controller
         $categories = Category::query()->whereIn('status', ['active', 'Active'])->orderBy('name')->get();
 
 
-        return view('masters.styles.create', compact('buyers', 'categories'));
+        $products = Product::query()->where('status', 'active')->orderBy('name')->get();
+
+        return view('masters.styles.create', compact('buyers', 'categories', 'products'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -56,6 +59,10 @@ class GarmentStyleController extends Controller
             'tech_specs'   => ['nullable', 'string'],
             'status'       => ['required', 'string'],
             'logo'         => ['nullable', 'image', 'max:2048'],
+            'materials'                => ['nullable', 'array'],
+            'materials.*.product_id'   => ['nullable', 'exists:products,id'],
+            'materials.*.qty_per_pc'   => ['nullable', 'numeric', 'min:0'],
+            'materials.*.unit'         => ['nullable', 'string', 'max:20'],
         ]);
 
         if ($request->hasFile('logo')) {
@@ -63,14 +70,18 @@ class GarmentStyleController extends Controller
             $validated['logo_path'] = $path;
         }
 
-        GarmentStyle::create($validated);
+        $materials = $validated['materials'] ?? [];
+        unset($validated['materials'], $validated['logo']);
+
+        $style = GarmentStyle::create($validated);
+        $this->syncMaterials($style, $materials);
 
         return redirect()->route('masters.styles.index')->with('success', 'Garment Style created successfully!');
     }
 
     public function show(GarmentStyle $style): View
     {
-        $style->load(['buyer', 'category', 'productionOrders']);
+        $style->load(['buyer', 'category', 'productionOrders', 'materials.product']);
 
         return view('masters.styles.show', compact('style'));
     }
@@ -79,9 +90,10 @@ class GarmentStyleController extends Controller
     {
         $buyers = Buyer::query()->whereIn('status', ['active', 'Active'])->orderBy('company_name')->get();
         $categories = Category::query()->whereIn('status', ['active', 'Active'])->orderBy('name')->get();
+        $products = Product::query()->where('status', 'active')->orderBy('name')->get();
+        $style->load('materials');
 
-
-        return view('masters.styles.edit', compact('style', 'buyers', 'categories'));
+        return view('masters.styles.edit', compact('style', 'buyers', 'categories', 'products'));
     }
 
     public function update(Request $request, GarmentStyle $style): RedirectResponse
@@ -100,6 +112,10 @@ class GarmentStyleController extends Controller
             'tech_specs'   => ['nullable', 'string'],
             'status'       => ['required', 'string'],
             'logo'         => ['nullable', 'image', 'max:2048'],
+            'materials'                => ['nullable', 'array'],
+            'materials.*.product_id'   => ['nullable', 'exists:products,id'],
+            'materials.*.qty_per_pc'   => ['nullable', 'numeric', 'min:0'],
+            'materials.*.unit'         => ['nullable', 'string', 'max:20'],
         ]);
 
         if ($request->hasFile('logo')) {
@@ -107,7 +123,11 @@ class GarmentStyleController extends Controller
             $validated['logo_path'] = $path;
         }
 
+        $materials = $validated['materials'] ?? [];
+        unset($validated['materials'], $validated['logo']);
+
         $style->update($validated);
+        $this->syncMaterials($style, $materials);
 
         return redirect()->route('masters.styles.index')->with('success', 'Garment Style updated successfully!');
     }
@@ -117,5 +137,25 @@ class GarmentStyleController extends Controller
         $style->delete();
 
         return redirect()->route('masters.styles.index')->with('success', 'Garment Style deleted successfully!');
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    private function syncMaterials(GarmentStyle $style, array $rows): void
+    {
+        $style->materials()->delete();
+        $order = 0;
+        foreach (array_values($rows) as $row) {
+            if (blank($row['product_id'] ?? null)) {
+                continue;
+            }
+            $style->materials()->create([
+                'product_id' => $row['product_id'],
+                'qty_per_pc' => $row['qty_per_pc'] ?? 0,
+                'unit'       => $row['unit'] ?? null,
+                'sort_order' => $order++,
+            ]);
+        }
     }
 }

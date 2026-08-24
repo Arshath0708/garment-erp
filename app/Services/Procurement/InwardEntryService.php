@@ -5,6 +5,7 @@ namespace App\Services\Procurement;
 use App\Models\InwardEntry;
 use App\Models\InwardEntryItem;
 use App\Models\NumberSeries;
+use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\PurchaseOrderTimelineEntry;
@@ -86,6 +87,7 @@ class InwardEntryService
     {
         return DB::transaction(function () use ($inward, $qcData, $userId) {
             $status = $qcData['status'] ?? 'approved';
+            $alreadyStocked = $inward->status === 'approved';
 
             $inward->update([
                 'status'          => $status,
@@ -113,6 +115,16 @@ class InwardEntryService
             $po = $inward->purchaseOrder;
             if ($po) {
                 $this->updatePurchaseOrderStatusAndTimeline($po, $inward);
+            }
+
+            if ($status === 'approved' && ! $alreadyStocked) {
+                $inward->load('items');
+                foreach ($inward->items as $line) {
+                    $qty = (float) ($line->passed_qty ?? $line->received_qty ?? 0);
+                    if ($line->product_id && $qty > 0) {
+                        Product::query()->whereKey($line->product_id)->increment('qty_on_hand', $qty);
+                    }
+                }
             }
 
             return $inward->refresh();

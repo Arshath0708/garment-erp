@@ -110,6 +110,8 @@
                     <input type="file" name="logo" class="form-control" accept="image/*">
                 </div>
 
+                @include('masters.styles._materials', ['products' => $products, 'style' => null])
+
                 <div class="text-end">
                     <a href="{{ route('masters.styles.index') }}" class="btn btn-secondary me-2">Cancel</a>
                     <button type="submit" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i> Save Garment Style</button>
