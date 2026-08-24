@@ -13,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ManufacturingController extends Controller
@@ -47,7 +48,7 @@ class ManufacturingController extends Controller
         $validated['status'] = 'In Progress';
         $validated['job_work_type'] = $validated['job_work_type'] ?? 'in_house';
 
-        $parsed = ProductionOrder::parseSizePayload($request->input('sizes'));
+        $parsed = $this->validatedSizeBreakdown($request, (int) $validated['total_qty']);
         $validated['size_breakdown'] = $parsed['breakdown'];
         $validated = array_merge($validated, $parsed['totals']);
 
@@ -86,9 +87,10 @@ class ManufacturingController extends Controller
         $style = GarmentStyle::findOrFail($validated['garment_style_id']);
         $validated['buyer_id'] = $style->buyer_id;
 
-        $parsed = ProductionOrder::parseSizePayload($request->input('sizes'));
+        $parsed = $this->validatedSizeBreakdown($request, (int) $validated['total_qty']);
         $validated['size_breakdown'] = $parsed['breakdown'];
         $validated = array_merge($validated, $parsed['totals']);
+        $validated['qc_rejected_qty'] = $parsed['breakdown']['qc_passed']['damage'] ?? $validated['qc_rejected_qty'] ?? 0;
 
         $order->update($validated);
 
@@ -109,13 +111,15 @@ class ManufacturingController extends Controller
             'current_stage'   => ['required', 'string'],
             'qc_rejected_qty' => ['nullable', 'integer', 'min:0'],
             'sizes'           => ['nullable', 'array'],
+            'damage'          => ['nullable', 'array'],
+            'damage.*'        => ['nullable', 'integer', 'min:0'],
         ]);
 
-        $parsed = ProductionOrder::parseSizePayload($request->input('sizes'));
+        $parsed = $this->validatedSizeBreakdown($request, (int) $order->total_qty);
 
         $order->update([
             'current_stage'   => $validated['current_stage'],
-            'qc_rejected_qty' => $validated['qc_rejected_qty'] ?? $order->qc_rejected_qty,
+            'qc_rejected_qty' => $parsed['breakdown']['qc_passed']['damage'] ?? $validated['qc_rejected_qty'] ?? $order->qc_rejected_qty,
             'size_breakdown'  => $parsed['breakdown'],
             ...$parsed['totals'],
         ]);
@@ -173,6 +177,23 @@ class ManufacturingController extends Controller
             'driver_name'           => ['nullable', 'string', 'max:100'],
             'challan_no'            => ['nullable', 'string', 'max:50'],
             'sizes'                 => ['nullable', 'array'],
+            'damage'                => ['nullable', 'array'],
+            'damage.*'              => ['nullable', 'integer', 'min:0'],
         ];
+    }
+
+    /**
+     * @return array{breakdown: array<string, array<string, int>>, totals: array<string, int>}
+     */
+    private function validatedSizeBreakdown(Request $request, int $orderQty): array
+    {
+        $parsed = ProductionOrder::parseSizePayload($request->input('sizes'), $request->input('damage'));
+        $errors = ProductionOrder::stageFlowErrors($parsed['breakdown'], $orderQty);
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        return $parsed;
     }
 }

@@ -106,8 +106,23 @@ class ProductionOrder extends Model
     public function stageSizeTotal(string $stage): int
     {
         $row = $this->size_breakdown[$stage] ?? [];
+        $sum = 0;
+        foreach (self::SIZES as $size) {
+            $sum += (int) ($row[$size] ?? 0);
+        }
 
-        return (int) collect($row)->sum();
+        return $sum;
+    }
+
+    public function stageDamage(string $stage): int
+    {
+        return max(0, (int) data_get($this->size_breakdown, "{$stage}.damage", 0));
+    }
+
+    /** Pieces that can move to the next stage (qty minus damage). */
+    public function stageGoodQty(string $stage): int
+    {
+        return max(0, $this->stageSizeTotal($stage) - $this->stageDamage($stage));
     }
 
     /**
@@ -131,7 +146,7 @@ class ProductionOrder extends Model
     /**
      * @return array{breakdown: array<string, array<string, int>>, totals: array<string, int>}
      */
-    public static function parseSizePayload(?array $sizes): array
+    public static function parseSizePayload(?array $sizes, ?array $damage = null): array
     {
         $breakdown = [];
         $totals = [];
@@ -144,10 +159,51 @@ class ProductionOrder extends Model
                 $row[$size] = $qty;
                 $sum += $qty;
             }
+            $row['damage'] = max(0, (int) ($damage[$key] ?? $sizes[$key]['damage'] ?? 0));
             $breakdown[$key] = $row;
             $totals[$meta['qty_column']] = $sum;
         }
 
         return ['breakdown' => $breakdown, 'totals' => $totals];
+    }
+
+    /**
+     * Next stage cannot exceed previous stage’s good pcs (qty − damage).
+     * Damage cannot exceed that stage’s own qty.
+     *
+     * @param  array<string, array<string, int>>  $breakdown
+     * @return array<string, string>
+     */
+    public static function stageFlowErrors(array $breakdown, int $orderQty): array
+    {
+        $errors = [];
+        $prevGood = max(0, $orderQty);
+        $prevLabel = 'order qty';
+
+        foreach (self::STAGE_KEYS as $key => $meta) {
+            $total = 0;
+            foreach (self::SIZES as $size) {
+                $total += (int) ($breakdown[$key][$size] ?? 0);
+            }
+            $dmg = max(0, (int) ($breakdown[$key]['damage'] ?? 0));
+            $label = $meta['label'];
+
+            if ($total === 0 && $dmg === 0) {
+                continue;
+            }
+
+            if ($dmg > $total) {
+                $errors["damage.{$key}"] = "{$label} damage ({$dmg}) cannot exceed {$label} qty ({$total}).";
+            }
+
+            if ($total > $prevGood) {
+                $errors["sizes.{$key}"] = "{$label} qty ({$total}) cannot exceed {$prevLabel} good pcs ({$prevGood}). Damaged pieces cannot move to the next stage.";
+            }
+
+            $prevGood = max(0, $total - $dmg);
+            $prevLabel = $label;
+        }
+
+        return $errors;
     }
 }

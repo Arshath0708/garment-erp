@@ -10,6 +10,17 @@
         </a>
     </div>
 
+    @if ($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
             <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
@@ -97,7 +108,7 @@
                                 </div>
                             </div>
                             @php $cutSizes = $order->size_breakdown['cutting'] ?? []; @endphp
-                            @if(collect($cutSizes)->sum() > 0)
+                            @if($order->stageSizeTotal('cutting') > 0)
                                 <div class="table-responsive mt-3">
                                     <table class="table table-sm table-bordered mb-0 small">
                                         <thead>
@@ -107,6 +118,7 @@
                                                     <th class="text-center">{{ $size }}</th>
                                                 @endforeach
                                                 <th class="text-center">Total</th>
+                                                <th class="text-center">Damage</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -116,6 +128,7 @@
                                                     <td class="text-center">{{ number_format((int) ($cutSizes[$size] ?? 0)) }}</td>
                                                 @endforeach
                                                 <td class="text-center fw-bold">{{ number_format($order->stageSizeTotal('cutting')) }}</td>
+                                                <td class="text-center text-danger">{{ number_format($order->stageDamage('cutting')) }}</td>
                                             </tr>
                                         </tbody>
                                     </table>

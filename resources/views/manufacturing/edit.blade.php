@@ -135,12 +135,6 @@
                         </a>
                     </div>
                     @include('manufacturing._size_matrix', ['order' => $order])
-                    <div class="row mt-3">
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold">QC Rejected Qty (not size-split)</label>
-                            <input type="number" name="qc_rejected_qty" class="form-control" value="{{ old('qc_rejected_qty', $order->qc_rejected_qty) }}">
-                        </div>
-                    </div>
                 </div>
 
                 <div class="mb-4">

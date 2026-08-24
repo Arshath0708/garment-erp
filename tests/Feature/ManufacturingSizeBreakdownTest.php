@@ -46,12 +46,17 @@ class ManufacturingSizeBreakdownTest extends TestCase
                         '3XL' => 0, '4XL' => 0, '5XL' => 0,
                     ],
                 ],
+                'damage'           => [
+                    'cutting' => 5,
+                ],
             ])
             ->assertRedirect(route('manufacturing.index'));
 
         $order->refresh();
         $this->assertSame(500, $order->cutting_qty);
         $this->assertSame(100, $order->sizeQty('cutting', 'M'));
+        $this->assertSame(5, $order->stageDamage('cutting'));
+        $this->assertSame(495, $order->stageGoodQty('cutting'));
         $this->assertSame('printing', $order->job_work_type);
         $this->assertSame('cutting', $order->challanStageKey());
     }
@@ -82,5 +87,84 @@ class ManufacturingSizeBreakdownTest extends TestCase
             ->get(route('manufacturing.job-work-challan', $order))
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_stitching_qty_cannot_exceed_cutting_good_pcs(): void
+    {
+        $user = User::factory()->create();
+        $style = GarmentStyle::create([
+            'style_number' => 'ST-SIZE-3',
+            'name'         => 'Flow Tee',
+            'status'       => 'Active',
+            'target_qty'   => 100,
+        ]);
+        $order = ProductionOrder::create([
+            'order_number'     => 'PO-SIZE-3',
+            'garment_style_id' => $style->id,
+            'total_qty'        => 100,
+            'target_date'      => now()->addDays(10),
+            'current_stage'    => 'Cutting',
+            'status'           => 'In Progress',
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('manufacturing.edit', $order))
+            ->put(route('manufacturing.update', $order), [
+                'order_number'     => 'PO-SIZE-3',
+                'garment_style_id' => $style->id,
+                'total_qty'        => 100,
+                'target_date'      => now()->addDays(10)->format('Y-m-d'),
+                'current_stage'    => 'Stitching',
+                'status'           => 'In Progress',
+                'job_work_type'    => 'in_house',
+                'sizes'            => [
+                    'cutting'   => ['S' => 40, 'M' => 40, 'L' => 20],
+                    'stitching' => ['S' => 50, 'M' => 50, 'L' => 10],
+                ],
+                'damage' => [
+                    'cutting' => 10,
+                ],
+            ])
+            ->assertRedirect(route('manufacturing.edit', $order))
+            ->assertSessionHasErrors('sizes.stitching');
+    }
+
+    public function test_damage_cannot_exceed_stage_qty(): void
+    {
+        $user = User::factory()->create();
+        $style = GarmentStyle::create([
+            'style_number' => 'ST-SIZE-4',
+            'name'         => 'Damage Tee',
+            'status'       => 'Active',
+            'target_qty'   => 50,
+        ]);
+        $order = ProductionOrder::create([
+            'order_number'     => 'PO-SIZE-4',
+            'garment_style_id' => $style->id,
+            'total_qty'        => 50,
+            'target_date'      => now()->addDays(10),
+            'current_stage'    => 'Cutting',
+            'status'           => 'In Progress',
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('manufacturing.edit', $order))
+            ->put(route('manufacturing.update', $order), [
+                'order_number'     => 'PO-SIZE-4',
+                'garment_style_id' => $style->id,
+                'total_qty'        => 50,
+                'target_date'      => now()->addDays(10)->format('Y-m-d'),
+                'current_stage'    => 'Cutting',
+                'status'           => 'In Progress',
+                'job_work_type'    => 'in_house',
+                'sizes'            => [
+                    'cutting' => ['S' => 20, 'M' => 10],
+                ],
+                'damage' => [
+                    'cutting' => 40,
+                ],
+            ])
+            ->assertRedirect(route('manufacturing.edit', $order))
+            ->assertSessionHasErrors('damage.cutting');
     }
 }
