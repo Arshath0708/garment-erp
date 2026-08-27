@@ -1,185 +1,136 @@
-<aside class="app-sidebar shadow-sm" data-enable-persistence="true">
+@php
+    $open = fn (string $pattern) => request()->routeIs($pattern) ? 'menu-open' : '';
+    $active = fn (string $pattern) => request()->routeIs($pattern) ? 'active' : '';
+@endphp
 
+<aside class="app-sidebar shadow-sm" data-enable-persistence="true">
     <div class="sidebar-brand">
-        <a href="{{ route('dashboard') }}" class="brand-link d-flex align-items-center gap-2 text-decoration-none">
-            <span class="brand-mark bg-primary text-white rounded p-1 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                <i class="bi bi-layers-fill fs-5"></i>
+        <a href="{{ route('dashboard') }}" class="brand-link">
+            <span class="brand-mark bg-primary text-white">
+                <i class="bi bi-layers-fill"></i>
             </span>
-            <span class="brand-text d-flex flex-column">
-                <span class="brand-text-title fs-6 lh-1">Garment ERP</span>
-                <small class="brand-text-subtitle" style="font-size: 0.65rem;">Apparel Manufacturing</small>
+            <span class="brand-text">
+                Garment ERP
+                <small>Apparel Manufacturing</small>
             </span>
         </a>
-
-        <button type="button" class="sidebar-toggle btn btn-sm text-secondary border-0" data-lte-toggle="sidebar"
+        <button type="button" class="sidebar-toggle" data-lte-toggle="sidebar"
                 aria-label="Collapse sidebar" title="Collapse sidebar">
             <i class="bi bi-chevron-double-left"></i>
         </button>
     </div>
 
     <div class="sidebar-wrapper">
-        <nav class="mt-2">
+        <div class="sidebar-search px-3 pt-3 pb-1">
+            <label class="visually-hidden" for="sidebar-search">Search menu</label>
+            <div class="input-group input-group-sm sidebar-search-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="search" id="sidebar-search" class="form-control" placeholder="Search menu..." autocomplete="off">
+            </div>
+        </div>
+
+        <nav class="mt-1">
             <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false">
 
-                <!-- 1. DASHBOARD -->
-                <li class="nav-item">
-                    <a href="{{ route('dashboard') }}"
-                       class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-grid-1x2-fill"></i>
+                <li class="nav-item" data-nav-label="dashboard">
+                    <a href="{{ route('dashboard') }}" class="nav-link {{ $active('dashboard') }}">
+                        <i class="nav-icon bi bi-grid-1x2"></i>
                         <p>Dashboard</p>
                     </a>
                 </li>
 
-                <!-- 2. MASTERS -->
-                <li class="nav-header">MASTERS</li>
-                <li class="nav-item">
-                    <a href="{{ route('masters.categories.index') }}" class="nav-link {{ request()->routeIs('masters.categories.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-tags-fill"></i>
-                        <p>Categories</p>
+                <li class="nav-item {{ $open('masters.*') }}">
+                    <a href="#" class="nav-link {{ $active('masters.*') }}">
+                        <i class="nav-icon bi bi-sliders"></i>
+                        <p>Masters<i class="nav-arrow bi bi-chevron-right"></i></p>
                     </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('masters.formats.index') }}" class="nav-link {{ request()->routeIs('masters.formats.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-file-earmark-ruled"></i>
-                        <p>Order Formats</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('masters.buyers.index') }}" class="nav-link {{ request()->routeIs('masters.buyers.*') ? 'active' : '' }}">
-
-
-                        <i class="nav-icon bi bi-person-badge"></i>
-                        <p>Customers / Buyers</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('masters.styles.index') }}" class="nav-link {{ request()->routeIs('masters.styles.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-scissors"></i>
-                        <p>Style Master & Tech Pack</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('masters.bom.index') }}" class="nav-link {{ request()->routeIs('masters.bom.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-calculator"></i>
-                        <p>BOM & Consumption</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('masters.products.index') }}" class="nav-link {{ request()->routeIs('masters.products.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-box-seam"></i>
-                        <p>Item Master (Trims/Fabric)</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('masters.suppliers.index') }}" class="nav-link {{ request()->routeIs('masters.suppliers.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-truck"></i>
-                        <p>Suppliers Master</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('masters.jobbers.index') }}" class="nav-link {{ request()->routeIs('masters.jobbers.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-building-gear"></i>
-                        <p>Job Worker / Jobbers</p>
-                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item" data-nav-label="categories"><a href="{{ route('masters.categories.index') }}" class="nav-link {{ $active('masters.categories.*') }}"><i class="nav-icon bi bi-dot"></i><p>Categories</p></a></li>
+                        <li class="nav-item" data-nav-label="order formats"><a href="{{ route('masters.formats.index') }}" class="nav-link {{ $active('masters.formats.*') }}"><i class="nav-icon bi bi-dot"></i><p>Order Formats</p></a></li>
+                        <li class="nav-item" data-nav-label="customers buyers"><a href="{{ route('masters.buyers.index') }}" class="nav-link {{ $active('masters.buyers.*') }}"><i class="nav-icon bi bi-dot"></i><p>Customers / Buyers</p></a></li>
+                        <li class="nav-item" data-nav-label="style master tech pack"><a href="{{ route('masters.styles.index') }}" class="nav-link {{ $active('masters.styles.*') }}"><i class="nav-icon bi bi-dot"></i><p>Style Master &amp; Tech Pack</p></a></li>
+                        <li class="nav-item" data-nav-label="bom consumption"><a href="{{ route('masters.bom.index') }}" class="nav-link {{ $active('masters.bom.*') }}"><i class="nav-icon bi bi-dot"></i><p>BOM &amp; Consumption</p></a></li>
+                        <li class="nav-item" data-nav-label="item master trims fabric"><a href="{{ route('masters.products.index') }}" class="nav-link {{ $active('masters.products.*') }}"><i class="nav-icon bi bi-dot"></i><p>Item Master (Trims/Fabric)</p></a></li>
+                        <li class="nav-item" data-nav-label="suppliers"><a href="{{ route('masters.suppliers.index') }}" class="nav-link {{ $active('masters.suppliers.*') }}"><i class="nav-icon bi bi-dot"></i><p>Suppliers Master</p></a></li>
+                        <li class="nav-item" data-nav-label="jobbers job worker"><a href="{{ route('masters.jobbers.index') }}" class="nav-link {{ $active('masters.jobbers.*') }}"><i class="nav-icon bi bi-dot"></i><p>Job Worker / Jobbers</p></a></li>
+                    </ul>
                 </li>
 
-                <!-- 3. SALES & ORDERS -->
-                <li class="nav-header">SALES & ORDERS</li>
-                <li class="nav-item">
-                    <a href="{{ route('sales.inquiries.index') }}" class="nav-link {{ request()->routeIs('sales.inquiries.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-chat-quote"></i>
-                        <p>Enquiry & Quotations</p>
+                <li class="nav-item {{ $open('sales.*') }}">
+                    <a href="#" class="nav-link {{ $active('sales.*') }}">
+                        <i class="nav-icon bi bi-bag-check"></i>
+                        <p>Sales &amp; Orders<i class="nav-arrow bi bi-chevron-right"></i></p>
                     </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('sales.order-confirmations.index') }}" class="nav-link {{ request()->routeIs('sales.order-confirmations.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-file-earmark-check"></i>
-                        <p>Sales Order / PO</p>
-                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item" data-nav-label="enquiry quotations"><a href="{{ route('sales.inquiries.index') }}" class="nav-link {{ $active('sales.inquiries.*') }}"><i class="nav-icon bi bi-dot"></i><p>Enquiry &amp; Quotations</p></a></li>
+                        <li class="nav-item" data-nav-label="sales order po"><a href="{{ route('sales.order-confirmations.index') }}" class="nav-link {{ $active('sales.order-confirmations.*') }}"><i class="nav-icon bi bi-dot"></i><p>Sales Order / PO</p></a></li>
+                    </ul>
                 </li>
 
-                <!-- 4. PLANNING & PRODUCTION -->
-                <li class="nav-header">MANUFACTURING PROCESSES</li>
-                <li class="nav-item">
-
-                    <a href="{{ route('manufacturing.index') }}" class="nav-link {{ request()->routeIs('manufacturing.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-diagram-3-fill"></i>
-                        <p>Production Planning</p>
+                <li class="nav-item {{ $open('manufacturing.*') }}">
+                    <a href="#" class="nav-link {{ $active('manufacturing.*') }}">
+                        <i class="nav-icon bi bi-diagram-3"></i>
+                        <p>Manufacturing Processes<i class="nav-arrow bi bi-chevron-right"></i></p>
                     </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item" data-nav-label="production planning"><a href="{{ route('manufacturing.index') }}" class="nav-link {{ $active('manufacturing.*') }}"><i class="nav-icon bi bi-dot"></i><p>Production Planning</p></a></li>
+                    </ul>
                 </li>
 
-                <!-- 5. INVENTORY & JOB WORK -->
-                <li class="nav-header">INVENTORY & JOB WORK</li>
-                <li class="nav-item">
-                    <a href="{{ route('inventory.index') }}" class="nav-link {{ request()->routeIs('inventory.*') ? 'active' : '' }}">
+                <li class="nav-item {{ $open('inventory.*') || $open('procurement.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('inventory.*') || request()->routeIs('procurement.*') ? 'active' : '' }}">
                         <i class="nav-icon bi bi-boxes"></i>
-                        <p>Fabric &amp; Accessory Stock</p>
+                        <p>Inventory &amp; Job Work<i class="nav-arrow bi bi-chevron-right"></i></p>
                     </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('procurement.purchase-orders.index') }}" class="nav-link {{ request()->routeIs('procurement.purchase-orders.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-cart-plus"></i>
-                        <p>Fabric &amp; Trims PO</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('procurement.inward-entries.index') }}" class="nav-link {{ request()->routeIs('procurement.inward-entries.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-box-arrow-in-down"></i>
-                        <p>Goods Inward</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('masters.jobbers.index') }}" class="nav-link">
-                        <i class="nav-icon bi bi-arrow-left-right text-purple"></i>
-                        <p>Job Work Issue / Receive</p>
-                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item" data-nav-label="fabric accessory stock"><a href="{{ route('inventory.index') }}" class="nav-link {{ $active('inventory.*') }}"><i class="nav-icon bi bi-dot"></i><p>Fabric &amp; Accessory Stock</p></a></li>
+                        <li class="nav-item" data-nav-label="fabric trims po"><a href="{{ route('procurement.purchase-orders.index') }}" class="nav-link {{ $active('procurement.purchase-orders.*') }}"><i class="nav-icon bi bi-dot"></i><p>Fabric &amp; Trims PO</p></a></li>
+                        <li class="nav-item" data-nav-label="goods inward"><a href="{{ route('procurement.inward-entries.index') }}" class="nav-link {{ $active('procurement.inward-entries.*') }}"><i class="nav-icon bi bi-dot"></i><p>Goods Inward</p></a></li>
+                        <li class="nav-item" data-nav-label="job work issue receive"><a href="{{ route('masters.jobbers.index') }}" class="nav-link"><i class="nav-icon bi bi-dot"></i><p>Job Work Issue / Receive</p></a></li>
+                    </ul>
                 </li>
 
-                <!-- 6. PACKING, SHIPMENT & BILLING -->
-                <li class="nav-header">PACKING, SHIPMENT & BILLING</li>
-                <li class="nav-item">
-                    <a href="{{ route('export.packing.index') }}" class="nav-link {{ request()->routeIs('export.packing.*') ? 'active' : '' }}">
+                <li class="nav-item {{ $open('export.packing.*') || $open('export.documents.*') || $open('finance.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('export.packing.*') || request()->routeIs('export.documents.*') || request()->routeIs('finance.*') ? 'active' : '' }}">
                         <i class="nav-icon bi bi-box-seam"></i>
-                        <p>Packing & Cartons</p>
+                        <p>Packing, Shipment &amp; Billing<i class="nav-arrow bi bi-chevron-right"></i></p>
                     </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('export.documents.index') }}" class="nav-link {{ request()->routeIs('export.documents.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-file-earmark-pdf"></i>
-                        <p>Export Docs & Invoices</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('finance.purchase-bills.index') }}" class="nav-link {{ request()->routeIs('finance.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-cash-stack"></i>
-                        <p>Billing & Payments</p>
-                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item" data-nav-label="packing cartons"><a href="{{ route('export.packing.index') }}" class="nav-link {{ $active('export.packing.*') }}"><i class="nav-icon bi bi-dot"></i><p>Packing &amp; Cartons</p></a></li>
+                        <li class="nav-item" data-nav-label="export docs invoices"><a href="{{ route('export.documents.index') }}" class="nav-link {{ $active('export.documents.*') }}"><i class="nav-icon bi bi-dot"></i><p>Export Docs &amp; Invoices</p></a></li>
+                        <li class="nav-item" data-nav-label="billing payments"><a href="{{ route('finance.purchase-bills.index') }}" class="nav-link {{ $active('finance.*') }}"><i class="nav-icon bi bi-dot"></i><p>Billing &amp; Payments</p></a></li>
+                    </ul>
                 </li>
 
-                <!-- 7. OCR & VERIFICATION -->
-                <li class="nav-header">INTELLIGENT OCR & REPORTS</li>
-                <li class="nav-item">
-                    <a href="{{ route('export.ocr.index') }}" class="nav-link {{ request()->routeIs('export.ocr.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-stars text-warning"></i>
-                        <p>OCR Document Verification</p>
+                <li class="nav-item {{ $open('export.ocr.*') || $open('reports.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('export.ocr.*') || request()->routeIs('reports.*') ? 'active' : '' }}">
+                        <i class="nav-icon bi bi-stars"></i>
+                        <p>Intelligent OCR &amp; Reports<i class="nav-arrow bi bi-chevron-right"></i></p>
                     </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('reports.index') }}" class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-bar-chart-line-fill"></i>
-                        <p>ERP Reports & Outstanding</p>
-                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item" data-nav-label="ocr document verification"><a href="{{ route('export.ocr.index') }}" class="nav-link {{ $active('export.ocr.*') }}"><i class="nav-icon bi bi-dot"></i><p>OCR Document Verification</p></a></li>
+                        <li class="nav-item" data-nav-label="erp reports outstanding"><a href="{{ route('reports.index') }}" class="nav-link {{ $active('reports.*') }}"><i class="nav-icon bi bi-dot"></i><p>ERP Reports &amp; Outstanding</p></a></li>
+                    </ul>
                 </li>
 
-                <!-- 8. ACCOUNT & SETTINGS -->
-                <li class="nav-header">ACCOUNT</li>
-                <li class="nav-item">
-                    <a href="{{ route('profile.edit') }}" class="nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}">
+                <li class="nav-item {{ $open('profile.*') || $open('user-management.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('profile.*') || request()->routeIs('user-management.*') ? 'active' : '' }}">
                         <i class="nav-icon bi bi-person-circle"></i>
-                        <p>Profile & Settings</p>
+                        <p>Account<i class="nav-arrow bi bi-chevron-right"></i></p>
                     </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item" data-nav-label="profile settings"><a href="{{ route('profile.edit') }}" class="nav-link {{ $active('profile.*') }}"><i class="nav-icon bi bi-dot"></i><p>Profile &amp; Settings</p></a></li>
+                        @can('user.view')
+                            <li class="nav-item" data-nav-label="users"><a href="{{ route('user-management.users.index') }}" class="nav-link {{ $active('user-management.users.*') }}"><i class="nav-icon bi bi-dot"></i><p>Users</p></a></li>
+                        @endcan
+                        @can('role.view')
+                            <li class="nav-item" data-nav-label="roles"><a href="{{ route('user-management.roles.index') }}" class="nav-link {{ $active('user-management.roles.*') }}"><i class="nav-icon bi bi-dot"></i><p>Roles</p></a></li>
+                        @endcan
+                        @can('permission.view')
+                            <li class="nav-item" data-nav-label="permissions"><a href="{{ route('user-management.permissions.index') }}" class="nav-link {{ $active('user-management.permissions.*') }}"><i class="nav-icon bi bi-dot"></i><p>Permissions</p></a></li>
+                        @endcan
+                    </ul>
                 </li>
-
             </ul>
         </nav>
     </div>

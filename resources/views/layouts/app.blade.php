@@ -131,6 +131,45 @@
                 width: 1rem;
                 opacity: .5;
             }
+            .app-sidebar .nav-arrow {
+                margin-left: auto;
+                font-size: .7rem;
+                transition: transform .15s ease;
+            }
+            .app-sidebar .nav-item.menu-open > .nav-link .nav-arrow {
+                transform: rotate(90deg);
+            }
+            .app-sidebar .sidebar-search-group {
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            .app-sidebar .sidebar-search-group .input-group-text,
+            .app-sidebar .sidebar-search-group .form-control {
+                background: #f3f6fa;
+                border-color: #e9edf2;
+                font-size: .8rem;
+            }
+            [data-bs-theme="dark"] .app-sidebar .sidebar-search-group .input-group-text,
+            [data-bs-theme="dark"] .app-sidebar .sidebar-search-group .form-control {
+                background: #1e293b;
+                border-color: rgba(255,255,255,.12);
+                color: #e2e8f0;
+            }
+            .erp-breadcrumb {
+                display: flex; align-items: center; flex-wrap: wrap; gap: .15rem .35rem;
+                font-size: .82rem; padding: .15rem .25rem;
+                min-width: 0;
+            }
+            .erp-breadcrumb-sep { font-size: .65rem; color: #9aa4b2; }
+            .erp-breadcrumb-link { color: #6b7280; text-decoration: none; white-space: nowrap; }
+            .erp-breadcrumb-link:hover { color: #2563eb; }
+            .erp-breadcrumb-current { color: #111827; font-weight: 600; white-space: nowrap; }
+            [data-bs-theme="dark"] .erp-breadcrumb-link { color: #94a3b8; }
+            [data-bs-theme="dark"] .erp-breadcrumb-current { color: #f8fafc; }
+            [data-bs-theme="dark"] .erp-breadcrumb-sep { color: #64748b; }
+            @media (max-width: 575.98px) {
+                .erp-breadcrumb { font-size: .75rem; }
+            }
 
             /* Modules whose screens are not built yet — visible but clearly inert. */
             .app-sidebar .nav-link.soon { color: #a3acb9; cursor: default; }
@@ -169,6 +208,9 @@
             .sidebar-mini.sidebar-collapse .app-sidebar:not(:hover) .sidebar-menu .nav-link.active {
                 box-shadow: none; background: #e0eaff;
             }
+            .sidebar-mini.sidebar-collapse .app-sidebar:not(:hover) .sidebar-search { display: none; }
+            .sidebar-mini.sidebar-collapse .app-sidebar:not(:hover) .nav-treeview { display: none !important; }
+            .sidebar-mini.sidebar-collapse .app-sidebar:not(:hover) .nav-arrow { display: none; }
 
             /* 2. Section headers are display:none when collapsed, so seven
                   groups run together as one undifferentiated strip of icons.
@@ -468,7 +510,7 @@
                     <div class="app-content-header">
                         <div class="container-fluid">
                             <div class="row align-items-center">
-                                <div class="col-sm-6">
+                                <div class="col-12">
                                     <h3 class="mb-0">{{ $header }}</h3>
                                 </div>
                             </div>
@@ -566,6 +608,23 @@
                 if (activeLink) {
                     activeLink.scrollIntoView({ block: 'center', inline: 'nearest' });
                 }
+            }
+
+            var search = document.getElementById('sidebar-search');
+            if (search) {
+                search.addEventListener('input', function () {
+                    var q = this.value.trim().toLowerCase();
+                    document.querySelectorAll('.sidebar-menu > .nav-item').forEach(function (group) {
+                        var labels = Array.from(group.querySelectorAll('[data-nav-label], .nav-link p'))
+                            .map(function (el) { return (el.getAttribute('data-nav-label') || el.textContent || '').toLowerCase(); })
+                            .join(' ');
+                        var show = !q || labels.indexOf(q) !== -1;
+                        group.classList.toggle('d-none', !show);
+                        if (q && show && group.querySelector('.nav-treeview')) {
+                            group.classList.add('menu-open');
+                        }
+                    });
+                });
             }
         });
         </script>

@@ -212,6 +212,15 @@ body.garment-erp-theme {
     color: #ffffff;
 }
 
+[data-bs-theme="dark"] .sidebar-mini.sidebar-collapse .app-sidebar:not(:hover) .sidebar-menu .nav-link.active {
+    box-shadow: none;
+    background-color: #2563eb;
+}
+
+[data-bs-theme="dark"] .sidebar-mini.sidebar-collapse .app-sidebar:not(:hover) .sidebar-menu .nav-header {
+    border-top-color: rgba(255, 255, 255, 0.12);
+}
+
 
 /* Glassmorphic Container & Cards */
 .erp-card {
