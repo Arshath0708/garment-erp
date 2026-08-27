@@ -20,8 +20,9 @@ class NavigationLayoutTest extends TestCase
             ->assertOk()
             ->assertSee('Search menu', false)
             ->assertSee('erp-breadcrumb', false)
-            ->assertSee('data-lte-toggle="sidebar"', false)
-            ->assertSee('nav-arrow bi bi-chevron-right', false)
+            ->assertSee('bi-arrow-left', false)
+            ->assertDontSee('sidebar-menu-toggle', false)
+            ->assertDontSee('nav-arrow bi bi-chevron-right', false)
             ->assertSee('Goods Inward', false)
             ->assertSee('Fabric &amp; Trims PO', false);
     }

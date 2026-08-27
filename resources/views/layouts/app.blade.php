@@ -85,9 +85,12 @@
                 font-weight: 700;
                 text-transform: uppercase;
                 letter-spacing: .08em;
-                padding: 1.1rem 1.15rem .4rem;
+                padding: 1.05rem 1.15rem .35rem;
+                margin: .35rem .75rem 0;
                 background: transparent;
+                border-top: 1px solid #eef1f5;
             }
+            .app-sidebar .nav-header:first-of-type { border-top: 0; }
 
             /* Links */
             .app-sidebar .sidebar-menu .nav-link {
@@ -155,6 +158,10 @@
                 border-color: rgba(255,255,255,.12);
                 color: #e2e8f0;
             }
+            .app-sidebar .sidebar-search-kbd {
+                font-size: .7rem;
+                color: #9aa4b2;
+            }
             .erp-breadcrumb {
                 display: flex; align-items: center; flex-wrap: wrap; gap: .15rem .35rem;
                 font-size: .82rem; padding: .15rem .25rem;
@@ -209,8 +216,6 @@
                 box-shadow: none; background: #e0eaff;
             }
             .sidebar-mini.sidebar-collapse .app-sidebar:not(:hover) .sidebar-search { display: none; }
-            .sidebar-mini.sidebar-collapse .app-sidebar:not(:hover) .nav-treeview { display: none !important; }
-            .sidebar-mini.sidebar-collapse .app-sidebar:not(:hover) .nav-arrow { display: none; }
 
             /* 2. Section headers are display:none when collapsed, so seven
                   groups run together as one undifferentiated strip of icons.
@@ -614,16 +619,15 @@
             if (search) {
                 search.addEventListener('input', function () {
                     var q = this.value.trim().toLowerCase();
-                    document.querySelectorAll('.sidebar-menu > .nav-item').forEach(function (group) {
-                        var labels = Array.from(group.querySelectorAll('[data-nav-label], .nav-link p'))
-                            .map(function (el) { return (el.getAttribute('data-nav-label') || el.textContent || '').toLowerCase(); })
-                            .join(' ');
-                        var show = !q || labels.indexOf(q) !== -1;
-                        group.classList.toggle('d-none', !show);
-                        if (q && show && group.querySelector('.nav-treeview')) {
-                            group.classList.add('menu-open');
-                        }
+                    document.querySelectorAll('.sidebar-menu [data-nav-label]').forEach(function (item) {
+                        var label = (item.getAttribute('data-nav-label') || '').toLowerCase();
+                        item.classList.toggle('d-none', q !== '' && label.indexOf(q) === -1);
                     });
+                });
+                document.addEventListener('keydown', function (e) {
+                    if (e.key !== '/' || e.target.closest('input, textarea, select, [contenteditable]')) return;
+                    e.preventDefault();
+                    search.focus();
                 });
             }
         });
