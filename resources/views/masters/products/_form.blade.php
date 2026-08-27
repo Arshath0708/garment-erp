@@ -306,6 +306,18 @@
     </div>
 </x-ui.form-section>
 
+<x-ui.form-section title="Inventory" icon="bi-boxes"
+                   subtitle="Fabric or accessory stock. Same-style orders can use this first instead of buying new.">
+    <div class="form-stack">
+        <x-ui.select name="item_kind" label="Item type" horizontal
+                     :options="\App\Models\Product::KINDS"
+                     :selected="$product?->item_kind ?? 'other'"
+                     :placeholder="false" />
+        <x-ui.field name="qty_on_hand" label="Qty on hand" :value="$product?->qty_on_hand ?? 0" horizontal
+                    type="number" step="0.001" min="0" placeholder="Current stock" />
+    </div>
+</x-ui.form-section>
+
 {{-- ==================== Y, Z, AA · OTHER DETAILS =================== --}}
 <x-ui.form-section title="Other Details" icon="bi-card-text">
     <div class="form-stack">

@@ -98,6 +98,8 @@
                     @include('manufacturing._size_matrix', ['order' => null])
                 </div>
 
+                @include('manufacturing._material_plan', ['planRows' => []])
+
                 <div class="mb-4">
                     <label class="form-label fw-semibold">Planning Notes</label>
                     <textarea name="notes" class="form-control" rows="3" placeholder="Enter line assignment, SAM target, or special instructions...">{{ old('notes') }}</textarea>

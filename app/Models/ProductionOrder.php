@@ -95,6 +95,11 @@ class ProductionOrder extends Model
         return $this->belongsTo(Supplier::class, 'jobber_id');
     }
 
+    public function materials(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductionOrderMaterial::class);
+    }
+
     /**
      * Qty for one stage + size. Missing keys read as 0.
      */
@@ -106,20 +111,94 @@ class ProductionOrder extends Model
     public function stageSizeTotal(string $stage): int
     {
         $row = $this->size_breakdown[$stage] ?? [];
+        $sum = 0;
+        foreach (self::SIZES as $size) {
+            $sum += (int) ($row[$size] ?? 0);
+        }
 
-        return (int) collect($row)->sum();
+        return $sum;
+    }
+
+    public function stageDamage(string $stage): int
+    {
+        return max(0, (int) data_get($this->size_breakdown, "{$stage}.damage", 0));
+    }
+
+    /** Pieces that can move to the next stage (qty minus damage). */
+    public function stageGoodQty(string $stage): int
+    {
+        return max(0, $this->stageSizeTotal($stage) - $this->stageDamage($stage));
+    }
+
+    /**
+     * Stages that already have size qty or damage entered.
+     *
+     * @return list<array{key: string, label: string, sizes: array<string, int>, total: int, damage: int}>
+     */
+    public function filledStageRows(): array
+    {
+        $rows = [];
+        foreach (self::STAGE_KEYS as $key => $meta) {
+            $total = $this->stageSizeTotal($key);
+            $damage = $this->stageDamage($key);
+            if ($total === 0 && $damage === 0) {
+                continue;
+            }
+
+            $sizes = [];
+            foreach (self::SIZES as $size) {
+                $sizes[$size] = $this->sizeQty($key, $size);
+            }
+
+            $rows[] = [
+                'key'    => $key,
+                'label'  => $meta['label'],
+                'sizes'  => $sizes,
+                'total'  => $total,
+                'damage' => $damage,
+            ];
+        }
+
+        return $rows;
+    }
+
+    public static function stageKeyFromLabel(?string $label): string
+    {
+        return match ($label) {
+            'Printing', 'Printing / Embroidery' => 'printing',
+            'Stitching'                         => 'stitching',
+            'Finishing'                         => 'finishing',
+            'Quality Check'                     => 'qc_passed',
+            'Packing'                           => 'packing',
+            'Dispatch'                          => 'dispatch',
+            default                             => 'cutting',
+        };
+    }
+
+    /**
+     * Size-breakdown key for the order’s current active stage label.
+     */
+    public function currentStageKey(): string
+    {
+        return self::stageKeyFromLabel($this->current_stage);
     }
 
     /**
      * Which size row to print on a job-work challan (what we are sending out).
+     * In-house / unspecified: the current active stage. Job-work still sends
+     * the previous stage’s goods (cut pieces to the printer, etc.).
      */
     public function challanStageKey(): string
     {
+        if (! $this->job_work_type || $this->job_work_type === 'in_house') {
+            return $this->currentStageKey();
+        }
+
         return match ($this->job_work_type) {
             'printing', 'embroidery' => 'cutting',
             'stitching'              => 'printing',
             'finishing'              => 'stitching',
-            default                  => 'cutting',
+            default                  => $this->currentStageKey(),
         };
     }
 
@@ -128,12 +207,10 @@ class ProductionOrder extends Model
         return self::JOB_WORK_TYPES[$this->job_work_type] ?? $this->job_work_type;
     }
 
-    /**
-     * Automatic stage balances (e.g. 5000 Cutting - 2500 Stitching = 2500 WIP remaining in Cutting).
-     */
     public function pendingCuttingQty(): int
     {
         $nextWorked = max($this->printing_qty, $this->stitching_qty);
+
         return max(0, $this->cutting_qty - $nextWorked);
     }
 
@@ -162,50 +239,23 @@ class ProductionOrder extends Model
         return max(0, $this->packing_qty - $this->dispatch_qty);
     }
 
-    /**
-     * Overall stage WIP balance helper.
-     */
     public function stageWipBalance(string $stage): int
     {
         return match ($stage) {
-            'cutting'   => $this->pendingCuttingQty(),
-            'printing'  => $this->pendingPrintingQty(),
-            'stitching' => $this->pendingStitchingQty(),
-            'finishing' => $this->pendingFinishingQty(),
-            'qc'        => $this->pendingQcQty(),
-            'packing'   => $this->pendingPackingQty(),
-            default     => 0,
+            'cutting'    => $this->pendingCuttingQty(),
+            'printing'   => $this->pendingPrintingQty(),
+            'stitching'  => $this->pendingStitchingQty(),
+            'finishing'  => $this->pendingFinishingQty(),
+            'qc', 'qc_passed' => $this->pendingQcQty(),
+            'packing'    => $this->pendingPackingQty(),
+            default      => 0,
         };
     }
-
-    /**
-     * Size-level WIP balance remaining in previous stage.
-     */
-    public function sizeWipBalance(string $stage, string $size): int
-    {
-        $current = $this->sizeQty($stage, $size);
-        $nextStageKey = match ($stage) {
-            'cutting'   => $this->printing_qty > 0 ? 'printing' : 'stitching',
-            'printing'  => 'stitching',
-            'stitching' => 'finishing',
-            'finishing' => 'qc',
-            'qc'        => 'packing',
-            'packing'   => 'dispatch',
-            default     => null,
-        };
-
-        if (!$nextStageKey) return $current;
-
-        $nextQty = $this->sizeQty($nextStageKey, $size);
-        return max(0, $current - $nextQty);
-    }
-
-
 
     /**
      * @return array{breakdown: array<string, array<string, int>>, totals: array<string, int>}
      */
-    public static function parseSizePayload(?array $sizes): array
+    public static function parseSizePayload(?array $sizes, ?array $damage = null): array
     {
         $breakdown = [];
         $totals = [];
@@ -218,10 +268,111 @@ class ProductionOrder extends Model
                 $row[$size] = $qty;
                 $sum += $qty;
             }
+            $row['damage'] = max(0, (int) ($damage[$key] ?? $sizes[$key]['damage'] ?? 0));
             $breakdown[$key] = $row;
             $totals[$meta['qty_column']] = $sum;
         }
 
         return ['breakdown' => $breakdown, 'totals' => $totals];
+    }
+
+    /**
+     * Next stage cannot exceed previous stage’s good pcs (qty − damage).
+     * Each size cannot exceed the same size on the previous filled stage.
+     * Damage cannot exceed that stage’s own qty.
+     *
+     * @param  array<string, array<string, int>>  $breakdown
+     * @return array<string, string>
+     */
+    public static function stageFlowErrors(array $breakdown, int $orderQty): array
+    {
+        $errors = [];
+        $prevGood = max(0, $orderQty);
+        $prevLabel = 'order qty';
+        $prevSizes = [];
+
+        foreach (self::STAGE_KEYS as $key => $meta) {
+            $total = 0;
+            foreach (self::SIZES as $size) {
+                $total += (int) ($breakdown[$key][$size] ?? 0);
+            }
+            $dmg = max(0, (int) ($breakdown[$key]['damage'] ?? 0));
+            $label = $meta['label'];
+
+            if ($total === 0 && $dmg === 0) {
+                continue;
+            }
+
+            if ($dmg > $total) {
+                $errors["damage.{$key}"] = "{$label} damage ({$dmg}) cannot exceed {$label} qty ({$total}).";
+            }
+
+            if ($total > $prevGood) {
+                $errors["sizes.{$key}"] = "{$label} qty ({$total}) cannot exceed {$prevLabel} good pcs ({$prevGood}). Damaged pieces cannot move to the next stage.";
+            }
+
+            foreach (self::SIZES as $size) {
+                $qty = (int) ($breakdown[$key][$size] ?? 0);
+                $prevSizeQty = $prevSizes[$size] ?? null;
+                if ($prevSizeQty !== null && $qty > $prevSizeQty) {
+                    $errors["sizes.{$key}.{$size}"] = "{$label} {$size} ({$qty}) cannot exceed {$prevLabel} {$size} ({$prevSizeQty}). That size was not cut / processed earlier.";
+                }
+            }
+
+            $prevGood = max(0, $total - $dmg);
+            $prevLabel = $label;
+            foreach (self::SIZES as $size) {
+                $prevSizes[$size] = (int) ($breakdown[$key][$size] ?? 0);
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Qty / damage for a later stage can only be entered after that stage is
+     * selected as Current Active Stage. Existing later-stage numbers may stay.
+     *
+     * @param  array<string, array<string, int>>  $breakdown
+     * @param  array<string, mixed>|null  $existingBreakdown
+     * @return array<string, string>
+     */
+    public static function stageSelectionErrors(array $breakdown, ?string $currentStageLabel, ?array $existingBreakdown = null): array
+    {
+        $keys = array_keys(self::STAGE_KEYS);
+        $activeIdx = array_search(self::stageKeyFromLabel($currentStageLabel), $keys, true);
+        if ($activeIdx === false) {
+            $activeIdx = 0;
+        }
+
+        $errors = [];
+        foreach ($keys as $idx => $key) {
+            if ($idx <= $activeIdx) {
+                continue;
+            }
+
+            $changed = false;
+            foreach (self::SIZES as $size) {
+                $posted = (int) ($breakdown[$key][$size] ?? 0);
+                $existing = (int) ($existingBreakdown[$key][$size] ?? 0);
+                if ($posted !== $existing) {
+                    $changed = true;
+                    break;
+                }
+            }
+
+            if (! $changed) {
+                $postedDamage = (int) ($breakdown[$key]['damage'] ?? 0);
+                $existingDamage = (int) ($existingBreakdown[$key]['damage'] ?? 0);
+                $changed = $postedDamage !== $existingDamage;
+            }
+
+            if ($changed) {
+                $label = self::STAGE_KEYS[$key]['label'];
+                $errors["sizes.{$key}"] = "Select {$label} as Current Active Stage first, then enter {$label} quantities.";
+            }
+        }
+
+        return $errors;
     }
 }

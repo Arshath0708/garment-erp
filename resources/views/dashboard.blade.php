@@ -5,14 +5,14 @@
     <div class="row mb-2">
         {{-- Card 1: Inquiries --}}
         <div class="col-xl-4 col-md-6 col-12 mb-3">
-            <div class="small-box text-bg-primary shadow-sm rounded-3">
+            <div class="small-box position-relative text-bg-primary shadow-sm rounded-3">
                 <div class="inner p-3">
                     <h3 class="fw-bold mb-1">{{ number_format($inquiryCount) }}</h3>
                     <p class="mb-0">Total Inquiries</p>
                 </div>
                 <i class="small-box-icon bi bi-inbox-fill opacity-50"></i>
                 @can('inquiry.view')
-                    <a href="{{ route('sales.inquiries.index') }}" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover py-2 d-block px-3">
+                    <a href="{{ route('sales.inquiries.index') }}" class="small-box-footer stretched-link link-light link-underline-opacity-0 link-underline-opacity-50-hover py-2 d-block px-3">
                         View Inquiries <i class="bi bi-arrow-right-circle-fill ms-1"></i>
                     </a>
                 @else
@@ -23,14 +23,14 @@
 
         {{-- Card 2: Order Confirmations --}}
         <div class="col-xl-4 col-md-6 col-12 mb-3">
-            <div class="small-box text-bg-success shadow-sm rounded-3">
+            <div class="small-box position-relative text-bg-success shadow-sm rounded-3">
                 <div class="inner p-3">
                     <h3 class="fw-bold mb-1">{{ number_format($orderConfirmationCount) }}</h3>
                     <p class="mb-0">Order Confirmations</p>
                 </div>
                 <i class="small-box-icon bi bi-cart-check-fill opacity-50"></i>
                 @can('order-confirmation.view')
-                    <a href="{{ route('sales.order-confirmations.index') }}" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover py-2 d-block px-3">
+                    <a href="{{ route('sales.order-confirmations.index') }}" class="small-box-footer stretched-link link-light link-underline-opacity-0 link-underline-opacity-50-hover py-2 d-block px-3">
                         View Order Confirmations <i class="bi bi-arrow-right-circle-fill ms-1"></i>
                     </a>
                 @else
@@ -41,14 +41,14 @@
 
         {{-- Card 3: Purchase Orders --}}
         <div class="col-xl-4 col-md-6 col-12 mb-3">
-            <div class="small-box text-bg-info shadow-sm rounded-3">
+            <div class="small-box position-relative text-bg-info shadow-sm rounded-3">
                 <div class="inner p-3">
                     <h3 class="fw-bold mb-1">{{ number_format($purchaseOrderCount) }}</h3>
                     <p class="mb-0">Purchase Orders</p>
                 </div>
                 <i class="small-box-icon bi bi-cart3 opacity-50"></i>
                 @can('purchase-order.view')
-                    <a href="{{ route('procurement.purchase-orders.index') }}" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover py-2 d-block px-3">
+                    <a href="{{ route('procurement.purchase-orders.index') }}" class="small-box-footer stretched-link link-light link-underline-opacity-0 link-underline-opacity-50-hover py-2 d-block px-3">
                         View Purchase Orders <i class="bi bi-arrow-right-circle-fill ms-1"></i>
                     </a>
                 @else
@@ -59,14 +59,14 @@
 
         {{-- Card 4: Open Shipments --}}
         <div class="col-xl-4 col-md-6 col-12 mb-3">
-            <div class="small-box text-bg-warning shadow-sm rounded-3">
+            <div class="small-box position-relative text-bg-warning shadow-sm rounded-3">
                 <div class="inner p-3">
                     <h3 class="fw-bold mb-1">{{ number_format($openShipmentCount) }}</h3>
                     <p class="mb-0">Open Shipments</p>
                 </div>
                 <i class="small-box-icon bi bi-truck opacity-50"></i>
                 @can('export-document.view')
-                    <a href="{{ route('export.documents.index') }}" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover py-2 d-block px-3">
+                    <a href="{{ route('export.documents.index') }}" class="small-box-footer stretched-link link-light link-underline-opacity-0 link-underline-opacity-50-hover py-2 d-block px-3">
                         View Export Documents <i class="bi bi-arrow-right-circle-fill ms-1"></i>
                     </a>
                 @else
@@ -77,14 +77,14 @@
 
         {{-- Card 5: Buyer Outstanding --}}
         <div class="col-xl-4 col-md-6 col-12 mb-3">
-            <div class="small-box text-bg-danger shadow-sm rounded-3">
+            <div class="small-box position-relative text-bg-danger shadow-sm rounded-3">
                 <div class="inner p-3">
                     <h3 class="fw-bold mb-1">${{ number_format($buyerOutstanding, 2) }}</h3>
                     <p class="mb-0">Buyer Outstanding</p>
                 </div>
                 <i class="small-box-icon bi bi-cash-stack opacity-50"></i>
                 @can('outstanding.view')
-                    <a href="{{ route('reports.outstanding.index') }}" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover py-2 d-block px-3">
+                    <a href="{{ route('reports.outstanding.index') }}" class="small-box-footer stretched-link link-light link-underline-opacity-0 link-underline-opacity-50-hover py-2 d-block px-3">
                         View Outstanding <i class="bi bi-arrow-right-circle-fill ms-1"></i>
                     </a>
                 @else
@@ -95,14 +95,14 @@
 
         {{-- Card 6: Supplier Outstanding --}}
         <div class="col-xl-4 col-md-6 col-12 mb-3">
-            <div class="small-box text-bg-dark shadow-sm rounded-3">
+            <div class="small-box position-relative text-bg-dark shadow-sm rounded-3">
                 <div class="inner p-3">
                     <h3 class="fw-bold mb-1">${{ number_format($supplierOutstanding, 2) }}</h3>
                     <p class="mb-0">Supplier Outstanding</p>
                 </div>
                 <i class="small-box-icon bi bi-building opacity-50"></i>
                 @can('outstanding.view')
-                    <a href="{{ route('reports.outstanding.index') }}" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover py-2 d-block px-3">
+                    <a href="{{ route('reports.outstanding.index') }}" class="small-box-footer stretched-link link-light link-underline-opacity-0 link-underline-opacity-50-hover py-2 d-block px-3">
                         View Outstanding <i class="bi bi-arrow-right-circle-fill ms-1"></i>
                     </a>
                 @else
@@ -163,8 +163,8 @@
         </div>
         <div class="card-body p-4">
             <div class="row g-4">
-                <!-- Cutting 85% -->
                 <div class="col-md-6 col-lg">
+                    <a href="{{ route('manufacturing.index', ['stage' => 'Cutting']) }}" class="text-decoration-none text-reset d-block h-100">
                     <div class="p-3 bg-body-tertiary rounded border h-100">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="fw-bold text-body"><i class="bi bi-scissors text-primary me-1"></i> Cutting</span>
@@ -178,10 +178,11 @@
                             <span>Pending: 1,500 pcs</span>
                         </div>
                     </div>
+                    </a>
                 </div>
 
-                <!-- Printing 82% -->
                 <div class="col-md-6 col-lg">
+                    <a href="{{ route('manufacturing.index', ['stage' => 'Printing']) }}" class="text-decoration-none text-reset d-block h-100">
                     <div class="p-3 bg-body-tertiary rounded border h-100">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="fw-bold text-body"><i class="bi bi-printer text-info me-1"></i> Printing</span>
@@ -195,10 +196,11 @@
                             <span>Pending: 1,800 pcs</span>
                         </div>
                     </div>
+                    </a>
                 </div>
 
-                <!-- Stitching 65% -->
                 <div class="col-md-6 col-lg">
+                    <a href="{{ route('manufacturing.index', ['stage' => 'Stitching']) }}" class="text-decoration-none text-reset d-block h-100">
                     <div class="p-3 bg-body-tertiary rounded border h-100">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="fw-bold text-body"><i class="bi bi-gear-wide-connected text-secondary me-1"></i> Stitching</span>
@@ -212,10 +214,11 @@
                             <span>Pending: 3,500 pcs</span>
                         </div>
                     </div>
+                    </a>
                 </div>
 
-                <!-- Finishing 58% (Attention Required) -->
                 <div class="col-md-6 col-lg">
+                    <a href="{{ route('manufacturing.index', ['stage' => 'Finishing']) }}" class="text-decoration-none text-reset d-block h-100">
                     <div class="p-3 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded h-100">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="fw-bold text-warning-emphasis"><i class="bi bi-shield-exclamation text-warning me-1"></i> 🟠 Finishing</span>
@@ -229,10 +232,11 @@
                             <span>Pending: 4,200 pcs</span>
                         </div>
                     </div>
+                    </a>
                 </div>
 
-                <!-- Packing 55% -->
                 <div class="col-md-6 col-lg">
+                    <a href="{{ route('manufacturing.index', ['stage' => 'Packing']) }}" class="text-decoration-none text-reset d-block h-100">
                     <div class="p-3 bg-body-tertiary rounded border h-100">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="fw-bold text-body"><i class="bi bi-box-seam text-success me-1"></i> Packing</span>
@@ -246,6 +250,7 @@
                             <span>Pending: 4,500 pcs</span>
                         </div>
                     </div>
+                    </a>
                 </div>
             </div>
         </div>

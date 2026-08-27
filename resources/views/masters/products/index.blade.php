@@ -49,6 +49,7 @@
                         <th>Category</th>
                         <th style="width:110px">HSN</th>
                         <th style="width:80px">Unit</th>
+                        <th style="width:100px" class="text-end">Stock</th>
                         <th style="width:80px" class="text-end">GST</th>
                         <th style="width:110px">Status</th>
                         <th class="text-end" style="width:150px">Actions</th>
@@ -70,6 +71,7 @@
                             <td class="text-body-secondary">{{ $product->category?->name ?: '—' }}</td>
                             <td class="text-body-secondary font-monospace">{{ $product->hsn_code ?: '—' }}</td>
                             <td class="text-body-secondary">{{ $product->unit_po ?: '—' }}</td>
+                            <td class="text-end {{ (float) $product->qty_on_hand <= 0 ? 'text-body-secondary' : 'fw-semibold' }}">{{ number_format((float) ($product->qty_on_hand ?? 0), 3) }}</td>
                             <td class="text-end text-body-secondary">{{ $product->gstRate?->label ?: '—' }}</td>
                             <td>
                                 @can('product.edit')

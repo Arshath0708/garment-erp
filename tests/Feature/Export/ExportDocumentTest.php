@@ -366,6 +366,17 @@ class ExportDocumentTest extends TestCase
         $this->assertSame('Shrinathji Forwarders', $document->forwarder_name);
     }
 
+    public function test_export_document_edit_page_includes_add_carton_script(): void
+    {
+        $document = $this->raiseDocument();
+
+        $this->actingAs($this->admin)
+            ->get(route('export.documents.edit', $document))
+            ->assertOk()
+            ->assertSee('id="add-carton"', false)
+            ->assertSee('addCartonBtn.addEventListener', false);
+    }
+
     private function raiseDocument(): ExportDocument
     {
         $item = $this->oc->items->first();

@@ -67,6 +67,38 @@
                 </div>
             </div>
 
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-body fw-bold py-3 border-0">
+                    <i class="bi bi-box-seam me-2 text-primary"></i> Fabric &amp; accessories BOM
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Item</th>
+                                <th>Type</th>
+                                <th class="text-end">Qty / pc</th>
+                                <th>Unit</th>
+                                <th class="text-end">In stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($style->materials as $line)
+                                <tr>
+                                    <td>{{ $line->product?->name ?? '—' }}</td>
+                                    <td>{{ \App\Models\Product::KINDS[$line->product->item_kind ?? 'other'] ?? '' }}</td>
+                                    <td class="text-end">{{ number_format((float) $line->qty_per_pc, 4) }}</td>
+                                    <td>{{ $line->unit ?: $line->product?->unit_po }}</td>
+                                    <td class="text-end">{{ number_format((float) ($line->product?->qty_on_hand ?? 0), 3) }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="5" class="text-body-secondary text-center py-3">No BOM yet. Edit the style to add fabric and accessories.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Associated Production Orders -->
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-body fw-bold py-3 border-0 d-flex justify-content-between align-items-center">

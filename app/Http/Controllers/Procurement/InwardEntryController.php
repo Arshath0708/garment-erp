@@ -148,26 +148,12 @@ class InwardEntryController extends Controller implements HasMiddleware
             'supplier:id,company_name,display_code',
             'items.product:id,name,item_group_code,category_id',
             'orderConfirmation:id,category_id,document_format_id',
-            'orderConfirmation.format.categories:id',
+            'orderConfirmation.format:id,name',
         ]);
 
         $oc = $purchaseOrder->orderConfirmation;
         $categoryId = $oc?->category_id;
-        $formatCategoryIds = $oc?->format?->categories?->pluck('id')->map(fn ($id) => (int) $id)->all() ?? [];
-
-        $allItems = $purchaseOrder->items;
-        $items = $allItems->filter(function ($poItem) use ($categoryId, $formatCategoryIds) {
-            if (! $poItem->product_id) {
-                return true;
-            }
-
-            $productCategoryId = (int) ($poItem->product?->category_id ?? 0);
-            if ($categoryId && $productCategoryId === (int) $categoryId) {
-                return true;
-            }
-
-            return $productCategoryId && in_array($productCategoryId, $formatCategoryIds, true);
-        })->values();
+        $items = $purchaseOrder->items;
 
         $mapped = $items->map(function ($poItem) {
             $prevReceived = (int) InwardEntryItem::query()
@@ -199,7 +185,7 @@ class InwardEntryController extends Controller implements HasMiddleware
             'category_id'       => $categoryId,
             'document_format_id'=> $oc?->document_format_id,
             'format_name'       => $oc?->format?->name,
-            'excluded_count'    => $allItems->count() - $items->count(),
+            'excluded_count'    => 0,
             'items'             => $mapped,
         ]);
     }

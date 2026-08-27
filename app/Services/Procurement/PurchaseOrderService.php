@@ -2,18 +2,27 @@
 
 namespace App\Services\Procurement;
 
+use App\Models\NumberSeries;
 use App\Models\PurchaseOrder;
+use App\Services\NumberSeriesService;
+use App\Support\FinancialYear;
 use Illuminate\Support\Facades\DB;
 
 class PurchaseOrderService
 {
+    public function __construct(private readonly NumberSeriesService $numbers)
+    {
+    }
+
     /**
      * @param  array<string, mixed>  $data
      */
     public function create(array $data): PurchaseOrder
     {
         return DB::transaction(function () use ($data) {
-            $po = PurchaseOrder::create($this->headerData($data));
+            $po = new PurchaseOrder($this->headerData($data));
+            $this->assignNumber($po);
+            $po->save();
 
             $this->syncItems($po, $data['items'] ?? []);
             $this->syncTimeline($po, $data['timeline'] ?? []);
@@ -43,6 +52,20 @@ class PurchaseOrderService
     private function headerData(array $data): array
     {
         return array_diff_key($data, array_flip(['items', 'timeline']));
+    }
+
+    private function assignNumber(PurchaseOrder $po): void
+    {
+        $financialYear = FinancialYear::current();
+
+        NumberSeries::firstOrCreate(
+            ['module' => 'po', 'financial_year' => $financialYear],
+            ['prefix' => '', 'padding' => 3, 'current_number' => 0, 'reset_yearly' => true]
+        );
+
+        $number = $this->numbers->nextNumber('po', $financialYear);
+        $po->po_num = "GT/PO/{$number}/{$financialYear}";
+        $po->financial_year = $financialYear;
     }
 
     /**

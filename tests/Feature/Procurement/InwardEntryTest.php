@@ -245,7 +245,8 @@ class InwardEntryTest extends TestCase
             ->get(route('procurement.inward-entries.create'))
             ->assertOk()
             ->assertSee('value="'.$this->po->id.'"', false)
-            ->assertSee($this->po->po_num);
+            ->assertSee($this->po->po_num)
+            ->assertSee('/procurement/inward-entries/po-details', false);
     }
 
     public function test_edit_form_renders_existing_inward_entry(): void

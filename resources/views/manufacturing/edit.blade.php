@@ -33,7 +33,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">Current Active Stage <span class="text-danger">*</span></label>
-                        <select name="current_stage" class="form-select" required>
+                        <select name="current_stage" class="form-select js-current-stage" required>
                             <option value="Cutting" {{ old('current_stage', $order->current_stage) == 'Cutting' ? 'selected' : '' }}>Cutting</option>
                             <option value="Printing" {{ old('current_stage', $order->current_stage) == 'Printing' ? 'selected' : '' }}>Printing</option>
                             <option value="Stitching" {{ old('current_stage', $order->current_stage) == 'Stitching' ? 'selected' : '' }}>Stitching</option>
@@ -135,13 +135,9 @@
                         </a>
                     </div>
                     @include('manufacturing._size_matrix', ['order' => $order])
-                    <div class="row mt-3">
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold">QC Rejected Qty (not size-split)</label>
-                            <input type="number" name="qc_rejected_qty" class="form-control" value="{{ old('qc_rejected_qty', $order->qc_rejected_qty) }}">
-                        </div>
-                    </div>
                 </div>
+
+                @include('manufacturing._material_plan', ['planRows' => $planRows ?? [], 'order' => $order])
 
                 <div class="mb-4">
                     <label class="form-label fw-semibold">Planning & Floor Notes</label>

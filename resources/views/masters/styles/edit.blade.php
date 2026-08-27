@@ -89,11 +89,10 @@
                     </div>
                 </div>
 
-                <!-- DYNAMIC SIZE & QUANTITY MATRIX REPEATER -->
                 <div class="card bg-body-tertiary border mb-4">
                     <div class="card-header bg-body d-flex justify-content-between align-items-center py-3">
                         <div>
-                            <h6 class="fw-bold mb-0"><i class="bi bi-rulers me-2 text-primary"></i> Size & Quantity Breakdown Matrix</h6>
+                            <h6 class="fw-bold mb-0"><i class="bi bi-rulers me-2 text-primary"></i> Size &amp; Quantity Breakdown Matrix</h6>
                             <small class="text-body-secondary">Add unlimited size breakdown entries. Click (+) to add more sizes.</small>
                         </div>
                         <button type="button" class="btn btn-sm btn-primary" id="addSizeRowBtn">
@@ -101,10 +100,7 @@
                         </button>
                     </div>
                     <div class="card-body p-3">
-                        <div id="sizeRowsContainer">
-                            {{-- Rows dynamically populated by JS below --}}
-                        </div>
-
+                        <div id="sizeRowsContainer"></div>
                         <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-2">
                             <span class="fw-semibold text-body-secondary small">Calculated Total Target Batch Quantity:</span>
                             <span class="fs-6 fw-bold text-primary" id="calculatedTotalQty">{{ number_format($style->target_qty) }} pcs</span>
@@ -114,8 +110,7 @@
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-6 d-none">
-                        <label class="form-label fw-semibold">Size Range</label>
-                        <input type="text" name="sizes" id="hiddenSizesInput" class="form-control" value="{{ old('sizes', $style->sizes) }}">
+                        <input type="hidden" name="sizes" id="hiddenSizesInput" value="{{ old('sizes', $style->sizes) }}">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Target Batch Quantity (pcs) <span class="text-danger">*</span></label>
@@ -139,6 +134,8 @@
                     @endif
                 </div>
 
+                @include('masters.styles._materials', ['products' => $products, 'style' => $style])
+
                 <div class="text-end">
                     <a href="{{ route('masters.styles.index') }}" class="btn btn-secondary me-2">Cancel</a>
                     <button type="submit" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i> Update Garment Style</button>
@@ -155,7 +152,6 @@
         const totalQtyEl = document.getElementById('calculatedTotalQty');
         const targetQtyInput = document.getElementById('targetQtyInput');
         const hiddenSizesInput = document.getElementById('hiddenSizesInput');
-
         const rawSizesString = @json($style->sizes ?? '');
         const currentTargetQty = parseInt(@json($style->target_qty ?? 0), 10) || 0;
         const defaultSizes = ['M', 'L', 'XL', '2XL', 'S', 'XS', '3XL'];
@@ -178,12 +174,8 @@
                     </div>
                 </div>
                 <div class="col-md-2 d-flex gap-1">
-                    <button type="button" class="btn btn-sm btn-outline-primary btn-add-row" title="Add Another Size">
-                        <i class="bi bi-plus-lg"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" title="Remove Size">
-                        <i class="bi bi-trash"></i>
-                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary btn-add-row" title="Add Another Size"><i class="bi bi-plus-lg"></i></button>
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" title="Remove Size"><i class="bi bi-trash"></i></button>
                 </div>
             `;
             return row;
@@ -196,11 +188,8 @@
                 const name = row.querySelector('.size-name-input')?.value.trim() || '';
                 const qty = parseInt(row.querySelector('.size-qty-input')?.value, 10) || 0;
                 total += qty;
-                if (name) {
-                    sizeSummaries.push(qty > 0 ? `${name} (${qty} pcs)` : name);
-                }
+                if (name) sizeSummaries.push(qty > 0 ? `${name} (${qty} pcs)` : name);
             });
-
             if (totalQtyEl) totalQtyEl.textContent = total.toLocaleString() + ' pcs';
             if (targetQtyInput) targetQtyInput.value = total;
             if (hiddenSizesInput) hiddenSizesInput.value = sizeSummaries.join(', ');
@@ -211,19 +200,15 @@
                 container.appendChild(createRow('M', currentTargetQty || 100));
                 return;
             }
-
             const parts = rawSizesString.split(',').map(s => s.trim()).filter(Boolean);
             if (parts.length === 0) {
                 container.appendChild(createRow('M', currentTargetQty || 100));
                 return;
             }
-
             parts.forEach(part => {
                 const match = part.match(/^(.+?)\s*\((?:(\d+)(?:\s*pcs)?)?\)$/i);
                 if (match) {
-                    const name = match[1].trim();
-                    const qty = parseInt(match[2], 10) || 0;
-                    container.appendChild(createRow(name, qty));
+                    container.appendChild(createRow(match[1].trim(), parseInt(match[2], 10) || 0));
                 } else {
                     const splitQty = Math.floor(currentTargetQty / parts.length);
                     container.appendChild(createRow(part, splitQty > 0 ? splitQty : 100));
@@ -240,25 +225,18 @@
         }
 
         addBtn?.addEventListener('click', function () {
-            const nextSize = suggestNextSize();
-            const newRow = createRow(nextSize, 100);
-            container.appendChild(newRow);
+            container.appendChild(createRow(suggestNextSize(), 100));
             recalculateTotals();
         });
 
         container?.addEventListener('click', function (e) {
             if (e.target.closest('.btn-add-row')) {
-                const nextSize = suggestNextSize();
-                const newRow = createRow(nextSize, 100);
-                e.target.closest('.size-row').after(newRow);
+                e.target.closest('.size-row').after(createRow(suggestNextSize(), 100));
                 recalculateTotals();
             } else if (e.target.closest('.btn-remove-row')) {
-                const rows = container.querySelectorAll('.size-row');
-                if (rows.length > 1) {
+                if (container.querySelectorAll('.size-row').length > 1) {
                     e.target.closest('.size-row').remove();
                     recalculateTotals();
-                } else {
-                    alert('At least one size entry is required.');
                 }
             }
         });
@@ -275,4 +253,3 @@
     </script>
     @endpush
 </x-app-layout>
-

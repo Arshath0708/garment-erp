@@ -10,6 +10,17 @@
         </a>
     </div>
 
+    @if ($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
             <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
@@ -18,24 +29,33 @@
     @endif
 
     <!-- Manufacturing Stage Pipeline Guide -->
+    @php
+        $activePipeline = request('stage');
+        $pipelineSteps = [
+            ['label' => '1. Buyer Sales Order', 'href' => route('sales.order-confirmations.index'), 'key' => 'sales'],
+            ['label' => '2. Style & BOM', 'href' => route('masters.styles.index'), 'key' => 'bom'],
+            ['label' => '3. Cutting', 'href' => route('manufacturing.index', ['stage' => 'Cutting']), 'key' => 'Cutting'],
+            ['label' => '4. Printing / Embroidery', 'href' => route('manufacturing.index', ['stage' => 'Printing']), 'key' => 'Printing'],
+            ['label' => '5. Stitching', 'href' => route('manufacturing.index', ['stage' => 'Stitching']), 'key' => 'Stitching'],
+            ['label' => '6. Finishing', 'href' => route('manufacturing.index', ['stage' => 'Finishing']), 'key' => 'Finishing'],
+            ['label' => '7. Quality Check', 'href' => route('manufacturing.index', ['stage' => 'Quality Check']), 'key' => 'Quality Check'],
+            ['label' => '8. Packing & Dispatch', 'href' => route('manufacturing.index', ['stage' => 'Packing']), 'key' => 'Packing'],
+        ];
+    @endphp
     <div class="card shadow-sm border-0 mb-4 bg-dark text-white p-3">
         <div class="text-uppercase text-info fw-bold small mb-2"><i class="bi bi-diagram-3-fill me-1"></i> Garment Manufacturing Order Pipeline</div>
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 text-center text-white-50 small">
-            <div class="px-3 py-2 bg-secondary bg-opacity-25 rounded"><strong class="text-white">1. Buyer Sales Order</strong></div>
-            <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-secondary bg-opacity-25 rounded"><strong class="text-white">2. Style & BOM</strong></div>
-            <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-primary bg-opacity-50 rounded text-white"><strong class="text-white">3. Cutting</strong></div>
-            <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-info bg-opacity-25 rounded text-info"><strong class="text-info">4. Printing / Embroidery</strong></div>
-            <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-primary bg-opacity-50 rounded text-white"><strong class="text-white">5. Stitching</strong></div>
-            <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-warning bg-opacity-25 rounded text-warning"><strong class="text-warning">6. Finishing</strong></div>
-            <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-success bg-opacity-25 rounded text-success"><strong class="text-success">7. Quality Check</strong></div>
-            <i class="bi bi-arrow-right"></i>
-            <div class="px-3 py-2 bg-info bg-opacity-25 rounded text-info"><strong class="text-info">8. Packing & Dispatch</strong></div>
+            @foreach ($pipelineSteps as $i => $step)
+                @if($i > 0)
+                    <i class="bi bi-arrow-right"></i>
+                @endif
+                @php $isActive = $activePipeline !== null && $activePipeline !== '' && $activePipeline === $step['key']; @endphp
+                <a href="{{ $step['href'] }}"
+                   data-pipeline-stage="{{ $step['key'] }}"
+                   class="px-3 py-2 rounded text-decoration-none {{ $isActive ? 'bg-info text-dark fw-bold' : 'bg-secondary bg-opacity-25 text-white' }}">
+                    {{ $step['label'] }}
+                </a>
+            @endforeach
         </div>
     </div>
 
@@ -66,82 +86,66 @@
 
                         <!-- Stage Breakdown Metrics -->
                         <div class="p-3 bg-body-tertiary rounded mb-3">
-                            <div class="row g-2 text-center small mb-2">
+                            <div class="row g-2 text-center small">
                                 <div class="col border-end">
                                     <div class="text-body-secondary">Cutting</div>
                                     <div class="fw-bold">{{ number_format($order->cutting_qty) }}</div>
-                                    @if($order->pendingCuttingQty() > 0)
-                                        <span class="badge bg-warning bg-opacity-25 text-dark mt-1" style="font-size: 0.7rem;">Bal: {{ number_format($order->pendingCuttingQty()) }}</span>
-                                    @endif
                                 </div>
                                 <div class="col border-end">
                                     <div class="text-body-secondary">Print / Emb</div>
                                     <div class="fw-bold">{{ number_format($order->printing_qty) }}</div>
-                                    @if($order->pendingPrintingQty() > 0)
-                                        <span class="badge bg-warning bg-opacity-25 text-dark mt-1" style="font-size: 0.7rem;">Bal: {{ number_format($order->pendingPrintingQty()) }}</span>
-                                    @endif
                                 </div>
                                 <div class="col border-end">
                                     <div class="text-body-secondary">Stitching</div>
                                     <div class="fw-bold">{{ number_format($order->stitching_qty) }}</div>
-                                    @if($order->pendingStitchingQty() > 0)
-                                        <span class="badge bg-warning bg-opacity-25 text-dark mt-1" style="font-size: 0.7rem;">Bal: {{ number_format($order->pendingStitchingQty()) }}</span>
-                                    @endif
                                 </div>
                                 <div class="col border-end">
                                     <div class="text-body-secondary">Finishing</div>
                                     <div class="fw-bold">{{ number_format($order->finishing_qty) }}</div>
-                                    @if($order->pendingFinishingQty() > 0)
-                                        <span class="badge bg-warning bg-opacity-25 text-dark mt-1" style="font-size: 0.7rem;">Bal: {{ number_format($order->pendingFinishingQty()) }}</span>
-                                    @endif
                                 </div>
                                 <div class="col border-end">
                                     <div class="text-body-secondary">QC Pass</div>
                                     <div class="fw-bold text-success">{{ number_format($order->qc_passed_qty) }}</div>
-                                    @if($order->pendingQcQty() > 0)
-                                        <span class="badge bg-warning bg-opacity-25 text-dark mt-1" style="font-size: 0.7rem;">Bal: {{ number_format($order->pendingQcQty()) }}</span>
-                                    @endif
                                 </div>
                                 <div class="col border-end">
                                     <div class="text-body-secondary">Packing</div>
                                     <div class="fw-bold">{{ number_format($order->packing_qty) }}</div>
-                                    @if($order->pendingPackingQty() > 0)
-                                        <span class="badge bg-warning bg-opacity-25 text-dark mt-1" style="font-size: 0.7rem;">Bal: {{ number_format($order->pendingPackingQty()) }}</span>
-                                    @endif
                                 </div>
                                 <div class="col">
                                     <div class="text-body-secondary">Dispatch</div>
                                     <div class="fw-bold text-primary">{{ number_format($order->dispatch_qty) }}</div>
                                 </div>
                             </div>
-
-                            @php $cutSizes = $order->size_breakdown['cutting'] ?? []; @endphp
-                            @if(collect($cutSizes)->sum() > 0)
+                            @php $stageRows = $order->filledStageRows(); @endphp
+                            @if($stageRows !== [])
                                 <div class="table-responsive mt-3">
                                     <table class="table table-sm table-bordered mb-0 small">
                                         <thead>
                                             <tr>
-                                                <th class="text-body-secondary fw-normal">Cutting sizes</th>
+                                                <th class="text-body-secondary fw-normal">Stage sizes</th>
                                                 @foreach (\App\Models\ProductionOrder::SIZES as $size)
                                                     <th class="text-center">{{ $size }}</th>
                                                 @endforeach
                                                 <th class="text-center">Total</th>
+                                                <th class="text-center">Damage</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr>
-                                                <td class="fw-semibold">Cut Output</td>
-                                                @foreach (\App\Models\ProductionOrder::SIZES as $size)
-                                                    <td class="text-center">{{ number_format((int) ($cutSizes[$size] ?? 0)) }}</td>
-                                                @endforeach
-                                                <td class="text-center fw-bold">{{ number_format($order->stageSizeTotal('cutting')) }}</td>
-                                            </tr>
+                                            @foreach ($stageRows as $row)
+                                                <tr>
+                                                    <td class="fw-semibold">{{ $row['label'] }}</td>
+                                                    @foreach (\App\Models\ProductionOrder::SIZES as $size)
+                                                        <td class="text-center">{{ number_format($row['sizes'][$size] ?? 0) }}</td>
+                                                    @endforeach
+                                                    <td class="text-center fw-bold">{{ number_format($row['total']) }}</td>
+                                                    <td class="text-center text-danger">{{ number_format($row['damage']) }}</td>
+                                                </tr>
+                                            @endforeach
                                         </tbody>
                                     </table>
                                 </div>
                             @endif
                         </div>
-
 
                         @php
                             $completedPct = min(100, round(($order->dispatch_qty / max(1, $order->total_qty)) * 100));
@@ -192,7 +196,7 @@
                             <div class="modal-body">
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">Current Active Stage</label>
-                                    <select name="current_stage" class="form-select">
+                                    <select name="current_stage" class="form-select js-current-stage">
                                         <option value="Cutting" {{ $order->current_stage == 'Cutting' ? 'selected' : '' }}>Cutting</option>
                                         <option value="Printing" {{ $order->current_stage == 'Printing' ? 'selected' : '' }}>Printing / Embroidery</option>
                                         <option value="Stitching" {{ $order->current_stage == 'Stitching' ? 'selected' : '' }}>Stitching</option>

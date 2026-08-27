@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Inventory\InventoryController;
 use App\Http\Controllers\Masters\BuyerController;
 use App\Http\Controllers\Masters\AgentController;
 use App\Http\Controllers\Masters\CategoryController;
@@ -235,8 +236,11 @@ Route::middleware('auth')->group(function () {
     | Manufacturing & Production Tracking
     |--------------------------------------------------------------------------
     */
+    Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
+
     Route::get('manufacturing', [ManufacturingController::class, 'index'])->name('manufacturing.index');
     Route::get('manufacturing/create', [ManufacturingController::class, 'create'])->name('manufacturing.create');
+    Route::get('manufacturing/material-plan', [ManufacturingController::class, 'materialPlan'])->name('manufacturing.material-plan');
     Route::post('manufacturing', [ManufacturingController::class, 'store'])->name('manufacturing.store');
     Route::get('manufacturing/{order}', [ManufacturingController::class, 'show'])->name('manufacturing.show');
     Route::get('manufacturing/{order}/edit', [ManufacturingController::class, 'edit'])->name('manufacturing.edit');

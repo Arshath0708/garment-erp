@@ -28,7 +28,6 @@
 
 
 
-
             /* ============================ SIDEBAR — LIGHT ============================ */
             .app-sidebar {
                 background: #ffffff;
@@ -86,9 +85,12 @@
                 font-weight: 700;
                 text-transform: uppercase;
                 letter-spacing: .08em;
-                padding: 1.1rem 1.15rem .4rem;
+                padding: 1.05rem 1.15rem .35rem;
+                margin: .35rem .75rem 0;
                 background: transparent;
+                border-top: 1px solid #eef1f5;
             }
+            .app-sidebar .nav-header:first-of-type { border-top: 0; }
 
             /* Links */
             .app-sidebar .sidebar-menu .nav-link {
@@ -132,6 +134,49 @@
                 width: 1rem;
                 opacity: .5;
             }
+            .app-sidebar .nav-arrow {
+                margin-left: auto;
+                font-size: .7rem;
+                transition: transform .15s ease;
+            }
+            .app-sidebar .nav-item.menu-open > .nav-link .nav-arrow {
+                transform: rotate(90deg);
+            }
+            .app-sidebar .sidebar-search-group {
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            .app-sidebar .sidebar-search-group .input-group-text,
+            .app-sidebar .sidebar-search-group .form-control {
+                background: #f3f6fa;
+                border-color: #e9edf2;
+                font-size: .8rem;
+            }
+            [data-bs-theme="dark"] .app-sidebar .sidebar-search-group .input-group-text,
+            [data-bs-theme="dark"] .app-sidebar .sidebar-search-group .form-control {
+                background: #1e293b;
+                border-color: rgba(255,255,255,.12);
+                color: #e2e8f0;
+            }
+            .app-sidebar .sidebar-search-kbd {
+                font-size: .7rem;
+                color: #9aa4b2;
+            }
+            .erp-breadcrumb {
+                display: flex; align-items: center; flex-wrap: wrap; gap: .15rem .35rem;
+                font-size: .82rem; padding: .15rem .25rem;
+                min-width: 0;
+            }
+            .erp-breadcrumb-sep { font-size: .65rem; color: #9aa4b2; }
+            .erp-breadcrumb-link { color: #6b7280; text-decoration: none; white-space: nowrap; }
+            .erp-breadcrumb-link:hover { color: #2563eb; }
+            .erp-breadcrumb-current { color: #111827; font-weight: 600; white-space: nowrap; }
+            [data-bs-theme="dark"] .erp-breadcrumb-link { color: #94a3b8; }
+            [data-bs-theme="dark"] .erp-breadcrumb-current { color: #f8fafc; }
+            [data-bs-theme="dark"] .erp-breadcrumb-sep { color: #64748b; }
+            @media (max-width: 575.98px) {
+                .erp-breadcrumb { font-size: .75rem; }
+            }
 
             /* Modules whose screens are not built yet — visible but clearly inert. */
             .app-sidebar .nav-link.soon { color: #a3acb9; cursor: default; }
@@ -170,6 +215,7 @@
             .sidebar-mini.sidebar-collapse .app-sidebar:not(:hover) .sidebar-menu .nav-link.active {
                 box-shadow: none; background: #e0eaff;
             }
+            .sidebar-mini.sidebar-collapse .app-sidebar:not(:hover) .sidebar-search { display: none; }
 
             /* 2. Section headers are display:none when collapsed, so seven
                   groups run together as one undifferentiated strip of icons.
@@ -469,7 +515,7 @@
                     <div class="app-content-header">
                         <div class="container-fluid">
                             <div class="row align-items-center">
-                                <div class="col-sm-6">
+                                <div class="col-12">
                                     <h3 class="mb-0">{{ $header }}</h3>
                                 </div>
                             </div>
@@ -559,6 +605,30 @@
                 sidebar.addEventListener('opened.lte.push-menu', describe);
                 sidebar.addEventListener('collapsed.lte.push-menu', describe);
                 describe();
+            }
+
+            var sidebarWrap = document.querySelector('.sidebar-wrapper');
+            if (sidebarWrap) {
+                var activeLink = sidebarWrap.querySelector('.nav-link.active');
+                if (activeLink) {
+                    activeLink.scrollIntoView({ block: 'center', inline: 'nearest' });
+                }
+            }
+
+            var search = document.getElementById('sidebar-search');
+            if (search) {
+                search.addEventListener('input', function () {
+                    var q = this.value.trim().toLowerCase();
+                    document.querySelectorAll('.sidebar-menu [data-nav-label]').forEach(function (item) {
+                        var label = (item.getAttribute('data-nav-label') || '').toLowerCase();
+                        item.classList.toggle('d-none', q !== '' && label.indexOf(q) === -1);
+                    });
+                });
+                document.addEventListener('keydown', function (e) {
+                    if (e.key !== '/' || e.target.closest('input, textarea, select, [contenteditable]')) return;
+                    e.preventDefault();
+                    search.focus();
+                });
             }
         });
         </script>
