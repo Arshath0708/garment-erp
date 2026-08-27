@@ -117,9 +117,15 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ route('procurement.purchase-orders.index') }}" class="nav-link {{ request()->routeIs('procurement.purchase-orders.*') || request()->routeIs('procurement.inward-entries.*') ? 'active' : '' }}">
+                    <a href="{{ route('procurement.purchase-orders.index') }}" class="nav-link {{ request()->routeIs('procurement.purchase-orders.*') ? 'active' : '' }}">
                         <i class="nav-icon bi bi-cart-plus"></i>
-                        <p>Fabric & Trims PO / Inward</p>
+                        <p>Fabric &amp; Trims PO</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('procurement.inward-entries.index') }}" class="nav-link {{ request()->routeIs('procurement.inward-entries.*') ? 'active' : '' }}">
+                        <i class="nav-icon bi bi-box-arrow-in-down"></i>
+                        <p>Goods Inward</p>
                     </a>
                 </li>
                 <li class="nav-item">
