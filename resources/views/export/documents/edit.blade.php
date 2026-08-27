@@ -540,7 +540,6 @@
             </div>
         </form>
     </x-ui.card>
-</x-app-layout>
 
 @push('scripts')
 <script>
@@ -644,3 +643,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
+</x-app-layout>
