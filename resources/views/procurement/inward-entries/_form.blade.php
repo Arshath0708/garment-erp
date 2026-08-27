@@ -139,8 +139,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
             tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading PO items...</td></tr>`;
 
-            fetch(`/procurement/inward-entries/po-details/${poId}`)
-                .then(res => res.json())
+            fetch(`{{ url('/procurement/inward-entries/po-details') }}/${poId}`, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin',
+            })
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error('PO details ' + res.status);
+                    }
+                    return res.json();
+                })
                 .then(data => {
                     if (!data.items || data.items.length === 0) {
                         const hint = data.excluded_count
