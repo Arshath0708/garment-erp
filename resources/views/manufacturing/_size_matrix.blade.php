@@ -9,12 +9,13 @@
     <table class="table table-sm table-bordered align-middle mb-0 size-qty-grid">
         <thead class="table-light">
             <tr>
-                <th style="min-width: 9rem">Stage</th>
+                <th style="min-width: 12rem">Stage</th>
                 @foreach ($sizes as $size)
                     <th class="text-center" style="width: 4.5rem">{{ $size }}</th>
                 @endforeach
                 <th class="text-center" style="width: 5rem">Total</th>
                 <th class="text-center" style="width: 6.5rem">Total Damage</th>
+                <th class="text-center" style="width: 6rem">Action</th>
             </tr>
         </thead>
         <tbody>
@@ -27,7 +28,12 @@
                     $rowDamage = (int) old("damage.{$key}", $order?->stageDamage($key) ?? 0);
                 @endphp
                 <tr data-stage-row data-stage-key="{{ $key }}" data-stage-label="{{ $meta['label'] }}">
-                    <td class="fw-semibold small">{{ $meta['label'] }}</td>
+                    <td class="fw-semibold small">
+                        <div>{{ $meta['label'] }}</div>
+                        <span class="badge bg-secondary bg-opacity-25 text-body small">
+                            Balance: {{ number_format($order?->stageWipBalance($key) ?? 0) }} pcs
+                        </span>
+                    </td>
                     @foreach ($sizes as $size)
                         <td>
                             <input type="number" min="0" step="1"
@@ -43,6 +49,11 @@
                                name="damage[{{ $key }}]"
                                class="form-control form-control-sm text-center js-stage-damage"
                                value="{{ $rowDamage }}">
+                    </td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 js-autofill-stage" data-stage="{{ $key }}" title="Copy remaining balance from previous stage">
+                            <i class="bi bi-arrow-down-short"></i> Fill
+                        </button>
                     </td>
                 </tr>
             @endforeach
@@ -229,6 +240,24 @@
             e.preventDefault();
             wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
+    });
+
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.js-autofill-stage');
+        if (!btn) return;
+        var wrap = btn.closest('.js-stage-grid-wrap');
+        if (!wrap) return;
+        var rows = garmentStageGridRows(wrap);
+        var target = btn.closest('[data-stage-row]');
+        var idx = rows.indexOf(target);
+        if (idx <= 0) return;
+        var prev = rows[idx - 1];
+        prev.querySelectorAll('.js-size-qty').forEach(function (prevInput) {
+            var size = prevInput.getAttribute('data-size');
+            var dest = target.querySelector('.js-size-qty[data-size="' + size + '"]');
+            if (dest && !dest.readOnly) dest.value = prevInput.value || 0;
+        });
+        garmentValidateStageFlow(wrap);
     });
 
     document.addEventListener('DOMContentLoaded', function () {

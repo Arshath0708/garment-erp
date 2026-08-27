@@ -27,168 +27,191 @@
 body.garment-erp-theme {
     background-color: var(--erp-bg);
     color: var(--erp-text-main);
-    font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: 'Source Sans 3', sans-serif;
     overflow-x: hidden;
 }
 
-
-
-
-
 /* ==================== PAGE CONTENT HEADERS ==================== */
+.app-content-header h3,
+.app-content-header h1,
+.app-content-header h2 {
+    font-weight: 600 !important;
+    font-size: 1.5rem;
+}
+
 [data-bs-theme="dark"] .app-content-header h3,
 [data-bs-theme="dark"] .app-content-header h1,
 [data-bs-theme="dark"] .app-content-header h2 {
-    color: #ffffff !important;
-    font-weight: 700 !important;
+    color: #ffffff;
 }
 
 [data-bs-theme="light"] .app-content-header h3,
 [data-bs-theme="light"] .app-content-header h1,
 [data-bs-theme="light"] .app-content-header h2 {
-    color: #0f172a !important;
-    font-weight: 700 !important;
+    color: #111827;
 }
 
-/* ==================== SIDEBAR LIGHT THEME ==================== */
+/* ==================== SIDEBAR LIGHT THEME (Guru Traders Standard) ==================== */
 [data-bs-theme="light"] .app-sidebar {
-    background-color: #ffffff !important;
-    border-right: 1px solid #e2e8f0 !important;
+    background-color: #ffffff;
+    border-right: 1px solid #e9edf2;
 }
 
 [data-bs-theme="light"] .app-sidebar .sidebar-brand {
-    background-color: #ffffff !important;
-    border-bottom: 1px solid #e2e8f0 !important;
+    background-color: #ffffff;
+    border-bottom: 1px solid #eef1f5;
 }
 
 [data-bs-theme="light"] .app-sidebar .brand-text-title {
-    color: #0f172a !important;
-    font-weight: 700 !important;
+    color: #111827;
+    font-weight: 600;
+    font-size: .98rem;
 }
 
 [data-bs-theme="light"] .app-sidebar .brand-text-subtitle {
-    color: #64748b !important;
-    font-weight: 600 !important;
+    color: #9aa4b2;
+    font-weight: 500;
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
 }
 
 [data-bs-theme="light"] .app-sidebar .nav-header {
-    color: #475569 !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.08em;
+    color: #9aa4b2;
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    padding: 1.1rem 1.15rem .4rem;
 }
 
 [data-bs-theme="light"] .app-sidebar .sidebar-menu .nav-link {
-    color: #1e293b !important;
-    font-weight: 600 !important;
+    color: #4b5563;
+    font-size: .885rem;
+    font-weight: 500;
+    border-radius: 8px;
+    margin: 1px .6rem;
+    padding: .5rem .7rem;
 }
 
 [data-bs-theme="light"] .app-sidebar .sidebar-menu .nav-link p {
-    color: #1e293b !important;
-    font-weight: 600 !important;
+    color: #4b5563;
+    font-size: .885rem;
+    font-weight: 500;
 }
 
 [data-bs-theme="light"] .app-sidebar .sidebar-menu .nav-link .nav-icon {
-    color: #475569 !important;
+    font-size: 1rem;
+    color: #8b95a5;
 }
 
 [data-bs-theme="light"] .app-sidebar .sidebar-menu .nav-link:hover {
-    background-color: #f1f5f9 !important;
-    color: #2563eb !important;
+    background-color: #f3f6fa;
+    color: #111827;
 }
 
 [data-bs-theme="light"] .app-sidebar .sidebar-menu .nav-link:hover p {
-    color: #2563eb !important;
+    color: #111827;
 }
 
 [data-bs-theme="light"] .app-sidebar .sidebar-menu .nav-link:hover .nav-icon {
-    color: #2563eb !important;
+    color: #2563eb;
 }
 
 [data-bs-theme="light"] .app-sidebar .sidebar-menu .nav-link.active {
-    background-color: #eff6ff !important;
-    color: #2563eb !important;
-    font-weight: 700 !important;
-    box-shadow: inset 4px 0 0 #2563eb !important;
+    background-color: #eff4ff;
+    color: #1d4ed8;
+    font-weight: 600;
+    box-shadow: inset 3px 0 0 #2563eb;
 }
 
 [data-bs-theme="light"] .app-sidebar .sidebar-menu .nav-link.active p {
-    color: #2563eb !important;
-    font-weight: 700 !important;
+    color: #1d4ed8;
+    font-weight: 600;
 }
 
 [data-bs-theme="light"] .app-sidebar .sidebar-menu .nav-link.active .nav-icon {
-    color: #2563eb !important;
+    color: #2563eb;
 }
 
-/* ==================== SIDEBAR DARK THEME (HIGH-CONTRAST BRIGHT TEXT) ==================== */
+/* ==================== SIDEBAR DARK THEME ==================== */
 [data-bs-theme="dark"] .app-sidebar {
-    background-color: #0f172a !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background-color: #0f172a;
+    border-right: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 [data-bs-theme="dark"] .app-sidebar .sidebar-brand {
-    background-color: #0f172a !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background-color: #0f172a;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 [data-bs-theme="dark"] .app-sidebar .brand-text-title {
-    color: #ffffff !important;
-    font-weight: 800 !important;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: .98rem;
 }
 
 [data-bs-theme="dark"] .app-sidebar .brand-text-subtitle {
-    color: #cbd5e1 !important;
-    font-weight: 600 !important;
+    color: #94a3b8;
+    font-weight: 500;
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
 }
 
 [data-bs-theme="dark"] .app-sidebar .nav-header {
-    color: #cbd5e1 !important;
-    font-weight: 800 !important;
-    letter-spacing: 0.08em;
+    color: #94a3b8;
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
 }
 
 [data-bs-theme="dark"] .app-sidebar .sidebar-menu .nav-link {
-    color: #ffffff !important;
-    font-weight: 600 !important;
+    color: #cbd5e1;
+    font-size: .885rem;
+    font-weight: 500;
 }
 
 [data-bs-theme="dark"] .app-sidebar .sidebar-menu .nav-link p {
-    color: #ffffff !important;
-    font-weight: 600 !important;
+    color: #cbd5e1;
+    font-size: .885rem;
+    font-weight: 500;
 }
 
 [data-bs-theme="dark"] .app-sidebar .sidebar-menu .nav-link .nav-icon {
-    color: #38bdf8 !important;
+    color: #38bdf8;
 }
 
 [data-bs-theme="dark"] .app-sidebar .sidebar-menu .nav-link:hover {
-    background-color: #1e293b !important;
-    color: #38bdf8 !important;
+    background-color: #1e293b;
+    color: #38bdf8;
 }
 
 [data-bs-theme="dark"] .app-sidebar .sidebar-menu .nav-link:hover p {
-    color: #38bdf8 !important;
+    color: #38bdf8;
 }
 
 [data-bs-theme="dark"] .app-sidebar .sidebar-menu .nav-link:hover .nav-icon {
-    color: #38bdf8 !important;
+    color: #38bdf8;
 }
 
 [data-bs-theme="dark"] .app-sidebar .sidebar-menu .nav-link.active {
-    background-color: #2563eb !important;
-    color: #ffffff !important;
-    font-weight: 700 !important;
-    box-shadow: inset 4px 0 0 #60a5fa !important;
+    background-color: #2563eb;
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: inset 3px 0 0 #60a5fa;
 }
 
 [data-bs-theme="dark"] .app-sidebar .sidebar-menu .nav-link.active p {
-    color: #ffffff !important;
-    font-weight: 700 !important;
+    color: #ffffff;
+    font-weight: 600;
 }
 
 [data-bs-theme="dark"] .app-sidebar .sidebar-menu .nav-link.active .nav-icon {
-    color: #ffffff !important;
+    color: #ffffff;
 }
+
 
 /* Glassmorphic Container & Cards */
 .erp-card {

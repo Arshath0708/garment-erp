@@ -73,6 +73,8 @@ class GarmentStyleController extends Controller
         $materials = $validated['materials'] ?? [];
         unset($validated['materials'], $validated['logo']);
 
+        $this->applySizeBreakdown($request, $validated);
+
         $style = GarmentStyle::create($validated);
         $this->syncMaterials($style, $materials);
 
@@ -123,6 +125,8 @@ class GarmentStyleController extends Controller
             $validated['logo_path'] = $path;
         }
 
+        $this->applySizeBreakdown($request, $validated);
+
         $materials = $validated['materials'] ?? [];
         unset($validated['materials'], $validated['logo']);
 
@@ -137,6 +141,38 @@ class GarmentStyleController extends Controller
         $style->delete();
 
         return redirect()->route('masters.styles.index')->with('success', 'Garment Style deleted successfully!');
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    private function applySizeBreakdown(Request $request, array &$validated): void
+    {
+        if (! $request->has('size_names') || ! is_array($request->input('size_names'))) {
+            return;
+        }
+
+        $sizeNames = $request->input('size_names', []);
+        $sizeQtys = $request->input('size_qtys', []);
+        $formattedSizes = [];
+        $totalQty = 0;
+
+        foreach ($sizeNames as $i => $name) {
+            $trimmedName = trim((string) $name);
+            $qty = (int) ($sizeQtys[$i] ?? 0);
+            if ($trimmedName === '') {
+                continue;
+            }
+            $formattedSizes[] = $qty > 0 ? "{$trimmedName} ({$qty} pcs)" : $trimmedName;
+            $totalQty += $qty;
+        }
+
+        if ($formattedSizes !== []) {
+            $validated['sizes'] = implode(', ', $formattedSizes);
+        }
+        if ($totalQty > 0) {
+            $validated['target_qty'] = $totalQty;
+        }
     }
 
     /**

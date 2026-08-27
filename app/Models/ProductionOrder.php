@@ -207,6 +207,51 @@ class ProductionOrder extends Model
         return self::JOB_WORK_TYPES[$this->job_work_type] ?? $this->job_work_type;
     }
 
+    public function pendingCuttingQty(): int
+    {
+        $nextWorked = max($this->printing_qty, $this->stitching_qty);
+
+        return max(0, $this->cutting_qty - $nextWorked);
+    }
+
+    public function pendingPrintingQty(): int
+    {
+        return max(0, $this->printing_qty - $this->stitching_qty);
+    }
+
+    public function pendingStitchingQty(): int
+    {
+        return max(0, $this->stitching_qty - $this->finishing_qty);
+    }
+
+    public function pendingFinishingQty(): int
+    {
+        return max(0, $this->finishing_qty - ($this->qc_passed_qty + $this->qc_rejected_qty));
+    }
+
+    public function pendingQcQty(): int
+    {
+        return max(0, $this->qc_passed_qty - $this->packing_qty);
+    }
+
+    public function pendingPackingQty(): int
+    {
+        return max(0, $this->packing_qty - $this->dispatch_qty);
+    }
+
+    public function stageWipBalance(string $stage): int
+    {
+        return match ($stage) {
+            'cutting'    => $this->pendingCuttingQty(),
+            'printing'   => $this->pendingPrintingQty(),
+            'stitching'  => $this->pendingStitchingQty(),
+            'finishing'  => $this->pendingFinishingQty(),
+            'qc', 'qc_passed' => $this->pendingQcQty(),
+            'packing'    => $this->pendingPackingQty(),
+            default      => 0,
+        };
+    }
+
     /**
      * @return array{breakdown: array<string, array<string, int>>, totals: array<string, int>}
      */
