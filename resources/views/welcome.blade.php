@@ -24,10 +24,10 @@
 
 
             --surface-card: rgba(15, 23, 42, 0.75);
-            --border-glow: rgba(56, 189, 248, 0.2);
-            --cyan-glow: #38bdf8;
-            --indigo-glow: #818cf8;
-            --emerald-glow: #34d399;
+            --border-glow: rgba(201, 162, 39, 0.2);
+            --cyan-glow: #c9a227;
+            --indigo-glow: #e5c158;
+            --emerald-glow: #10b981;
         }
 
         body {

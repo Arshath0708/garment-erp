@@ -1,8 +1,16 @@
 @php
     $crumbs = \App\Support\Breadcrumbs::trail();
 @endphp
-<nav class="app-header navbar navbar-expand bg-body shadow-sm">
+<nav class="app-header navbar navbar-expand bg-body">
     <div class="container-fluid">
+        <ul class="navbar-nav align-items-center me-3">
+            <li class="nav-item">
+                <a class="nav-link me-2" data-lte-toggle="sidebar" href="#" role="button">
+                    <i class="bi bi-list fs-5"></i>
+                </a>
+            </li>
+        </ul>
+
         <ul class="navbar-nav align-items-center flex-grow-1 min-w-0">
             <li class="nav-item flex-grow-1 min-w-0">
                 <nav class="erp-breadcrumb" aria-label="Breadcrumb">

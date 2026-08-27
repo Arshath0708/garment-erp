@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 height: 240,
                 background: 'transparent'
             },
-            colors: ['#3b82f6', '#f59e0b', '#8b5cf6', '#10b981'],
+            colors: ['#3b82f6', '#f59e0b', '#c9a227', '#10b981'],
             stroke: { show: false },
             legend: {
                 position: 'bottom',
