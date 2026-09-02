@@ -253,6 +253,9 @@
         @error('images.*')
             <div class="invalid-feedback d-block">{{ $message }}</div>
         @enderror
+        @error('keep_images.*')
+            <div class="invalid-feedback d-block">{{ $message }}</div>
+        @enderror
     </div>
 </x-ui.form-section>
 
