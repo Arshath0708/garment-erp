@@ -217,11 +217,13 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label small">Cost Price / Unit (₹)</label>
-                            <input type="number" step="0.01" min="0" class="form-control form-control-sm js-field" data-field="cost_price" value="{{ $iCostPrice }}">
-                            <div class="form-text">Internal — feeds Purchase Order</div>
-                        </div>
+                        @if(auth()->user()?->hasRole('Super Admin'))
+                            <div class="col-md-3">
+                                <label class="form-label small">Cost Price / Unit (₹)</label>
+                                <input type="number" step="0.01" min="0" class="form-control form-control-sm js-field" data-field="cost_price" value="{{ $iCostPrice }}">
+                                <div class="form-text">Internal — feeds Purchase Order</div>
+                            </div>
+                        @endif
                         <div class="col-md-6">
                             <label class="form-label small">Item Remarks</label>
                             <input type="text" class="form-control form-control-sm js-field" data-field="remarks" maxlength="500" value="{{ $iRemarks }}">

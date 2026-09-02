@@ -43,14 +43,12 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Style #</th>
+                        <th>Style # (System)</th>
+                        <th>Buyer Style No.</th>
+                        <th>Factory Style No.</th>
                         <th>Style Name</th>
                         <th>Buyer</th>
                         <th>Category</th>
-                        <th>Season</th>
-                        <th>Fabric / Composition</th>
-                        <th>Colorway</th>
-                        <th>Target Qty</th>
                         <th>Status</th>
                         <th class="text-end">Actions</th>
                     </tr>
@@ -63,6 +61,8 @@
                                     {{ $style->style_number }}
                                 </a>
                             </td>
+                            <td><span class="badge bg-light text-dark border">{{ $style->buyer_style_no ?: '—' }}</span></td>
+                            <td><span class="badge bg-light text-dark border">{{ $style->factory_style_no ?: '—' }}</span></td>
                             <td>{{ $style->name }}</td>
                             <td>{{ $style->buyer ? $style->buyer->company_name : '—' }}</td>
                             <td>
@@ -72,10 +72,6 @@
                                     —
                                 @endif
                             </td>
-                            <td>{{ $style->season ?: '—' }}</td>
-                            <td>{{ $style->fabric ?: '—' }}</td>
-                            <td><span class="badge bg-secondary">{{ $style->color ?: 'Standard' }}</span></td>
-                            <td class="fw-bold">{{ number_format($style->target_qty) }} pcs</td>
                             <td>
                                 <span class="badge bg-success">{{ $style->status }}</span>
                             </td>

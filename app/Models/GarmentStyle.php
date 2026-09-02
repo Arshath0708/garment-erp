@@ -13,6 +13,8 @@ class GarmentStyle extends Model
 
     protected $fillable = [
         'style_number',
+        'buyer_style_no',
+        'factory_style_no',
         'name',
         'buyer_id',
         'category_id',
@@ -46,5 +48,10 @@ class GarmentStyle extends Model
     public function materials(): HasMany
     {
         return $this->hasMany(GarmentStyleMaterial::class)->orderBy('sort_order');
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(GarmentStyleComment::class)->orderByDesc('id');
     }
 }

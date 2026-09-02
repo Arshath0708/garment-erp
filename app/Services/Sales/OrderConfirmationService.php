@@ -264,11 +264,16 @@ class OrderConfirmationService
      */
     private function syncItems(OrderConfirmation $oc, array $items): void
     {
+        $existingCosts = $oc->items()->pluck('cost_price', 'sort_order')->toArray();
         $oc->items()->whereNull('purchase_order_id')->delete();
 
         $startIndex = $oc->items()->count();
 
         foreach (array_values($items) as $offset => $itemData) {
+            $costPrice = array_key_exists('cost_price', $itemData) && $itemData['cost_price'] !== null
+                ? $itemData['cost_price']
+                : ($existingCosts[$startIndex + $offset] ?? null);
+
             $item = $oc->items()->create([
                 'sort_order'    => $startIndex + $offset,
                 'design_no'     => $itemData['design_no'] ?? null,
@@ -278,7 +283,7 @@ class OrderConfirmationService
                 'unit'          => $itemData['unit'] ?? null,
                 'fob_value_id'  => $itemData['fob_value_id'] ?? null,
                 'price'         => $itemData['price'] ?? null,
-                'cost_price'    => $itemData['cost_price'] ?? null,
+                'cost_price'    => $costPrice,
                 'remarks'       => $itemData['remarks'] ?? null,
                 'custom_values' => array_filter((array) ($itemData['custom'] ?? []), fn ($v) => filled($v)) ?: null,
             ]);

@@ -46,19 +46,21 @@ class GarmentStyleController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'style_number' => ['required', 'string', 'max:50', 'unique:garment_styles,style_number'],
-            'name'         => ['required', 'string', 'max:255'],
-            'buyer_id'     => ['nullable', 'exists:buyers,id'],
-            'category_id'  => ['nullable', 'exists:categories,id'],
-            'season'       => ['nullable', 'string', 'max:100'],
-            'color'        => ['nullable', 'string', 'max:100'],
-            'design'       => ['nullable', 'string', 'max:255'],
-            'fabric'       => ['nullable', 'string', 'max:255'],
-            'sizes'        => ['nullable', 'string', 'max:255'],
-            'target_qty'   => ['required', 'integer', 'min:0'],
-            'tech_specs'   => ['nullable', 'string'],
-            'status'       => ['required', 'string'],
-            'logo'         => ['nullable', 'image', 'max:2048'],
+            'style_number'     => ['required', 'string', 'max:50', 'unique:garment_styles,style_number'],
+            'buyer_style_no'   => ['nullable', 'string', 'max:100'],
+            'factory_style_no' => ['nullable', 'string', 'max:100'],
+            'name'             => ['required', 'string', 'max:255'],
+            'buyer_id'         => ['nullable', 'exists:buyers,id'],
+            'category_id'      => ['nullable', 'exists:categories,id'],
+            'season'           => ['nullable', 'string', 'max:100'],
+            'color'            => ['nullable', 'string', 'max:100'],
+            'design'           => ['nullable', 'string', 'max:255'],
+            'fabric'           => ['nullable', 'string', 'max:255'],
+            'sizes'            => ['nullable', 'string', 'max:255'],
+            'target_qty'       => ['required', 'integer', 'min:0'],
+            'tech_specs'       => ['nullable', 'string'],
+            'status'           => ['required', 'string'],
+            'logo'             => ['nullable', 'image', 'max:2048'],
             'materials'                => ['nullable', 'array'],
             'materials.*.product_id'   => ['nullable', 'exists:products,id'],
             'materials.*.qty_per_pc'   => ['nullable', 'numeric', 'min:0'],
@@ -83,7 +85,7 @@ class GarmentStyleController extends Controller
 
     public function show(GarmentStyle $style): View
     {
-        $style->load(['buyer', 'category', 'productionOrders', 'materials.product']);
+        $style->load(['buyer', 'category', 'productionOrders', 'materials.product', 'comments.user']);
 
         return view('masters.styles.show', compact('style'));
     }
@@ -101,19 +103,21 @@ class GarmentStyleController extends Controller
     public function update(Request $request, GarmentStyle $style): RedirectResponse
     {
         $validated = $request->validate([
-            'style_number' => ['required', 'string', 'max:50', Rule::unique('garment_styles', 'style_number')->ignore($style->id)],
-            'name'         => ['required', 'string', 'max:255'],
-            'buyer_id'     => ['nullable', 'exists:buyers,id'],
-            'category_id'  => ['nullable', 'exists:categories,id'],
-            'season'       => ['nullable', 'string', 'max:100'],
-            'color'        => ['nullable', 'string', 'max:100'],
-            'design'       => ['nullable', 'string', 'max:255'],
-            'fabric'       => ['nullable', 'string', 'max:255'],
-            'sizes'        => ['nullable', 'string', 'max:255'],
-            'target_qty'   => ['required', 'integer', 'min:0'],
-            'tech_specs'   => ['nullable', 'string'],
-            'status'       => ['required', 'string'],
-            'logo'         => ['nullable', 'image', 'max:2048'],
+            'style_number'     => ['required', 'string', 'max:50', Rule::unique('garment_styles', 'style_number')->ignore($style->id)],
+            'buyer_style_no'   => ['nullable', 'string', 'max:100'],
+            'factory_style_no' => ['nullable', 'string', 'max:100'],
+            'name'             => ['required', 'string', 'max:255'],
+            'buyer_id'         => ['nullable', 'exists:buyers,id'],
+            'category_id'      => ['nullable', 'exists:categories,id'],
+            'season'           => ['nullable', 'string', 'max:100'],
+            'color'            => ['nullable', 'string', 'max:100'],
+            'design'           => ['nullable', 'string', 'max:255'],
+            'fabric'           => ['nullable', 'string', 'max:255'],
+            'sizes'            => ['nullable', 'string', 'max:255'],
+            'target_qty'       => ['required', 'integer', 'min:0'],
+            'tech_specs'       => ['nullable', 'string'],
+            'status'           => ['required', 'string'],
+            'logo'             => ['nullable', 'image', 'max:2048'],
             'materials'                => ['nullable', 'array'],
             'materials.*.product_id'   => ['nullable', 'exists:products,id'],
             'materials.*.qty_per_pc'   => ['nullable', 'numeric', 'min:0'],
@@ -134,6 +138,21 @@ class GarmentStyleController extends Controller
         $this->syncMaterials($style, $materials);
 
         return redirect()->route('masters.styles.index')->with('success', 'Garment Style updated successfully!');
+    }
+
+    public function storeComment(Request $request, GarmentStyle $style): RedirectResponse
+    {
+        $validated = $request->validate([
+            'comment' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $style->comments()->create([
+            'user_id'   => auth()->id(),
+            'user_name' => auth()->user()?->name ?? 'System User',
+            'comment'   => $validated['comment'],
+        ]);
+
+        return redirect()->route('masters.styles.show', $style->id)->with('success', 'Style comment added successfully!');
     }
 
     public function destroy(GarmentStyle $style): RedirectResponse

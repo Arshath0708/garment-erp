@@ -143,8 +143,15 @@
                         @foreach($carton->lines as $lineIndex => $line)
                             <tr>
                                 <td>{{ $lineIndex === 0 ? ($document->marks_and_numbers ?: '—') : '' }}</td>
-                                <td>{{ $lineIndex === 0 ? $carton->carton_no : '' }}</td>
-                                <td>{{ $line->description }}</td>
+                                <td>
+                                    @php
+                                        $mStyle = \App\Models\GarmentStyle::where('style_number', $line->design_no ?? '')->orWhere('design', $line->design_no ?? '')->first();
+                                    @endphp
+                                    {{ $line->description }}
+                                    @if($mStyle?->buyer_style_no)
+                                        <br><small style="color:#0f172a; font-weight:bold;">[Buyer Style No: {{ $mStyle->buyer_style_no }}]</small>
+                                    @endif
+                                </td>
                                 <td class="text-center">{{ $line->qty }} {{ $line->unit }}</td>
                                 <td class="text-center">{{ $lineIndex === 0 && $carton->net_weight !== null ? number_format((float) $carton->net_weight, 2) : '' }}</td>
                             </tr>

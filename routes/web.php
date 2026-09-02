@@ -76,6 +76,7 @@ Route::middleware('auth')->group(function () {
             ->name('categories.toggle-status');
         Route::resource('categories', CategoryController::class);
         Route::get('bom', [\App\Http\Controllers\Masters\BOMController::class, 'index'])->name('bom.index');
+        Route::post('styles/{style}/comments', [GarmentStyleController::class, 'storeComment'])->name('styles.comments.store');
         Route::resource('styles', GarmentStyleController::class);
 
 

@@ -27,7 +27,7 @@ class ManufacturingController extends Controller
     public function index(Request $request): View
     {
         $orders = ProductionOrder::query()
-            ->with(['garmentStyle', 'buyer', 'orderConfirmation', 'jobber'])
+            ->with(['garmentStyle.comments', 'buyer', 'orderConfirmation', 'jobber'])
             ->orderByDesc('id')
             ->get();
 
@@ -78,7 +78,7 @@ class ManufacturingController extends Controller
 
         $salesOrders = OrderConfirmation::query()->orderByDesc('id')->get();
         $jobbers = Supplier::query()->ofParty('jobber')->orderBy('company_name')->get();
-        $order->load(['garmentStyle', 'buyer', 'orderConfirmation', 'jobber', 'materials.product']);
+        $order->load(['garmentStyle.comments', 'buyer', 'orderConfirmation', 'jobber', 'materials.product']);
         $planRows = $this->materials->preview($order->garmentStyle, (int) $order->total_qty, $order);
 
         return view('manufacturing.edit', compact('order', 'styles', 'salesOrders', 'jobbers', 'planRows'));

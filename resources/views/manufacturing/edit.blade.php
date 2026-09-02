@@ -17,6 +17,39 @@
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
+    @if($order->garmentStyle)
+        <div class="card shadow-sm border-0 mb-4 bg-body-tertiary">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <span class="badge bg-dark me-2">Factory Style No: {{ $order->garmentStyle->factory_style_no ?: 'Not set' }}</span>
+                        <span class="badge bg-outline-secondary me-2">Buyer Style No: {{ $order->garmentStyle->buyer_style_no ?: 'Not set' }}</span>
+                        <strong>Style Code: {{ $order->garmentStyle->style_number }} — {{ $order->garmentStyle->name }}</strong>
+                    </div>
+                    <a href="{{ route('masters.styles.show', $order->garmentStyle->id) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Open Tech Pack
+                    </a>
+                </div>
+
+                @if($order->garmentStyle->comments->isNotEmpty())
+                    <div class="p-3 bg-white rounded border">
+                        <div class="fw-bold text-primary mb-2">
+                            <i class="bi bi-chat-left-text-fill me-1 text-warning"></i> Pre-Production Style &amp; Tech Pack Instructions:
+                        </div>
+                        <div class="vstack gap-2">
+                            @foreach($order->garmentStyle->comments as $c)
+                                <div class="p-2 bg-body-tertiary rounded small border-start border-3 border-warning">
+                                    <div class="d-flex justify-content-between text-body-secondary mb-1">
+                                        <strong>{{ $c->user_name }}</strong>
+                                        <small>{{ $c->created_at->format('Y-m-d H:i') }}</small>
+                                    </div>
+                                    <div class="text-body" style="white-space: pre-line;">{{ $c->comment }}</div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </div>
         </div>
     @endif
 
