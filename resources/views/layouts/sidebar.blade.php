@@ -45,6 +45,7 @@
                 <li class="nav-item" data-nav-label="item master trims fabric"><a href="{{ route('masters.products.index') }}" class="nav-link {{ $active('masters.products.*') }}"><i class="nav-icon bi bi-box-seam"></i><p>Item Master (Trims/Fabric)</p></a></li>
                 <li class="nav-item" data-nav-label="suppliers"><a href="{{ route('masters.suppliers.index') }}" class="nav-link {{ $active('masters.suppliers.*') }}"><i class="nav-icon bi bi-truck"></i><p>Suppliers Master</p></a></li>
                 <li class="nav-item" data-nav-label="jobbers job worker"><a href="{{ route('masters.jobbers.index') }}" class="nav-link {{ $active('masters.jobbers.*') }}"><i class="nav-icon bi bi-building-gear"></i><p>Job Worker / Jobbers</p></a></li>
+                <li class="nav-item" data-nav-label="fob values"><a href="{{ route('masters.fob-values.index') }}" class="nav-link {{ $active('masters.fob-values.*') }}"><i class="nav-icon bi bi-currency-dollar"></i><p>FOB Values</p></a></li>
 
                 <li class="nav-header">Sales &amp; Orders</li>
                 <li class="nav-item" data-nav-label="enquiry quotations"><a href="{{ route('sales.inquiries.index') }}" class="nav-link {{ $active('sales.inquiries.*') }}"><i class="nav-icon bi bi-chat-quote"></i><p>Enquiry &amp; Quotations</p></a></li>
