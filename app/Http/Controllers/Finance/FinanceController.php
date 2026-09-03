@@ -21,16 +21,6 @@ class FinanceController extends Controller
         return view('finance.purchase-bills.index', compact('rows'));
     }
 
-    public function debitNotes(): View
-    {
-        $purchaseOrders = PurchaseOrder::query()
-            ->with(['supplier:id,company_name', 'items:id,purchase_order_id,amount'])
-            ->latest('id')
-            ->paginate(20);
-
-        return view('finance.debit-notes.index', compact('purchaseOrders'));
-    }
-
     public function supplierPayments(): View
     {
         $purchaseOrders = PurchaseOrder::query()

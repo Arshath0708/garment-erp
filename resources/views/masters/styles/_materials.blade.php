@@ -5,9 +5,11 @@
         'product_id' => $m->product_id,
         'qty_per_pc' => $m->qty_per_pc,
         'unit' => $m->unit,
-    ])->all() ?? [['product_id' => '', 'qty_per_pc' => '', 'unit' => '']]);
+        'size_from' => $m->size_from,
+        'size_to' => $m->size_to,
+    ])->all() ?? [['product_id' => '', 'qty_per_pc' => '', 'unit' => '', 'size_from' => '', 'size_to' => '']]);
     if ($rows === []) {
-        $rows = [['product_id' => '', 'qty_per_pc' => '', 'unit' => '']];
+        $rows = [['product_id' => '', 'qty_per_pc' => '', 'unit' => '', 'size_from' => '', 'size_to' => '']];
     }
 @endphp
 
@@ -15,7 +17,7 @@
     <div class="d-flex justify-content-between align-items-center mb-2">
         <div>
             <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-box-seam me-1"></i> Fabric &amp; accessories BOM</h6>
-            <p class="small text-body-secondary mb-0">Same style on a new order will show this stock first. Qty is per garment.</p>
+            <p class="small text-body-secondary mb-0">Qty is per garment. For zippers/buttons that change by size, set From–To (S–M vs L–XL).</p>
         </div>
         <button type="button" class="btn btn-sm btn-outline-primary" id="add-material-row">Add material</button>
     </div>
@@ -26,6 +28,8 @@
                     <th>Item (fabric / accessory)</th>
                     <th style="width:8rem">Qty / pc</th>
                     <th style="width:7rem">Unit</th>
+                    <th style="width:6rem">Size from</th>
+                    <th style="width:6rem">Size to</th>
                     <th style="width:7rem">In stock</th>
                     <th style="width:3rem"></th>
                 </tr>
@@ -49,6 +53,22 @@
                         </td>
                         <td><input type="number" step="0.0001" min="0" name="materials[{{ $i }}][qty_per_pc]" class="form-control form-control-sm" value="{{ $row['qty_per_pc'] ?? '' }}"></td>
                         <td><input type="text" name="materials[{{ $i }}][unit]" class="form-control form-control-sm js-material-unit" value="{{ $row['unit'] ?? '' }}"></td>
+                        <td>
+                            <select name="materials[{{ $i }}][size_from]" class="form-select form-select-sm">
+                                <option value="">All</option>
+                                @foreach(\App\Models\ProductionOrder::SIZES as $size)
+                                    <option value="{{ $size }}" @selected(($row['size_from'] ?? '') === $size)>{{ $size }}</option>
+                                @endforeach
+                            </select>
+                        </td>
+                        <td>
+                            <select name="materials[{{ $i }}][size_to]" class="form-select form-select-sm">
+                                <option value="">All</option>
+                                @foreach(\App\Models\ProductionOrder::SIZES as $size)
+                                    <option value="{{ $size }}" @selected(($row['size_to'] ?? '') === $size)>{{ $size }}</option>
+                                @endforeach
+                            </select>
+                        </td>
                         <td class="small text-body-secondary js-material-stock">
                             @php $p = $products->firstWhere('id', (int) $pid); @endphp
                             {{ $p ? number_format((float) $p->qty_on_hand, 3) : '—' }}
@@ -85,7 +105,7 @@
             tbody.insertAdjacentHTML('beforeend', html);
             var row = tbody.querySelector('tr:last-child');
             row.querySelectorAll('input').forEach(function (el) { el.value = ''; });
-            row.querySelector('select').selectedIndex = 0;
+            row.querySelectorAll('select').forEach(function (el) { el.selectedIndex = 0; });
             row.querySelector('.js-material-stock').textContent = '—';
             bindRow(row);
         });

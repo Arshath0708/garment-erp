@@ -8,6 +8,7 @@ use App\Models\Currency;
 use App\Models\DocumentFormat;
 use App\Models\InwardEntry;
 use App\Models\OrderConfirmation;
+use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Supplier;
@@ -449,5 +450,65 @@ class InwardEntryTest extends TestCase
             ]);
 
         $response->assertSessionHasErrors('items.0.rejected_qty');
+    }
+
+    public function test_qc_approve_does_not_increment_stock_until_stores_receive(): void
+    {
+        $category = new Category(['name' => 'Fabric', 'status' => 'active']);
+        $category->code = 'FAB-INW';
+        $category->save();
+
+        $product = Product::create([
+            'category_id'     => $category->id,
+            'item_group_code' => 'INW'.substr(uniqid(), -6),
+            'name'            => 'Inward Cotton',
+            'status'          => 'active',
+            'item_kind'       => 'fabric',
+            'qty_on_hand'     => 10,
+            'unit_po'         => 'kg',
+        ]);
+
+        $poItem = $this->po->items->first();
+        $inward = new InwardEntry([
+            'financial_year'    => '26-27',
+            'inward_date'       => now()->toDateString(),
+            'purchase_order_id' => $this->po->id,
+            'supplier_id'       => $this->supplier->id,
+            'status'            => 'pending',
+        ]);
+        $inward->inward_no = 'GT/INW/010/26-27';
+        $inward->save();
+
+        $inwardItem = $inward->items()->create([
+            'purchase_order_item_id' => $poItem->id,
+            'product_id'             => $product->id,
+            'ordered_qty'            => 100,
+            'received_qty'           => 20,
+            'passed_qty'             => 20,
+            'rejected_qty'           => 0,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->post(route('procurement.inward-entries.approve', $inward), [
+                'status' => 'approved',
+                'items'  => [
+                    $inwardItem->id => [
+                        'passed_qty'   => 18,
+                        'rejected_qty' => 2,
+                    ],
+                ],
+            ])
+            ->assertRedirect();
+
+        $this->assertEquals('approved', $inward->fresh()->status);
+        $this->assertNull($inward->fresh()->stores_received_at);
+        $this->assertEquals('10.000', (string) $product->fresh()->qty_on_hand);
+
+        $this->actingAs($this->admin)
+            ->post(route('procurement.inward-entries.stores-receive', $inward))
+            ->assertRedirect(route('procurement.inward-entries.show', $inward));
+
+        $this->assertNotNull($inward->fresh()->stores_received_at);
+        $this->assertEquals('28.000', (string) $product->fresh()->qty_on_hand);
     }
 }

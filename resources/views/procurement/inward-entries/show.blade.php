@@ -239,6 +239,44 @@
             </div>
         </div>
 
+        @if($inwardEntry->status === 'approved')
+            <div class="card border-primary mb-4">
+                <div class="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="bi bi-box-arrow-in-down me-2"></i>Stores receive
+                    </h6>
+                    @if($inwardEntry->isStoresReceived())
+                        <span class="badge text-bg-success"><i class="bi bi-check-circle me-1"></i>In stock</span>
+                    @else
+                        <span class="badge text-bg-info">Awaiting stores</span>
+                    @endif
+                </div>
+                <div class="card-body">
+                    @if($inwardEntry->isStoresReceived())
+                        <p class="mb-0 small text-body-secondary">
+                            Received into stock
+                            {{ $inwardEntry->stores_received_at?->format('d M Y, H:i') }}
+                            @if($inwardEntry->storesReceiver)
+                                by {{ $inwardEntry->storesReceiver->name }}
+                            @endif
+                        </p>
+                    @else
+                        <p class="small text-body-secondary">QC has passed. Stores posts passed qty onto item stock. This is a separate step from inspection.</p>
+                        @can('inward-entry.edit')
+                            <form action="{{ route('procurement.inward-entries.stores-receive', $inwardEntry) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-box-seam me-1"></i> Receive into stock
+                                </button>
+                            </form>
+                        @else
+                            <p class="mb-0 small text-body-secondary">Requires <code>inward-entry.edit</code>.</p>
+                        @endcan
+                    @endif
+                </div>
+            </div>
+        @endif
+
         <h6 class="fw-semibold mb-2">Module Connections</h6>
         <div class="d-flex flex-wrap gap-2 mb-4">
             <span class="badge text-bg-light border fw-normal">PO Module — status updated to {{ $inwardEntry->purchaseOrder?->statusLabel() }}</span>

@@ -22,6 +22,11 @@
                     <i class="bi bi-pencil me-1"></i> Edit
                 </a>
             @endcan
+            @foreach($inquiry->orderConfirmations as $oc)
+                <a href="{{ route('sales.order-confirmations.show', $oc) }}" class="btn btn-sm btn-outline-success">
+                    OC {{ $oc->oc_num }}
+                </a>
+            @endforeach
             <a href="{{ route('sales.inquiries.index') }}" class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-arrow-left me-1"></i> Back
             </a>

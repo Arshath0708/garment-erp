@@ -149,7 +149,11 @@ class OrderConfirmationController extends Controller implements HasMiddleware
             return back()->with('warning', 'Select at least one item to raise a PO.');
         }
 
-        $purchaseOrders = $this->confirmations->raisePurchaseOrders($orderConfirmation, $itemIds);
+        try {
+            $purchaseOrders = $this->confirmations->raisePurchaseOrders($orderConfirmation, $itemIds);
+        } catch (RuntimeException $e) {
+            return back()->with('warning', $e->getMessage());
+        }
 
         if ($purchaseOrders->isEmpty()) {
             return back()->with('warning', 'Nothing to raise — the selected items have no supplier set, or are already on a PO.');

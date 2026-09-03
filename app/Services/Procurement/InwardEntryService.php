@@ -87,7 +87,6 @@ class InwardEntryService
     {
         return DB::transaction(function () use ($inward, $qcData, $userId) {
             $status = $qcData['status'] ?? 'approved';
-            $alreadyStocked = $inward->status === 'approved';
 
             $inward->update([
                 'status'          => $status,
@@ -117,18 +116,39 @@ class InwardEntryService
                 $this->updatePurchaseOrderStatusAndTimeline($po, $inward);
             }
 
-            if ($status === 'approved' && ! $alreadyStocked) {
-                $inward->load('items');
-                foreach ($inward->items as $line) {
-                    $qty = (float) ($line->passed_qty ?? $line->received_qty ?? 0);
-                    if ($line->product_id && $qty > 0) {
-                        Product::query()->whereKey($line->product_id)->increment('qty_on_hand', $qty);
-                    }
-                }
+            return $inward->refresh();
+        });
+    }
 
-                app(\App\Services\Manufacturing\WorkOrderService::class)
-                    ->markFabricInwardForOc($po?->order_confirmation_id);
+    /**
+     * Stores takes QC-passed qty into stock. QC approval itself must not increment qty.
+     */
+    public function receiveAtStore(InwardEntry $inward, int $userId): InwardEntry
+    {
+        return DB::transaction(function () use ($inward, $userId) {
+            if ($inward->status !== 'approved') {
+                throw new \RuntimeException('QC must pass before stores can take this inward into stock.');
             }
+
+            if ($inward->isStoresReceived()) {
+                throw new \RuntimeException('This inward is already in stock.');
+            }
+
+            $inward->load('items');
+            foreach ($inward->items as $line) {
+                $qty = (float) ($line->passed_qty ?? $line->received_qty ?? 0);
+                if ($line->product_id && $qty > 0) {
+                    Product::query()->whereKey($line->product_id)->increment('qty_on_hand', $qty);
+                }
+            }
+
+            $inward->update([
+                'stores_received_at' => now(),
+                'stores_received_by' => $userId,
+            ]);
+
+            $ocId = $inward->purchaseOrder()->value('order_confirmation_id');
+            app(\App\Services\Manufacturing\WorkOrderService::class)->markFabricInwardForOc($ocId ? (int) $ocId : null);
 
             return $inward->refresh();
         });

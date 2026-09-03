@@ -675,6 +675,9 @@
     @push('scripts')
     <script>
     document.addEventListener('DOMContentLoaded', function () {
+        if (new URLSearchParams(window.location.search).get('tab') === 'generate') {
+            document.querySelector('[data-bs-target="#tab-generate"]')?.click();
+        }
         document.querySelectorAll('.js-checklist-form').forEach(function (form) {
             const btn = form.querySelector('.js-ocr-extract');
             if (! btn) return;

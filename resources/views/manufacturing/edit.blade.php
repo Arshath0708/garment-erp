@@ -169,6 +169,11 @@
                         <a href="{{ route('manufacturing.job-work-challan', $order) }}" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-file-earmark-pdf me-1"></i> Job Work Delivery Challan
                         </a>
+                        @can('job-work.create')
+                            <a href="{{ route('job-work.create', ['type' => 'issue', 'production_order_id' => $order->id]) }}" class="btn btn-sm btn-outline-secondary">
+                                Issue / Receive
+                            </a>
+                        @endcan
                     </div>
                     @include('manufacturing._size_matrix', ['order' => $order])
                 </div>
@@ -185,6 +190,81 @@
                     <button type="submit" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i> Update Production Order</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <h6 class="fw-bold text-primary mb-2"><i class="bi bi-clipboard-check me-1"></i> In-production QC</h6>
+            <p class="small text-body-secondary">Record a check at any stage. Fail + Hold stops the work order until merchandising releases it again.</p>
+            <form action="{{ route('manufacturing.qc-check', $order) }}" method="POST" class="row g-2 align-items-end mb-3">
+                @csrf
+                <div class="col-md-3">
+                    <label class="form-label small">Stage</label>
+                    <select name="stage" class="form-select form-select-sm" required>
+                        @foreach(\App\Models\ProductionOrder::STAGE_KEYS as $key => $meta)
+                            <option value="{{ $key }}" @selected($order->current_stage === $meta['label'] || $order->current_stage === $key)>{{ $meta['label'] }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Checked</label>
+                    <input type="number" min="1" name="checked_qty" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Pass</label>
+                    <input type="number" min="0" name="passed_qty" class="form-control form-control-sm" value="0" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Fail</label>
+                    <input type="number" min="0" name="failed_qty" class="form-control form-control-sm" value="0" required>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check mt-4">
+                        <input type="checkbox" name="hold_work_order" value="1" class="form-check-input" id="hold-wo">
+                        <label class="form-check-label small" for="hold-wo">Hold work order if fail</label>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Defect code / CAPA note"></textarea>
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-sm btn-primary">Save QC check</button>
+                </div>
+            </form>
+            @if($order->qcChecks->isNotEmpty())
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>When</th>
+                                <th>Stage</th>
+                                <th class="text-end">Checked</th>
+                                <th class="text-end">Pass</th>
+                                <th class="text-end">Fail</th>
+                                <th>Result</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($order->qcChecks as $check)
+                                <tr>
+                                    <td class="small">{{ $check->created_at?->format('d M H:i') }} @if($check->creator) · {{ $check->creator->name }} @endif</td>
+                                    <td>{{ $check->stageLabel() }}</td>
+                                    <td class="text-end">{{ $check->checked_qty }}</td>
+                                    <td class="text-end">{{ $check->passed_qty }}</td>
+                                    <td class="text-end">{{ $check->failed_qty }}</td>
+                                    <td>
+                                        <span class="badge text-bg-{{ $check->isFail() ? 'danger' : 'success' }}">{{ $check->isFail() ? 'Fail' : 'Pass' }}</span>
+                                        @if($check->held_work_order)<span class="badge text-bg-warning">WO Hold</span>@endif
+                                    </td>
+                                    <td class="small">{{ $check->notes ?: '—' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
         </div>
     </div>
 </x-app-layout>

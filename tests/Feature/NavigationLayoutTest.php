@@ -27,7 +27,11 @@ class NavigationLayoutTest extends TestCase
             ->assertSee('Fabric &amp; Trims PO', false)
             ->assertSee('FOB Values', false)
             ->assertSee('Work Orders', false)
-            ->assertSee('Time &amp; Action', false);
+            ->assertSee('Time &amp; Action', false)
+            ->assertSee('Style Costing', false)
+            ->assertSee('Job Work Issue', false)
+            ->assertSee('Line efficiency', false)
+            ->assertSee('Find order, style, PO', false);
     }
 
     public function test_inward_index_breadcrumb_is_home_module_screen(): void
@@ -40,6 +44,18 @@ class NavigationLayoutTest extends TestCase
         $trail = collect(Breadcrumbs::trail())->pluck('label')->all();
 
         $this->assertSame(['Home', 'Inventory & Job Work', 'Goods Inward'], $trail);
+    }
+
+    public function test_job_work_index_breadcrumb_is_home_module_screen(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('job-work.index'));
+
+        $trail = collect(Breadcrumbs::trail())->pluck('label')->all();
+
+        $this->assertSame(['Home', 'Inventory & Job Work', 'Job Work Issue / Receive'], $trail);
     }
 
     public function test_style_edit_adds_edit_action_crumb(): void

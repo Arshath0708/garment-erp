@@ -101,4 +101,96 @@ class PurchaseOrderStoreTest extends TestCase
         $this->assertSame('draft', $po->status);
         $this->assertSame(4578, (int) $po->items()->first()?->qty);
     }
+
+    public function test_raised_po_is_blocked_until_matching_style_costing_is_approved(): void
+    {
+        $this->artisan('permission:sync --roles');
+
+        $admin = User::factory()->create();
+        $admin->assignRole(Role::firstOrCreate(['name' => 'Super Admin']));
+
+        $supplier = Supplier::create([
+            'display_code' => 'SPU2',
+            'company_name' => 'Fabric Co',
+            'party_type'   => 'supplier',
+            'status'       => 'active',
+        ]);
+
+        $buyer = Buyer::forceCreate([
+            'display_code' => 'BUY02',
+            'company_name' => 'Buyer Two',
+            'status'       => 'active',
+        ]);
+
+        $category = new Category(['name' => 'tshirt', 'status' => 'active']);
+        $category->code = 'CAT002';
+        $category->save();
+
+        $format = DocumentFormat::create(['name' => 'Standard', 'status' => 'active']);
+        $currency = new Currency(['name' => 'INR', 'symbol' => '₹', 'status' => 'active']);
+        $currency->iso_code = 'INR';
+        $currency->save();
+
+        $oc = new OrderConfirmation([
+            'buyer_id'           => $buyer->id,
+            'category_id'        => $category->id,
+            'document_format_id' => $format->id,
+            'currency_id'        => $currency->id,
+            'oc_date'            => now()->toDateString(),
+            'status'             => 'confirmed',
+        ]);
+        $oc->oc_num = 'GT/BUY02/001/'.FinancialYear::current();
+        $oc->financial_year = FinancialYear::current();
+        $oc->save();
+
+        $style = \App\Models\GarmentStyle::create([
+            'style_number' => 'ST-PO-GATE',
+            'name'         => 'Gate Tee',
+            'status'       => 'Active',
+            'target_qty'   => 100,
+        ]);
+
+        $payload = [
+            'order_confirmation_id' => $oc->id,
+            'supplier_id'           => $supplier->id,
+            'po_date'               => now()->toDateString(),
+            'dispatch_date'         => now()->toDateString(),
+            'delivery_details'      => 'Factory delivery',
+            'packing_details'       => 'Roll packing',
+            'status'                => 'raised',
+            'items'                 => [
+                [
+                    'design_no'  => $style->style_number,
+                    'product_id' => null,
+                    'unit'       => 'MTR',
+                    'cost_price' => 50,
+                    'colours'    => [
+                        [
+                            'colour' => 'White',
+                            'sizes'  => [
+                                ['size' => 'M', 'qty' => 10],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->actingAs($admin)
+            ->from(route('procurement.purchase-orders.create'))
+            ->post(route('procurement.purchase-orders.store'), $payload)
+            ->assertRedirect(route('procurement.purchase-orders.create'))
+            ->assertSessionHas('warning');
+
+        $this->assertDatabaseCount('purchase_orders', 0);
+
+        $this->approveStyleCosting($style);
+
+        $this->actingAs($admin)
+            ->post(route('procurement.purchase-orders.store'), $payload)
+            ->assertRedirect(route('procurement.purchase-orders.index'))
+            ->assertSessionHas('success');
+
+        $this->assertSame('raised', PurchaseOrder::query()->first()?->status);
+    }
 }

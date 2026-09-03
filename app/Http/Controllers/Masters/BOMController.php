@@ -12,7 +12,7 @@ class BOMController extends Controller
 {
     public function index(Request $request, MaterialPlanService $plan): View
     {
-        $styles = GarmentStyle::query()->with(['buyer', 'materials.product'])->orderByDesc('id')->paginate(15);
+        $styles = GarmentStyle::query()->with(['buyer', 'materials.product', 'costings'])->orderByDesc('id')->paginate(15);
         $selected = $styles->firstWhere('id', $request->integer('style_id')) ?? $styles->first();
         $orderQty = max(1, $request->integer('qty', (int) ($selected?->target_qty ?: 1)));
         $planRows = $selected ? $plan->preview($selected, $orderQty) : [];

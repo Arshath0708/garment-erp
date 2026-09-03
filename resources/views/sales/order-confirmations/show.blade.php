@@ -98,7 +98,9 @@
                                 <th style="width:32px" title="Raise PO"><i class="bi bi-cart-check"></i></th>
                             @endif
                             @if($canShip)
-                                <th style="width:32px" title="Raise Export Document"><i class="bi bi-box-seam"></i></th>
+                                <th style="width:32px" title="Raise Export Document">
+                                    <input type="checkbox" class="form-check-input" id="js-select-all-export" title="Select all unshipped">
+                                </th>
                             @endif
                             <th>#</th>
                             <th>Design No.</th>
@@ -135,7 +137,7 @@
                                         @if($item->isShipped())
                                             <i class="bi bi-check-circle-fill text-success" title="Already on an Export Document"></i>
                                         @else
-                                            <input type="checkbox" name="item_ids[]" value="{{ $item->id }}" class="form-check-input" form="raise-export-form">
+                                            <input type="checkbox" name="item_ids[]" value="{{ $item->id }}" class="form-check-input js-export-item" form="raise-export-form">
                                         @endif
                                     </td>
                                 @endif
@@ -217,7 +219,10 @@
                         <button type="submit" form="raise-export-form" class="btn btn-sm btn-info">
                             <i class="bi bi-box-seam me-1"></i> Raise Export Document for Selected
                         </button>
-                        <div class="form-text">Creates one Export Document with the full document checklist.</div>
+                        <button type="submit" form="raise-export-form" name="raise_all" value="1" class="btn btn-sm btn-outline-info">
+                            Raise all unshipped
+                        </button>
+                        <div class="form-text">Creates one Export Document. Invoice no. and shipment date copy from this OC.</div>
                     </div>
                 @endif
             </div>
@@ -279,4 +284,11 @@
             </dd>
         </dl>
     </x-ui.card>
+    @push('scripts')
+    <script>
+        document.getElementById('js-select-all-export')?.addEventListener('change', function () {
+            document.querySelectorAll('.js-export-item').forEach((el) => { el.checked = this.checked; });
+        });
+    </script>
+    @endpush
 </x-app-layout>

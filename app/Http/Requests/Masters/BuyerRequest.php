@@ -115,6 +115,7 @@ abstract class BuyerRequest extends FormRequest
             // Cols B, C
             'company_name'           => ['required', 'string', 'max:200'],
             'name_on_export_invoice' => ['nullable', 'string', 'max:200'],
+            'invoice_layout'         => ['nullable', Rule::in(array_keys(\App\Models\Buyer::INVOICE_LAYOUTS))],
 
             // Col D — multi-select, connected to the category master
             'category_ids'           => ['nullable', 'array'],

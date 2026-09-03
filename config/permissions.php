@@ -123,6 +123,7 @@ return [
             'agent'     => ['label' => 'Agents'],
             'fob-value' => ['label' => 'FOB Values'],
             'markup'    => ['label' => 'Markup'],
+            'style-costing' => ['label' => 'Style Costing', 'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
         ],
 
         'Sales' => [
@@ -132,6 +133,7 @@ return [
 
         'Manufacturing' => [
             'work-order' => ['label' => 'Work Orders', 'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
+            'job-work'   => ['label' => 'Job Work Issue / Receive', 'actions' => ['view', 'create', 'edit', 'delete'], 'built' => true],
         ],
 
         'Procurement' => [
@@ -223,9 +225,9 @@ return [
             'permissions' => [
                 'user.*', 'role.view', 'company-profile.*',
                 'category.*', 'po-format.*', 'product.*', 'buyer.*', 'supplier.*', 'jobber.*',
-                'agent.*', 'fob-value.*', 'markup.*',
+                'agent.*', 'fob-value.*', 'markup.*', 'style-costing.*',
                 'inquiry.*', 'order-confirmation.*',
-                'work-order.*',
+                'work-order.*', 'job-work.*',
                 'purchase-order.*', 'inward-entry.*',
                 'packing.*', 'export-document.*',
                 'purchase-bill.*', 'debit-note.*', 'payment.*', 'foreign-payment.*',
@@ -240,7 +242,8 @@ return [
                 'category.view', 'po-format.view', 'product.*', 'buyer.view',
                 'supplier.*', 'agent.view',
                 'inquiry.*', 'order-confirmation.*',
-                'work-order.*',
+                'style-costing.*',
+                'work-order.*', 'job-work.*',
                 'purchase-order.*', 'inward-entry.view',
                 'export-document.view',
                 'outstanding.view', 'report.view', 'report.export',

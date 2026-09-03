@@ -5,8 +5,11 @@ use App\Http\Controllers\Masters\BuyerController;
 use App\Http\Controllers\Masters\AgentController;
 use App\Http\Controllers\Masters\CategoryController;
 use App\Http\Controllers\Masters\GarmentStyleController;
+use App\Http\Controllers\Manufacturing\JobWorkVoucherController;
 use App\Http\Controllers\Manufacturing\ManufacturingController;
+use App\Http\Controllers\Manufacturing\ProductionLineController;
 use App\Http\Controllers\Manufacturing\WorkOrderController;
+use App\Http\Controllers\SearchController;
 
 use App\Http\Controllers\Masters\DocumentFormatController;
 use App\Http\Controllers\Masters\FobValueController;
@@ -14,12 +17,14 @@ use App\Http\Controllers\Masters\GeoController;
 use App\Http\Controllers\Masters\JobberController;
 use App\Http\Controllers\Masters\MarkupController;
 use App\Http\Controllers\Masters\ProductController;
+use App\Http\Controllers\Masters\StyleCostingController;
 use App\Http\Controllers\Masters\SupplierController;
 use App\Http\Controllers\Administration\CompanyProfileController;
 use App\Http\Controllers\Export\ExportDocumentChecklistController;
 use App\Http\Controllers\Export\ExportDocumentController;
 use App\Http\Controllers\Export\ExportDocumentOcrController;
 use App\Http\Controllers\Export\PackingController;
+use App\Http\Controllers\Finance\DebitNoteController;
 use App\Http\Controllers\Finance\FinanceController;
 use App\Http\Controllers\Procurement\InwardEntryController;
 use App\Http\Controllers\Procurement\PurchaseOrderController;
@@ -53,6 +58,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('/profile', 'destroy')->name('profile.destroy');
     });
 
+    Route::get('search', SearchController::class)->name('search');
+
     /*
     |--------------------------------------------------------------------------
     | Masters
@@ -78,6 +85,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('categories', CategoryController::class);
         Route::get('bom', [\App\Http\Controllers\Masters\BOMController::class, 'index'])->name('bom.index');
         Route::post('styles/{style}/comments', [GarmentStyleController::class, 'storeComment'])->name('styles.comments.store');
+        Route::post('styles/{style}/approve-bom', [GarmentStyleController::class, 'approveBom'])->name('styles.approve-bom');
         Route::resource('styles', GarmentStyleController::class);
 
 
@@ -229,6 +237,8 @@ Route::middleware('auth')->group(function () {
             ->name('inward-entries.po-details');
         Route::post('inward-entries/{inwardEntry}/approve', [InwardEntryController::class, 'approve'])
             ->name('inward-entries.approve');
+        Route::post('inward-entries/{inwardEntry}/stores-receive', [InwardEntryController::class, 'receiveAtStore'])
+            ->name('inward-entries.stores-receive');
         Route::resource('inward-entries', InwardEntryController::class)
             ->parameters(['inward-entries' => 'inwardEntry']);
     });
@@ -239,6 +249,12 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
+
+    Route::get('job-work', [JobWorkVoucherController::class, 'index'])->name('job-work.index');
+    Route::get('job-work/create', [JobWorkVoucherController::class, 'create'])->name('job-work.create');
+    Route::post('job-work', [JobWorkVoucherController::class, 'store'])->name('job-work.store');
+    Route::get('job-work/{jobWorkVoucher}', [JobWorkVoucherController::class, 'show'])->name('job-work.show');
+    Route::delete('job-work/{jobWorkVoucher}', [JobWorkVoucherController::class, 'destroy'])->name('job-work.destroy');
 
     Route::get('work-orders', [WorkOrderController::class, 'index'])->name('work-orders.index');
     Route::get('work-orders/create', [WorkOrderController::class, 'create'])->name('work-orders.create');
@@ -251,10 +267,23 @@ Route::middleware('auth')->group(function () {
     Route::post('work-orders/{workOrder}/release', [WorkOrderController::class, 'release'])->name('work-orders.release');
     Route::post('work-orders/{workOrder}/hold', [WorkOrderController::class, 'hold'])->name('work-orders.hold');
 
+    Route::get('style-costings', [StyleCostingController::class, 'index'])->name('style-costings.index');
+    Route::get('style-costings/create', [StyleCostingController::class, 'create'])->name('style-costings.create');
+    Route::post('style-costings', [StyleCostingController::class, 'store'])->name('style-costings.store');
+    Route::get('style-costings/{styleCosting}', [StyleCostingController::class, 'show'])->name('style-costings.show');
+    Route::get('style-costings/{styleCosting}/edit', [StyleCostingController::class, 'edit'])->name('style-costings.edit');
+    Route::put('style-costings/{styleCosting}', [StyleCostingController::class, 'update'])->name('style-costings.update');
+    Route::delete('style-costings/{styleCosting}', [StyleCostingController::class, 'destroy'])->name('style-costings.destroy');
+    Route::post('style-costings/{styleCosting}/approve', [StyleCostingController::class, 'approve'])->name('style-costings.approve');
+
+    Route::get('production-lines', [ProductionLineController::class, 'index'])->name('production-lines.index');
+    Route::post('production-lines/outputs', [ProductionLineController::class, 'storeOutput'])->name('production-lines.outputs.store');
+
     Route::get('manufacturing', [ManufacturingController::class, 'index'])->name('manufacturing.index');
     Route::get('manufacturing/create', [ManufacturingController::class, 'create'])->name('manufacturing.create');
     Route::get('manufacturing/material-plan', [ManufacturingController::class, 'materialPlan'])->name('manufacturing.material-plan');
     Route::post('manufacturing', [ManufacturingController::class, 'store'])->name('manufacturing.store');
+    Route::post('manufacturing/{order}/qc-check', [ManufacturingController::class, 'storeQcCheck'])->name('manufacturing.qc-check');
     Route::get('manufacturing/{order}', [ManufacturingController::class, 'show'])->name('manufacturing.show');
     Route::get('manufacturing/{order}/edit', [ManufacturingController::class, 'edit'])->name('manufacturing.edit');
     Route::put('manufacturing/{order}', [ManufacturingController::class, 'update'])->name('manufacturing.update');
@@ -325,9 +354,10 @@ Route::middleware('auth')->group(function () {
         Route::get('purchase-bills', [FinanceController::class, 'purchaseBills'])
             ->middleware('permission:purchase-bill.view')
             ->name('purchase-bills.index');
-        Route::get('debit-notes', [FinanceController::class, 'debitNotes'])
-            ->middleware('permission:debit-note.view')
+        Route::get('debit-notes', [DebitNoteController::class, 'index'])
             ->name('debit-notes.index');
+        Route::post('debit-notes', [DebitNoteController::class, 'store'])
+            ->name('debit-notes.store');
         Route::get('supplier-payments', [FinanceController::class, 'supplierPayments'])
             ->middleware('permission:payment.view')
             ->name('supplier-payments.index');
@@ -343,6 +373,9 @@ Route::middleware('auth')->group(function () {
         Route::get('outstanding', [ReportsController::class, 'outstanding'])
             ->middleware('permission:outstanding.view')
             ->name('outstanding.index');
+        Route::get('order-profit', [ReportsController::class, 'orderProfit'])
+            ->middleware('permission:report.view')
+            ->name('order-profit');
         Route::get('/', [ReportsController::class, 'index'])
             ->middleware('permission:report.view')
             ->name('index');

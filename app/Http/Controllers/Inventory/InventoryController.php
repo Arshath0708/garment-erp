@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\StyleStock;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -25,8 +26,22 @@ class InventoryController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $finishedGoods = StyleStock::query()
+            ->with('garmentStyle')
+            ->where('qty_on_hand', '>', 0)
+            ->orderByDesc('qty_on_hand')
+            ->get();
+
+        $lowStock = Product::query()
+            ->where('reorder_level', '>', 0)
+            ->whereColumn('qty_on_hand', '<=', 'reorder_level')
+            ->orderBy('name')
+            ->get();
+
         return view('inventory.index', [
             'items' => $items,
+            'finishedGoods' => $finishedGoods,
+            'lowStock' => $lowStock,
             'kinds' => Product::KINDS,
             'filters' => $request->only('search', 'kind'),
         ]);

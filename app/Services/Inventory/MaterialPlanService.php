@@ -25,7 +25,8 @@ class MaterialPlanService
                 continue;
             }
 
-            $required = round((float) $line->qty_per_pc * $orderQty, 3);
+            $pcs = $this->pcsForLine($line, $orderQty, $order);
+            $required = round((float) $line->qty_per_pc * $pcs, 3);
             $already = (float) ($order?->materials->firstWhere('product_id', $product->id)?->use_stock_qty ?? 0);
             $available = round((float) $product->qty_on_hand + $already, 3);
             $use = min($required, $available);
@@ -38,6 +39,8 @@ class MaterialPlanService
                 'kind_label'    => Product::KINDS[$product->item_kind] ?? $product->item_kind,
                 'unit'          => $line->unit ?: $product->unit_po,
                 'qty_per_pc'    => (float) $line->qty_per_pc,
+                'size_range'    => $line->sizeRangeLabel(),
+                'pcs'           => $pcs,
                 'required_qty'  => $required,
                 'qty_on_hand'   => $available,
                 'use_stock_qty' => $use,
@@ -72,14 +75,24 @@ class MaterialPlanService
 
             $orderQty = (int) $order->total_qty;
             $kept = [];
+            $requiredByProduct = [];
 
             foreach ($style->materials()->with('product')->orderBy('sort_order')->get() as $line) {
-                $product = Product::query()->lockForUpdate()->find($line->product_id);
+                if (! $line->product) {
+                    continue;
+                }
+                $pcs = $this->pcsForLine($line, $orderQty, $order);
+                $requiredByProduct[$line->product_id] = ($requiredByProduct[$line->product_id] ?? 0)
+                    + round((float) $line->qty_per_pc * $pcs, 3);
+            }
+
+            foreach ($requiredByProduct as $productId => $required) {
+                $product = Product::query()->lockForUpdate()->find($productId);
                 if (! $product) {
                     continue;
                 }
 
-                $required = round((float) $line->qty_per_pc * $orderQty, 3);
+                $required = round($required, 3);
                 $onHand = (float) $product->qty_on_hand;
                 $want = array_key_exists($product->id, $requested)
                     ? (float) ($requested[$product->id]['use_stock_qty'] ?? $requested[$product->id]['use_stock'] ?? 0)
@@ -133,5 +146,47 @@ class MaterialPlanService
         }
 
         $order->materials()->delete();
+    }
+
+    /**
+     * Zipper-by-size: a 5.5" zipper for S–M, a 6" for L–XL. Null range = every size.
+     */
+    private function pcsForLine($line, int $orderQty, ?ProductionOrder $order): int
+    {
+        if (! $line->size_from && ! $line->size_to) {
+            return $orderQty;
+        }
+
+        if (! $order) {
+            return $orderQty;
+        }
+
+        $sum = 0;
+        foreach ($this->sizesInRange($line->size_from, $line->size_to) as $size) {
+            $sum += $order->sizeQty('cutting', $size);
+        }
+
+        return $sum > 0 ? $sum : $orderQty;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function sizesInRange(?string $from, ?string $to): array
+    {
+        $all = ProductionOrder::SIZES;
+        $fromIdx = $from ? array_search($from, $all, true) : 0;
+        $toIdx = $to ? array_search($to, $all, true) : count($all) - 1;
+        if ($fromIdx === false) {
+            $fromIdx = 0;
+        }
+        if ($toIdx === false) {
+            $toIdx = count($all) - 1;
+        }
+        if ($fromIdx > $toIdx) {
+            [$fromIdx, $toIdx] = [$toIdx, $fromIdx];
+        }
+
+        return array_slice($all, $fromIdx, $toIdx - $fromIdx + 1);
     }
 }
