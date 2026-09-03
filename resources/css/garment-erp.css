@@ -2,26 +2,26 @@
 
 :root {
     --erp-bg: #0b0f19;
-    --erp-card-bg: rgba(18, 26, 43, 0.75);
-    --erp-card-border: rgba(255, 255, 255, 0.08);
+    --erp-card-bg: #111827;
+    --erp-card-border: rgba(255, 255, 255, 0.1);
     --erp-primary: #2563eb;
     --erp-primary-hover: #1d4ed8;
-    --erp-accent: #0284c7;
+    --erp-gold: #c9a227;
+    --erp-gold-light: #e5c158;
     --erp-success: #10b981;
     --erp-warning: #f59e0b;
     --erp-danger: #ef4444;
-    --erp-purple: #8b5cf6;
     --erp-text-main: #f8fafc;
     --erp-text-muted: #94a3b8;
 }
 
-/* Light Theme Variables */
+/* Light Theme Variables (Guru Traders Reference Standard) */
 [data-bs-theme="light"] {
-    --erp-bg: #f8fafc;
+    --erp-bg: #f5f7fa;
     --erp-card-bg: #ffffff;
-    --erp-card-border: #e2e8f0;
-    --erp-text-main: #0f172a;
-    --erp-text-muted: #475569;
+    --erp-card-border: #e9edf2;
+    --erp-text-main: #111827;
+    --erp-text-muted: #6b7280;
 }
 
 body.garment-erp-theme {
@@ -62,14 +62,14 @@ body.garment-erp-theme {
     border-bottom: 1px solid #eef1f5;
 }
 
-[data-bs-theme="light"] .app-sidebar .brand-text-title {
-    color: #111827;
+[data-bs-theme="light"] .app-sidebar .brand-text {
+    color: #111827 !important;
     font-weight: 600;
     font-size: .98rem;
 }
 
-[data-bs-theme="light"] .app-sidebar .brand-text-subtitle {
-    color: #9aa4b2;
+[data-bs-theme="light"] .app-sidebar .brand-text small {
+    color: #9aa4b2 !important;
     font-weight: 500;
     font-size: .68rem;
     text-transform: uppercase;
@@ -145,14 +145,14 @@ body.garment-erp-theme {
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-[data-bs-theme="dark"] .app-sidebar .brand-text-title {
-    color: #ffffff;
+[data-bs-theme="dark"] .app-sidebar .brand-text {
+    color: #ffffff !important;
     font-weight: 600;
     font-size: .98rem;
 }
 
-[data-bs-theme="dark"] .app-sidebar .brand-text-subtitle {
-    color: #94a3b8;
+[data-bs-theme="dark"] .app-sidebar .brand-text small {
+    color: #c9a227 !important;
     font-weight: 500;
     font-size: .68rem;
     text-transform: uppercase;
@@ -180,20 +180,20 @@ body.garment-erp-theme {
 }
 
 [data-bs-theme="dark"] .app-sidebar .sidebar-menu .nav-link .nav-icon {
-    color: #38bdf8;
+    color: #94a3b8;
 }
 
 [data-bs-theme="dark"] .app-sidebar .sidebar-menu .nav-link:hover {
     background-color: #1e293b;
-    color: #38bdf8;
+    color: #ffffff;
 }
 
 [data-bs-theme="dark"] .app-sidebar .sidebar-menu .nav-link:hover p {
-    color: #38bdf8;
+    color: #ffffff;
 }
 
 [data-bs-theme="dark"] .app-sidebar .sidebar-menu .nav-link:hover .nav-icon {
-    color: #38bdf8;
+    color: #c9a227;
 }
 
 [data-bs-theme="dark"] .app-sidebar .sidebar-menu .nav-link.active {
@@ -259,19 +259,17 @@ body.garment-erp-theme {
 .erp-badge-success { background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.25); }
 .erp-badge-warning { background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.25); }
 .erp-badge-danger { background: rgba(239, 68, 68, 0.12); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.25); }
-.erp-badge-accent { background: rgba(2, 132, 199, 0.12); color: #0284c7; border: 1px solid rgba(2, 132, 199, 0.25); }
-.erp-badge-purple { background: rgba(139, 92, 246, 0.12); color: #7c3aed; border: 1px solid rgba(139, 92, 246, 0.25); }
+.erp-badge-gold { background: rgba(201, 162, 39, 0.12); color: #c9a227; border: 1px solid rgba(201, 162, 39, 0.25); }
 
 /* Buttons */
 .btn-erp-primary {
-    background: linear-gradient(135deg, #2563eb 0%, #0284c7 100%);
+    background-color: #2563eb;
     color: #ffffff !important;
     border: none;
     font-weight: 600;
     padding: 0.6rem 1.4rem;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -279,13 +277,11 @@ body.garment-erp-theme {
 }
 
 .btn-erp-primary:hover {
-    background: linear-gradient(135deg, #1d4ed8 0%, #0369a1 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+    background-color: #1d4ed8;
 }
 
 .btn-erp-secondary {
-    background: rgba(255, 255, 255, 0.08);
+    background-color: transparent;
     color: var(--erp-text-main) !important;
     border: 1px solid var(--erp-card-border);
     font-weight: 600;
@@ -299,7 +295,7 @@ body.garment-erp-theme {
 }
 
 .btn-erp-secondary:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background-color: rgba(0, 0, 0, 0.05);
     border-color: rgba(37, 99, 235, 0.3);
 }
 

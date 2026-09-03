@@ -5,9 +5,7 @@
 <aside class="app-sidebar shadow-sm" data-enable-persistence="true">
     <div class="sidebar-brand">
         <a href="{{ route('dashboard') }}" class="brand-link">
-            <span class="brand-mark bg-primary text-white">
-                <i class="bi bi-layers-fill"></i>
-            </span>
+            <span class="brand-mark"><x-brand-logo :size="38" /></span>
             <span class="brand-text">
                 Garment ERP
                 <small>Apparel Manufacturing</small>
@@ -15,7 +13,7 @@
         </a>
         <button type="button" class="sidebar-toggle" data-lte-toggle="sidebar"
                 aria-label="Collapse sidebar" title="Collapse sidebar">
-            <i class="bi bi-arrow-left"></i>
+            <i class="bi bi-chevron-double-left"></i>
         </button>
     </div>
 

@@ -71,7 +71,7 @@
             }
             .app-sidebar .brand-text {
                 display: flex; flex-direction: column; line-height: 1.15;
-                font-weight: 600; font-size: .98rem; color: #111827;
+                font-weight: 600; font-size: .98rem; color: var(--erp-text-main, #111827);
             }
             .app-sidebar .brand-text small {
                 font-size: .68rem; font-weight: 500; color: #9aa4b2;
