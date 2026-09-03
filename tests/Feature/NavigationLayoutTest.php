@@ -24,7 +24,10 @@ class NavigationLayoutTest extends TestCase
             ->assertDontSee('sidebar-menu-toggle', false)
             ->assertDontSee('nav-arrow bi bi-chevron-right', false)
             ->assertSee('Goods Inward', false)
-            ->assertSee('Fabric &amp; Trims PO', false);
+            ->assertSee('Fabric &amp; Trims PO', false)
+            ->assertSee('FOB Values', false)
+            ->assertSee('Work Orders', false)
+            ->assertSee('Time &amp; Action', false);
     }
 
     public function test_inward_index_breadcrumb_is_home_module_screen(): void

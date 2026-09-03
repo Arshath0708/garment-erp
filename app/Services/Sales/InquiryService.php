@@ -84,9 +84,14 @@ class InquiryService
      */
     private function syncItems(Inquiry $inquiry, array $items): void
     {
+        $existingCosts = $inquiry->items->pluck('cost_price', 'sort_order')->toArray();
         $inquiry->items()->delete();
 
         foreach (array_values($items) as $index => $itemData) {
+            $costPrice = array_key_exists('cost_price', $itemData) && $itemData['cost_price'] !== null
+                ? $itemData['cost_price']
+                : ($existingCosts[$index] ?? null);
+
             $item = $inquiry->items()->create([
                 'sort_order'   => $index,
                 'design_no'    => $itemData['design_no'] ?? null,
@@ -96,7 +101,7 @@ class InquiryService
                 'unit'         => $itemData['unit'] ?? null,
                 'fob_value_id' => $itemData['fob_value_id'] ?? null,
                 'price'        => $itemData['price'] ?? null,
-                'cost_price'   => $itemData['cost_price'] ?? null,
+                'cost_price'   => $costPrice,
                 'status'       => $itemData['status'] ?? 'draft',
                 'remarks'      => $itemData['remarks'] ?? null,
                 'custom_values' => array_filter((array) ($itemData['custom'] ?? []), fn ($v) => filled($v)) ?: null,

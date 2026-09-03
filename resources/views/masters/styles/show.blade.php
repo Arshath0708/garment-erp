@@ -31,20 +31,20 @@
         <!-- Style Key Summary Cards -->
         <div class="col-md-3">
             <div class="card shadow-sm border-0 bg-body-tertiary p-3">
-                <div class="text-body-secondary small text-uppercase">Season</div>
-                <div class="fw-bold fs-6">{{ $style->season ?: 'N/A' }}</div>
+                <div class="text-body-secondary small text-uppercase">Buyer Style No.</div>
+                <div class="fw-bold fs-6 text-primary">{{ $style->buyer_style_no ?: '—' }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-body-tertiary p-3">
+                <div class="text-body-secondary small text-uppercase">Factory Style No.</div>
+                <div class="fw-bold fs-6 text-dark">{{ $style->factory_style_no ?: '—' }}</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card shadow-sm border-0 bg-body-tertiary p-3">
                 <div class="text-body-secondary small text-uppercase">Fabric & GSM</div>
                 <div class="fw-bold fs-6 text-primary">{{ $style->fabric ?: 'N/A' }}</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 bg-body-tertiary p-3">
-                <div class="text-body-secondary small text-uppercase">Colorway & Sizes</div>
-                <div class="fw-bold fs-6 text-body">{{ $style->color ?: 'N/A' }} ({{ $style->sizes ?: 'N/A' }})</div>
             </div>
         </div>
         <div class="col-md-3">
@@ -64,6 +64,41 @@
                 </div>
                 <div class="card-body">
                     <p class="mb-0 text-body-secondary" style="white-space: pre-line;">{{ $style->tech_specs ?: 'No additional technical specifications provided for this style.' }}</p>
+                </div>
+            </div>
+
+            <!-- Style / Tech Pack Comments -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-body fw-bold py-3 border-0 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-chat-left-text me-2 text-warning"></i> Style &amp; Tech Pack Comments</span>
+                    <span class="badge bg-secondary">{{ $style->comments->count() }} Comments</span>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('masters.styles.comments.store', $style) }}" method="POST" class="mb-4">
+                        @csrf
+                        <div class="mb-2">
+                            <textarea name="comment" class="form-control" rows="2" placeholder="Add a buyer instruction or tech pack comment..." required></textarea>
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-send me-1"></i> Add Comment
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="comment-history">
+                        @forelse($style->comments as $c)
+                            <div class="p-3 bg-body-tertiary rounded border mb-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="text-primary small">{{ $c->user_name }}</strong>
+                                    <small class="text-body-secondary"><i class="bi bi-clock me-1"></i>{{ $c->created_at->format('Y-m-d H:i') }}</small>
+                                </div>
+                                <div class="text-body small" style="white-space: pre-line;">{{ $c->comment }}</div>
+                            </div>
+                        @empty
+                            <p class="text-body-secondary small mb-0">No comments added to this style yet.</p>
+                        @endforelse
+                    </div>
                 </div>
             </div>
 

@@ -8,7 +8,9 @@ use App\Models\GarmentStyle;
 use App\Models\ProductionOrder;
 use App\Models\OrderConfirmation;
 use App\Models\Supplier;
+use App\Models\WorkOrder;
 use App\Services\Inventory\MaterialPlanService;
+use App\Services\Manufacturing\WorkOrderService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -20,39 +22,67 @@ use Illuminate\View\View;
 
 class ManufacturingController extends Controller
 {
-    public function __construct(private readonly MaterialPlanService $materials)
-    {
+    public function __construct(
+        private readonly MaterialPlanService $materials,
+        private readonly WorkOrderService $workOrders,
+    ) {
     }
 
     public function index(Request $request): View
     {
         $orders = ProductionOrder::query()
-            ->with(['garmentStyle', 'buyer', 'orderConfirmation', 'jobber'])
+            ->with(['garmentStyle.comments', 'buyer', 'orderConfirmation', 'jobber', 'workOrder'])
             ->orderByDesc('id')
             ->get();
 
         return view('manufacturing.index', compact('orders'));
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        $styles = GarmentStyle::query()->whereIn('status', ['active', 'Active'])->get();
+        $styles = GarmentStyle::query()
+            ->with('buyer')
+            ->whereIn('status', ['active', 'Active'])
+            ->orderBy('style_number')
+            ->get();
 
-        $salesOrders = OrderConfirmation::query()->orderByDesc('id')->get();
+        $salesOrders = OrderConfirmation::query()->with('buyer')->orderByDesc('id')->get();
         $jobbers = Supplier::query()->ofParty('jobber')->orderBy('company_name')->get();
+        $workOrders = WorkOrder::query()
+            ->released()
+            ->with(['garmentStyle', 'buyer', 'orderConfirmation'])
+            ->latest('id')
+            ->get();
+        $selectedWorkOrderId = $request->integer('work_order_id') ?: null;
+        $selectedWorkOrder = $selectedWorkOrderId
+            ? $workOrders->firstWhere('id', $selectedWorkOrderId)
+            : null;
 
-        return view('manufacturing.create', compact('styles', 'salesOrders', 'jobbers'));
+        return view('manufacturing.create', compact(
+            'styles',
+            'salesOrders',
+            'jobbers',
+            'workOrders',
+            'selectedWorkOrderId',
+            'selectedWorkOrder',
+        ));
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate($this->orderRules());
+        $validated = $request->validate(array_merge($this->orderRules(), [
+            'work_order_id' => ['required', 'integer', 'exists:work_orders,id'],
+        ]));
+
+        $workOrder = $this->releasedWorkOrderOrFail($validated['work_order_id']);
+        $this->assertWorkOrderMatchesOrder($workOrder, $validated);
 
         $style = GarmentStyle::findOrFail($validated['garment_style_id']);
         $validated['buyer_id'] = $style->buyer_id;
         $validated['current_stage'] = 'Cutting';
         $validated['status'] = 'In Progress';
         $validated['job_work_type'] = $validated['job_work_type'] ?? 'in_house';
+        $validated['work_order_id'] = $workOrder->id;
 
         $parsed = $this->validatedSizeBreakdown($request, (int) $validated['total_qty']);
         $validated['size_breakdown'] = $parsed['breakdown'];
@@ -61,6 +91,7 @@ class ManufacturingController extends Controller
 
         $order = ProductionOrder::create($validated);
         $this->materials->apply($order, $request->input('materials', []));
+        $this->workOrders->markActualForProduction($order->fresh());
 
         return redirect()->route('manufacturing.index')->with('success', 'Production Order created and connected to Style & Sales Order successfully!');
     }
@@ -78,7 +109,7 @@ class ManufacturingController extends Controller
 
         $salesOrders = OrderConfirmation::query()->orderByDesc('id')->get();
         $jobbers = Supplier::query()->ofParty('jobber')->orderBy('company_name')->get();
-        $order->load(['garmentStyle', 'buyer', 'orderConfirmation', 'jobber', 'materials.product']);
+        $order->load(['garmentStyle.comments', 'buyer', 'orderConfirmation', 'jobber', 'materials.product']);
         $planRows = $this->materials->preview($order->garmentStyle, (int) $order->total_qty, $order);
 
         return view('manufacturing.edit', compact('order', 'styles', 'salesOrders', 'jobbers', 'planRows'));
@@ -104,6 +135,7 @@ class ManufacturingController extends Controller
 
         $order->update($validated);
         $this->materials->apply($order->fresh('garmentStyle'), $request->input('materials', []));
+        $this->workOrders->markActualForProduction($order->fresh());
 
         return redirect()->route('manufacturing.index')->with('success', "Production Order {$order->order_number} updated successfully!");
     }
@@ -135,6 +167,8 @@ class ManufacturingController extends Controller
             'size_breakdown'  => $parsed['breakdown'],
             ...$parsed['totals'],
         ]);
+
+        $this->workOrders->markActualForProduction($order->fresh());
 
         return back()->with('success', "Manufacturing stage updated for {$order->order_number}!");
     }
@@ -238,5 +272,38 @@ class ManufacturingController extends Controller
         }
 
         return $parsed;
+    }
+
+    private function releasedWorkOrderOrFail(int $id): WorkOrder
+    {
+        $workOrder = WorkOrder::query()->find($id);
+
+        if (! $workOrder || $workOrder->status !== 'released') {
+            throw ValidationException::withMessages([
+                'work_order_id' => 'Release a work order first. Production cannot start on Draft or Hold.',
+            ]);
+        }
+
+        return $workOrder;
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    private function assertWorkOrderMatchesOrder(WorkOrder $workOrder, array $validated): void
+    {
+        if ((int) $workOrder->garment_style_id !== (int) $validated['garment_style_id']) {
+            throw ValidationException::withMessages([
+                'garment_style_id' => 'Style must match the released work order.',
+            ]);
+        }
+
+        if ($workOrder->order_confirmation_id
+            && ! empty($validated['order_confirmation_id'])
+            && (int) $workOrder->order_confirmation_id !== (int) $validated['order_confirmation_id']) {
+            throw ValidationException::withMessages([
+                'order_confirmation_id' => 'Sales order must match the released work order.',
+            ]);
+        }
     }
 }

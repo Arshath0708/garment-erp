@@ -38,9 +38,19 @@ abstract class DocumentFormatRequest extends FormRequest
             ->values()
             ->all();
 
+        // Empty keep_images[] is posted when the format has no images yet
+        // (placeholder so "untick all" can mean delete). "" is not an integer,
+        // so validation used to fail silently on Update (one error, no banner).
+        $keepImages = collect($this->input('keep_images', []))
+            ->filter(fn ($id) => $id !== null && $id !== '')
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+
         $this->merge([
             'units'                  => $units,
             'allow_multiple_colours' => $this->boolean('allow_multiple_colours'),
+            'keep_images'            => $keepImages,
         ]);
     }
 

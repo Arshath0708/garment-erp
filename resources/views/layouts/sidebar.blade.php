@@ -45,12 +45,15 @@
                 <li class="nav-item" data-nav-label="item master trims fabric"><a href="{{ route('masters.products.index') }}" class="nav-link {{ $active('masters.products.*') }}"><i class="nav-icon bi bi-box-seam"></i><p>Item Master (Trims/Fabric)</p></a></li>
                 <li class="nav-item" data-nav-label="suppliers"><a href="{{ route('masters.suppliers.index') }}" class="nav-link {{ $active('masters.suppliers.*') }}"><i class="nav-icon bi bi-truck"></i><p>Suppliers Master</p></a></li>
                 <li class="nav-item" data-nav-label="jobbers job worker"><a href="{{ route('masters.jobbers.index') }}" class="nav-link {{ $active('masters.jobbers.*') }}"><i class="nav-icon bi bi-building-gear"></i><p>Job Worker / Jobbers</p></a></li>
+                <li class="nav-item" data-nav-label="fob values"><a href="{{ route('masters.fob-values.index') }}" class="nav-link {{ $active('masters.fob-values.*') }}"><i class="nav-icon bi bi-currency-dollar"></i><p>FOB Values</p></a></li>
 
                 <li class="nav-header">Sales &amp; Orders</li>
                 <li class="nav-item" data-nav-label="enquiry quotations"><a href="{{ route('sales.inquiries.index') }}" class="nav-link {{ $active('sales.inquiries.*') }}"><i class="nav-icon bi bi-chat-quote"></i><p>Enquiry &amp; Quotations</p></a></li>
                 <li class="nav-item" data-nav-label="sales order po"><a href="{{ route('sales.order-confirmations.index') }}" class="nav-link {{ $active('sales.order-confirmations.*') }}"><i class="nav-icon bi bi-file-earmark-check"></i><p>Sales Order / PO</p></a></li>
 
                 <li class="nav-header">Manufacturing Processes</li>
+                <li class="nav-item" data-nav-label="work orders"><a href="{{ route('work-orders.index') }}" class="nav-link {{ $active('work-orders.*') }}"><i class="nav-icon bi bi-clipboard-check"></i><p>Work Orders</p></a></li>
+                <li class="nav-item" data-nav-label="time and action tna"><a href="{{ route('time-and-action.index') }}" class="nav-link {{ $active('time-and-action.*') }}"><i class="nav-icon bi bi-calendar-week"></i><p>Time &amp; Action</p></a></li>
                 <li class="nav-item" data-nav-label="production planning"><a href="{{ route('manufacturing.index') }}" class="nav-link {{ $active('manufacturing.*') }}"><i class="nav-icon bi bi-diagram-3"></i><p>Production Planning</p></a></li>
 
                 <li class="nav-header">Inventory &amp; Job Work</li>

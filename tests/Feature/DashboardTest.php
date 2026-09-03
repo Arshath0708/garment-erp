@@ -46,9 +46,17 @@ class DashboardTest extends TestCase
     public function test_dashboard_reflects_actual_inquiry_and_order_confirmation_counts(): void
     {
         $user = User::factory()->create();
+        $buyer = \App\Models\Buyer::forceCreate(['display_code' => 'B01', 'company_name' => 'Buyer One']);
+        $cat = \App\Models\Category::forceCreate(['code' => 'C01', 'name' => 'Cat 1', 'status' => 'active']);
+        $df = \App\Models\DocumentFormat::forceCreate(['name' => 'Standard']);
+        $cur = \App\Models\Currency::forceCreate(['name' => 'INR', 'iso_code' => 'INR', 'symbol' => '₹']);
 
-        Inquiry::factory()->count(3)->create();
-        OrderConfirmation::factory()->count(2)->create();
+        Inquiry::forceCreate(['inquiry_no' => 'INQ-001', 'financial_year' => '2026', 'buyer_id' => $buyer->id, 'category_id' => $cat->id, 'document_format_id' => $df->id, 'currency_id' => $cur->id, 'inquiry_date' => now()]);
+        Inquiry::forceCreate(['inquiry_no' => 'INQ-002', 'financial_year' => '2026', 'buyer_id' => $buyer->id, 'category_id' => $cat->id, 'document_format_id' => $df->id, 'currency_id' => $cur->id, 'inquiry_date' => now()]);
+        Inquiry::forceCreate(['inquiry_no' => 'INQ-003', 'financial_year' => '2026', 'buyer_id' => $buyer->id, 'category_id' => $cat->id, 'document_format_id' => $df->id, 'currency_id' => $cur->id, 'inquiry_date' => now()]);
+
+        OrderConfirmation::forceCreate(['oc_num' => 'OC-001', 'financial_year' => '2026', 'buyer_id' => $buyer->id, 'category_id' => $cat->id, 'document_format_id' => $df->id, 'currency_id' => $cur->id, 'oc_date' => now()]);
+        OrderConfirmation::forceCreate(['oc_num' => 'OC-002', 'financial_year' => '2026', 'buyer_id' => $buyer->id, 'category_id' => $cat->id, 'document_format_id' => $df->id, 'currency_id' => $cur->id, 'oc_date' => now()]);
 
         $response = $this->actingAs($user)->get('/dashboard');
 
@@ -60,13 +68,17 @@ class DashboardTest extends TestCase
     public function test_dashboard_does_not_count_soft_deleted_records(): void
     {
         $user = User::factory()->create();
+        $buyer = \App\Models\Buyer::forceCreate(['display_code' => 'B02', 'company_name' => 'Buyer Two']);
+        $cat = \App\Models\Category::forceCreate(['code' => 'C02', 'name' => 'Cat 2', 'status' => 'active']);
+        $df = \App\Models\DocumentFormat::forceCreate(['name' => 'Standard2']);
+        $cur = \App\Models\Currency::forceCreate(['name' => 'USD', 'iso_code' => 'USD', 'symbol' => '$']);
 
-        $activeInquiry = Inquiry::factory()->create();
-        $deletedInquiry = Inquiry::factory()->create();
+        $activeInquiry = Inquiry::forceCreate(['inquiry_no' => 'INQ-010', 'financial_year' => '2026', 'buyer_id' => $buyer->id, 'category_id' => $cat->id, 'document_format_id' => $df->id, 'currency_id' => $cur->id, 'inquiry_date' => now()]);
+        $deletedInquiry = Inquiry::forceCreate(['inquiry_no' => 'INQ-011', 'financial_year' => '2026', 'buyer_id' => $buyer->id, 'category_id' => $cat->id, 'document_format_id' => $df->id, 'currency_id' => $cur->id, 'inquiry_date' => now()]);
         $deletedInquiry->delete();
 
-        $activeOc = OrderConfirmation::factory()->create();
-        $deletedOc = OrderConfirmation::factory()->create();
+        $activeOc = OrderConfirmation::forceCreate(['oc_num' => 'OC-010', 'financial_year' => '2026', 'buyer_id' => $buyer->id, 'category_id' => $cat->id, 'document_format_id' => $df->id, 'currency_id' => $cur->id, 'oc_date' => now()]);
+        $deletedOc = OrderConfirmation::forceCreate(['oc_num' => 'OC-011', 'financial_year' => '2026', 'buyer_id' => $buyer->id, 'category_id' => $cat->id, 'document_format_id' => $df->id, 'currency_id' => $cur->id, 'oc_date' => now()]);
         $deletedOc->delete();
 
         $response = $this->actingAs($user)->get('/dashboard');

@@ -26,13 +26,19 @@
                 @csrf
 
                 <div class="row g-3 mb-4">
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Style Number <span class="text-danger">*</span></label>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Style Code (System) <span class="text-danger">*</span></label>
                         <input type="text" name="style_number" class="form-control" placeholder="e.g. ST-1005" value="{{ old('style_number') }}" required>
                     </div>
-                    <div class="col-md-5">
-                        <label class="form-label fw-semibold">Style Name <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control" placeholder="e.g. Men's Woven Casual Shirt" value="{{ old('name') }}" required>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Buyer Style No.</label>
+                        <input type="text" name="buyer_style_no" class="form-control" placeholder="e.g. BST-9942" value="{{ old('buyer_style_no') }}">
+                        <div class="form-text">Used on OC, Packing List &amp; Invoice</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Factory Style No.</label>
+                        <input type="text" name="factory_style_no" class="form-control" placeholder="e.g. FST-3301" value="{{ old('factory_style_no') }}">
+                        <div class="form-text">Used on Production Floor</div>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
@@ -41,6 +47,13 @@
                             <option value="Inactive" {{ old('status') == 'Inactive' ? 'selected' : '' }}>Inactive</option>
                             <option value="Draft" {{ old('status') == 'Draft' ? 'selected' : '' }}>Draft</option>
                         </select>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-12">
+                        <label class="form-label fw-semibold">Style Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Men's Woven Casual Shirt" value="{{ old('name') }}" required>
                     </div>
                 </div>
 

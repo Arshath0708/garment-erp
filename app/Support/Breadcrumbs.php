@@ -76,6 +76,8 @@ class Breadcrumbs
             'masters.fob-values' => ['module' => 'Masters', 'module_url' => route('masters.categories.index'), 'screen' => 'FOB Values', 'index' => 'masters.fob-values.index'],
             'sales.inquiries' => ['module' => 'Sales & Orders', 'module_url' => route('sales.inquiries.index'), 'screen' => 'Enquiry & Quotations', 'index' => 'sales.inquiries.index'],
             'sales.order-confirmations' => ['module' => 'Sales & Orders', 'module_url' => route('sales.inquiries.index'), 'screen' => 'Sales Order / PO', 'index' => 'sales.order-confirmations.index'],
+            'work-orders' => ['module' => 'Manufacturing Processes', 'module_url' => route('work-orders.index'), 'screen' => 'Work Orders', 'index' => 'work-orders.index'],
+            'time-and-action' => ['module' => 'Manufacturing Processes', 'module_url' => route('work-orders.index'), 'screen' => 'Time & Action', 'index' => 'time-and-action.index'],
             'manufacturing' => ['module' => 'Manufacturing Processes', 'module_url' => route('manufacturing.index'), 'screen' => 'Production Planning', 'index' => 'manufacturing.index'],
             'inventory' => ['module' => 'Inventory & Job Work', 'module_url' => route('inventory.index'), 'screen' => 'Fabric & Accessory Stock', 'index' => 'inventory.index'],
             'procurement.purchase-orders' => ['module' => 'Inventory & Job Work', 'module_url' => route('inventory.index'), 'screen' => 'Fabric & Trims PO', 'index' => 'procurement.purchase-orders.index'],

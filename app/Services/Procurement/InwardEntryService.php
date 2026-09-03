@@ -125,6 +125,9 @@ class InwardEntryService
                         Product::query()->whereKey($line->product_id)->increment('qty_on_hand', $qty);
                     }
                 }
+
+                app(\App\Services\Manufacturing\WorkOrderService::class)
+                    ->markFabricInwardForOc($po?->order_confirmation_id);
             }
 
             return $inward->refresh();
