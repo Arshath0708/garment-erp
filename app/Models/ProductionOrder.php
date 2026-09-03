@@ -68,6 +68,7 @@ class ProductionOrder extends Model
         'vehicle_no',
         'driver_name',
         'challan_no',
+        'work_order_id',
     ];
 
     protected $casts = [
@@ -88,6 +89,11 @@ class ProductionOrder extends Model
     public function orderConfirmation(): BelongsTo
     {
         return $this->belongsTo(OrderConfirmation::class);
+    }
+
+    public function workOrder(): BelongsTo
+    {
+        return $this->belongsTo(WorkOrder::class);
     }
 
     public function jobber(): BelongsTo

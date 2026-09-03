@@ -130,6 +130,10 @@ return [
             'order-confirmation' => ['label' => 'Order Confirmations', 'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => true],
         ],
 
+        'Manufacturing' => [
+            'work-order' => ['label' => 'Work Orders', 'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
+        ],
+
         'Procurement' => [
             'purchase-order' => ['label' => 'Purchase Orders', 'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => true],
             // "approve" is the QC pass: the receiver records what arrived, the
@@ -221,6 +225,7 @@ return [
                 'category.*', 'po-format.*', 'product.*', 'buyer.*', 'supplier.*', 'jobber.*',
                 'agent.*', 'fob-value.*', 'markup.*',
                 'inquiry.*', 'order-confirmation.*',
+                'work-order.*',
                 'purchase-order.*', 'inward-entry.*',
                 'packing.*', 'export-document.*',
                 'purchase-bill.*', 'debit-note.*', 'payment.*', 'foreign-payment.*',
@@ -235,6 +240,7 @@ return [
                 'category.view', 'po-format.view', 'product.*', 'buyer.view',
                 'supplier.*', 'agent.view',
                 'inquiry.*', 'order-confirmation.*',
+                'work-order.*',
                 'purchase-order.*', 'inward-entry.view',
                 'export-document.view',
                 'outstanding.view', 'report.view', 'report.export',

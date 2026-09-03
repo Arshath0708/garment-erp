@@ -34,12 +34,13 @@
         $pipelineSteps = [
             ['label' => '1. Buyer Sales Order', 'href' => route('sales.order-confirmations.index'), 'key' => 'sales'],
             ['label' => '2. Style & BOM', 'href' => route('masters.styles.index'), 'key' => 'bom'],
-            ['label' => '3. Cutting', 'href' => route('manufacturing.index', ['stage' => 'Cutting']), 'key' => 'Cutting'],
-            ['label' => '4. Printing / Embroidery', 'href' => route('manufacturing.index', ['stage' => 'Printing']), 'key' => 'Printing'],
-            ['label' => '5. Stitching', 'href' => route('manufacturing.index', ['stage' => 'Stitching']), 'key' => 'Stitching'],
-            ['label' => '6. Finishing', 'href' => route('manufacturing.index', ['stage' => 'Finishing']), 'key' => 'Finishing'],
-            ['label' => '7. Quality Check', 'href' => route('manufacturing.index', ['stage' => 'Quality Check']), 'key' => 'Quality Check'],
-            ['label' => '8. Packing & Dispatch', 'href' => route('manufacturing.index', ['stage' => 'Packing']), 'key' => 'Packing'],
+            ['label' => '3. Work Order', 'href' => route('work-orders.index'), 'key' => 'work-order'],
+            ['label' => '4. Cutting', 'href' => route('manufacturing.index', ['stage' => 'Cutting']), 'key' => 'Cutting'],
+            ['label' => '5. Printing / Embroidery', 'href' => route('manufacturing.index', ['stage' => 'Printing']), 'key' => 'Printing'],
+            ['label' => '6. Stitching', 'href' => route('manufacturing.index', ['stage' => 'Stitching']), 'key' => 'Stitching'],
+            ['label' => '7. Finishing', 'href' => route('manufacturing.index', ['stage' => 'Finishing']), 'key' => 'Finishing'],
+            ['label' => '8. Quality Check', 'href' => route('manufacturing.index', ['stage' => 'Quality Check']), 'key' => 'Quality Check'],
+            ['label' => '9. Packing & Dispatch', 'href' => route('manufacturing.index', ['stage' => 'Packing']), 'key' => 'Packing'],
         ];
     @endphp
     <div class="card shadow-sm border-0 mb-4 bg-dark text-white p-3">
@@ -77,6 +78,9 @@
                             <div class="col-6 text-end">Target Date: <strong>{{ $order->target_date ? $order->target_date->format('Y-m-d') : 'N/A' }}</strong></div>
                             <div class="col-6">Total Order Qty: <strong class="text-primary">{{ number_format($order->total_qty) }} pcs</strong></div>
                             <div class="col-6 text-end">Dispatch Qty: <strong class="text-success">{{ number_format($order->dispatch_qty) }} pcs</strong></div>
+                            @if($order->workOrder)
+                                <div class="col-12">Work order: <a href="{{ route('work-orders.show', $order->workOrder) }}" class="font-monospace">{{ $order->workOrder->wo_num }}</a></div>
+                            @endif
                             @if($order->job_work_type && $order->job_work_type !== 'in_house')
                                 <div class="col-12">Job work: <strong>{{ $order->jobWorkTypeLabel() }}</strong>
                                     @if($order->jobber) · {{ $order->jobber->company_name }} @endif

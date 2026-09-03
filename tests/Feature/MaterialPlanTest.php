@@ -7,6 +7,7 @@ use App\Models\GarmentStyle;
 use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\User;
+use App\Services\Manufacturing\WorkOrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -47,6 +48,7 @@ class MaterialPlanTest extends TestCase
         $this->actingAs($user)
             ->post(route('manufacturing.store'), [
                 'order_number'     => 'PO-INV-1',
+                'work_order_id'    => $this->releasedWorkOrder($style, 10000)->id,
                 'garment_style_id' => $style->id,
                 'total_qty'        => 10000,
                 'target_date'      => now()->addDays(10)->format('Y-m-d'),
@@ -98,6 +100,7 @@ class MaterialPlanTest extends TestCase
             ->from(route('manufacturing.create'))
             ->post(route('manufacturing.store'), [
                 'order_number'     => 'PO-INV-2',
+                'work_order_id'    => $this->releasedWorkOrder($style, 50)->id,
                 'garment_style_id' => $style->id,
                 'total_qty'        => 50,
                 'target_date'      => now()->addDays(5)->format('Y-m-d'),
@@ -110,5 +113,18 @@ class MaterialPlanTest extends TestCase
             ->assertSessionHasErrors();
 
         $this->assertEquals('100.000', (string) Product::find($button->id)->qty_on_hand);
+    }
+
+    private function releasedWorkOrder(GarmentStyle $style, int $qty): \App\Models\WorkOrder
+    {
+        $service = app(WorkOrderService::class);
+        $workOrder = $service->create([
+            'wo_date'          => now()->toDateString(),
+            'garment_style_id' => $style->id,
+            'total_qty'        => $qty,
+            'target_date'      => now()->addDays(30)->toDateString(),
+        ]);
+
+        return $service->release($workOrder);
     }
 }

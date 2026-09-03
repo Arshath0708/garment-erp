@@ -6,6 +6,7 @@ use App\Http\Controllers\Masters\AgentController;
 use App\Http\Controllers\Masters\CategoryController;
 use App\Http\Controllers\Masters\GarmentStyleController;
 use App\Http\Controllers\Manufacturing\ManufacturingController;
+use App\Http\Controllers\Manufacturing\WorkOrderController;
 
 use App\Http\Controllers\Masters\DocumentFormatController;
 use App\Http\Controllers\Masters\FobValueController;
@@ -237,6 +238,17 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
+
+    Route::get('work-orders', [WorkOrderController::class, 'index'])->name('work-orders.index');
+    Route::get('work-orders/create', [WorkOrderController::class, 'create'])->name('work-orders.create');
+    Route::post('work-orders', [WorkOrderController::class, 'store'])->name('work-orders.store');
+    Route::get('time-and-action', [WorkOrderController::class, 'timeAndAction'])->name('time-and-action.index');
+    Route::get('work-orders/{workOrder}', [WorkOrderController::class, 'show'])->name('work-orders.show');
+    Route::get('work-orders/{workOrder}/edit', [WorkOrderController::class, 'edit'])->name('work-orders.edit');
+    Route::put('work-orders/{workOrder}', [WorkOrderController::class, 'update'])->name('work-orders.update');
+    Route::delete('work-orders/{workOrder}', [WorkOrderController::class, 'destroy'])->name('work-orders.destroy');
+    Route::post('work-orders/{workOrder}/release', [WorkOrderController::class, 'release'])->name('work-orders.release');
+    Route::post('work-orders/{workOrder}/hold', [WorkOrderController::class, 'hold'])->name('work-orders.hold');
 
     Route::get('manufacturing', [ManufacturingController::class, 'index'])->name('manufacturing.index');
     Route::get('manufacturing/create', [ManufacturingController::class, 'create'])->name('manufacturing.create');
