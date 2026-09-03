@@ -107,7 +107,9 @@
                             <th>Colour / Size</th>
                             <th>Unit</th>
                             <th class="text-end">FOB</th>
-                            <th class="text-end text-body-secondary">Cost Price</th>
+                            @if(auth()->user()?->hasRole('Super Admin'))
+                                <th class="text-end text-body-secondary">Cost Price</th>
+                            @endif
                             <th class="text-end">Qty</th>
                             <th class="text-end">Amount</th>
                             <th>PO</th>
@@ -138,7 +140,15 @@
                                     </td>
                                 @endif
                                 <td>{{ $loop->iteration }}</td>
-                                <td class="fw-semibold">{{ $item->design_no ?: '—' }}</td>
+                                <td class="fw-semibold">
+                                    {{ $item->design_no ?: '—' }}
+                                    @php
+                                        $mStyle = \App\Models\GarmentStyle::where('style_number', $item->design_no)->orWhere('design', $item->design_no)->first();
+                                    @endphp
+                                    @if($mStyle?->buyer_style_no)
+                                        <br><small class="text-primary fw-normal">Buyer Style: {{ $mStyle->buyer_style_no }}</small>
+                                    @endif
+                                </td>
                                 <td>{{ $item->product?->name ?? '—' }}</td>
                                 <td>{{ $item->supplier?->company_name ?? '—' }}</td>
                                 <td>
@@ -157,7 +167,9 @@
                                 </td>
                                 <td>{{ $item->unit ?? '—' }}</td>
                                 <td class="text-end">{{ $item->price !== null ? number_format((float) $item->price, 2) : '—' }}</td>
-                                <td class="text-end text-body-secondary">{{ $item->cost_price !== null ? number_format((float) $item->cost_price, 2) : '—' }}</td>
+                                @if(auth()->user()?->hasRole('Super Admin'))
+                                    <td class="text-end text-body-secondary">{{ $item->cost_price !== null ? number_format((float) $item->cost_price, 2) : '—' }}</td>
+                                @endif
                                 <td class="text-end">{{ $item->qty }}</td>
                                 <td class="text-end">{{ number_format((float) $item->amount, 2) }}</td>
                                 <td>

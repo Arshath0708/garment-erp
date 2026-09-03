@@ -125,8 +125,14 @@
                 @php $totalTaxable += (float) $item->amount; @endphp
                 <tr>
                     <td class="center">{{ ++$sr }}</td>
-                    <td class="small">{{ $document->marks_and_numbers ?: '—' }}</td>
-                    <td>{{ $item->design_no ? "{$item->design_no} — " : '' }}{{ $item->description }}</td>
+                    <td>
+                        @php
+                            $mStyle = \App\Models\GarmentStyle::where('style_number', $item->design_no)->orWhere('design', $item->design_no)->first();
+                        @endphp
+                        {{ $item->design_no ? "{$item->design_no} " : '' }}
+                        @if($mStyle?->buyer_style_no)<span style="color:#0f172a; font-weight:bold;">[Buyer Style: {{ $mStyle->buyer_style_no }}]</span> @endif
+                        — {{ $item->description }}
+                    </td>
                     <td>{{ $item->product?->hsn_code ?? '—' }}</td>
                     <td class="center">{{ $item->qty }}</td>
                     <td class="center">{{ $item->unit ?? '—' }}</td>

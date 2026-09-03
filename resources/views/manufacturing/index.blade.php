@@ -74,6 +74,8 @@
                     </div>
                     <div class="card-body">
                         <div class="row g-2 mb-3 small">
+                            <div class="col-6">Factory Style No: <strong class="text-dark">{{ $order->garmentStyle?->factory_style_no ?: '—' }}</strong></div>
+                            <div class="col-6 text-end">Buyer Style No: <strong>{{ $order->garmentStyle?->buyer_style_no ?: '—' }}</strong></div>
                             <div class="col-6">Buyer: <strong>{{ $order->buyer ? $order->buyer->company_name : 'N/A' }}</strong></div>
                             <div class="col-6 text-end">Target Date: <strong>{{ $order->target_date ? $order->target_date->format('Y-m-d') : 'N/A' }}</strong></div>
                             <div class="col-6">Total Order Qty: <strong class="text-primary">{{ number_format($order->total_qty) }} pcs</strong></div>
@@ -87,6 +89,21 @@
                                 </div>
                             @endif
                         </div>
+
+                        @if($order->garmentStyle && $order->garmentStyle->comments->isNotEmpty())
+                            <div class="p-2 mb-3 bg-warning bg-opacity-10 border border-warning rounded small">
+                                <div class="fw-bold text-dark mb-1">
+                                    <i class="bi bi-chat-left-text me-1 text-warning"></i> Style &amp; Tech Pack Comments ({{ $order->garmentStyle->comments->count() }}):
+                                </div>
+                                <ul class="list-unstyled mb-0 ps-1">
+                                    @foreach($order->garmentStyle->comments->take(3) as $c)
+                                        <li class="mb-1 text-body">
+                                            <strong class="text-primary">{{ $c->user_name }}</strong> <span class="text-body-secondary">({{ $c->created_at->format('Y-m-d H:i') }}):</span> {{ $c->comment }}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
 
                         <!-- Stage Breakdown Metrics -->
                         <div class="p-3 bg-body-tertiary rounded mb-3">
