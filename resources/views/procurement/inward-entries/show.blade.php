@@ -261,11 +261,45 @@
                             @endif
                         </p>
                     @else
-                        <p class="small text-body-secondary">QC has passed. Stores posts passed qty onto item stock. This is a separate step from inspection.</p>
+                        <p class="small text-body-secondary">QC has passed. Stores posts passed qty into a godown as lot/roll rows (and onto item stock). This is a separate step from inspection.</p>
                         @can('inward-entry.edit')
-                            <form action="{{ route('procurement.inward-entries.stores-receive', $inwardEntry) }}" method="POST">
+                            <form action="{{ route('procurement.inward-entries.stores-receive', $inwardEntry) }}" method="POST" class="vstack gap-3">
                                 @csrf
-                                <button type="submit" class="btn btn-primary">
+                                <div>
+                                    <label class="form-label small mb-1">Godown</label>
+                                    <select name="warehouse_id" class="form-select form-select-sm" required>
+                                        @forelse($warehouses ?? [] as $wh)
+                                            <option value="{{ $wh->id }}" @selected(($defaultWarehouseId ?? null) == $wh->id)>{{ $wh->name }} ({{ $wh->code }})</option>
+                                        @empty
+                                            <option value="">No godowns — create one first</option>
+                                        @endforelse
+                                    </select>
+                                </div>
+                                @if($inwardEntry->items->isNotEmpty())
+                                    <div>
+                                        <label class="form-label small mb-1">Lot / roll no (optional)</label>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm mb-0">
+                                                <thead><tr><th>Item</th><th>Passed</th><th>Lot / roll</th></tr></thead>
+                                                <tbody>
+                                                    @foreach($inwardEntry->items as $line)
+                                                        @php $passQty = (float) ($line->passed_qty ?? $line->received_qty ?? 0); @endphp
+                                                        @if($line->product_id && $passQty > 0)
+                                                            <tr>
+                                                                <td>{{ $line->product?->name ?? '—' }}</td>
+                                                                <td>{{ number_format($passQty, 3) }}</td>
+                                                                <td>
+                                                                    <input type="text" name="lot_numbers[{{ $line->id }}]" class="form-control form-control-sm" maxlength="80" placeholder="Auto from inward no">
+                                                                </td>
+                                                            </tr>
+                                                        @endif
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                @endif
+                                <button type="submit" class="btn btn-primary" @disabled(($warehouses ?? collect())->isEmpty())>
                                     <i class="bi bi-box-seam me-1"></i> Receive into stock
                                 </button>
                             </form>

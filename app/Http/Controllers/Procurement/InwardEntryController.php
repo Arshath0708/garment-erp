@@ -97,6 +97,11 @@ class InwardEntryController extends Controller implements HasMiddleware
                 'creator',
                 'updater',
             ]),
+            'warehouses' => \App\Models\Warehouse::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(),
+            'defaultWarehouseId' => \App\Models\Warehouse::defaultFabric()?->id,
         ]);
     }
 
@@ -131,15 +136,24 @@ class InwardEntryController extends Controller implements HasMiddleware
 
     public function receiveAtStore(InwardEntry $inwardEntry): RedirectResponse
     {
+        $data = request()->validate([
+            'warehouse_id' => ['nullable', 'integer', 'exists:warehouses,id'],
+            'lot_numbers' => ['nullable', 'array'],
+            'lot_numbers.*' => ['nullable', 'string', 'max:80'],
+        ]);
+
         try {
-            $this->inwardEntries->receiveAtStore($inwardEntry, (int) request()->user()->id);
+            $this->inwardEntries->receiveAtStore($inwardEntry, (int) request()->user()->id, [
+                'warehouse_id' => isset($data['warehouse_id']) ? (int) $data['warehouse_id'] : null,
+                'lot_numbers' => $data['lot_numbers'] ?? [],
+            ]);
         } catch (RuntimeException $e) {
             return back()->with('warning', $e->getMessage());
         }
 
         return redirect()
             ->route('procurement.inward-entries.show', $inwardEntry)
-            ->with('success', "Stores received \"{$inwardEntry->inward_no}\" into stock.");
+            ->with('success', "Stores received \"{$inwardEntry->inward_no}\" into stock (godown + lot).");
     }
 
     public function destroy(InwardEntry $inwardEntry): RedirectResponse

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Inventory\InventoryController;
+use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\Masters\BuyerController;
 use App\Http\Controllers\Masters\AgentController;
 use App\Http\Controllers\Masters\CategoryController;
@@ -249,6 +250,10 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
+    Route::get('inventory/lots', [InventoryController::class, 'lots'])->name('inventory.lots');
+    Route::resource('inventory/warehouses', WarehouseController::class)
+        ->parameters(['warehouses' => 'warehouse'])
+        ->names('inventory.warehouses');
 
     Route::get('job-work', [JobWorkVoucherController::class, 'index'])->name('job-work.index');
     Route::get('job-work/create', [JobWorkVoucherController::class, 'create'])->name('job-work.create');
