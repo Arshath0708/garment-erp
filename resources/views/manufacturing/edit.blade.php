@@ -169,6 +169,9 @@
                         <a href="{{ route('manufacturing.job-work-challan', $order) }}" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-file-earmark-pdf me-1"></i> Job Work Delivery Challan
                         </a>
+                        <a href="{{ route('manufacturing.bundle-ticket', $order) }}" class="btn btn-sm btn-outline-dark">
+                            <i class="bi bi-upc me-1"></i> Bundle ticket
+                        </a>
                         @can('job-work.create')
                             <a href="{{ route('job-work.create', ['type' => 'issue', 'production_order_id' => $order->id]) }}" class="btn btn-sm btn-outline-secondary">
                                 Issue / Receive

@@ -1,42 +1,42 @@
 <?php
 
-use App\Http\Controllers\Inventory\InventoryController;
-use App\Http\Controllers\Masters\BuyerController;
-use App\Http\Controllers\Masters\AgentController;
-use App\Http\Controllers\Masters\CategoryController;
-use App\Http\Controllers\Masters\GarmentStyleController;
-use App\Http\Controllers\Manufacturing\JobWorkVoucherController;
-use App\Http\Controllers\Manufacturing\ManufacturingController;
-use App\Http\Controllers\Manufacturing\ProductionLineController;
-use App\Http\Controllers\Manufacturing\WorkOrderController;
-use App\Http\Controllers\SearchController;
-
-use App\Http\Controllers\Masters\DocumentFormatController;
-use App\Http\Controllers\Masters\FobValueController;
-use App\Http\Controllers\Masters\GeoController;
-use App\Http\Controllers\Masters\JobberController;
-use App\Http\Controllers\Masters\MarkupController;
-use App\Http\Controllers\Masters\ProductController;
-use App\Http\Controllers\Masters\StyleCostingController;
-use App\Http\Controllers\Masters\SupplierController;
 use App\Http\Controllers\Administration\CompanyProfileController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Export\ExportDocumentChecklistController;
 use App\Http\Controllers\Export\ExportDocumentController;
 use App\Http\Controllers\Export\ExportDocumentOcrController;
 use App\Http\Controllers\Export\PackingController;
 use App\Http\Controllers\Finance\DebitNoteController;
 use App\Http\Controllers\Finance\FinanceController;
+use App\Http\Controllers\Inventory\InventoryController;
+use App\Http\Controllers\Manufacturing\FloorScanController;
+use App\Http\Controllers\Manufacturing\JobWorkVoucherController;
+use App\Http\Controllers\Manufacturing\ManufacturingController;
+use App\Http\Controllers\Manufacturing\ProductionLineController;
+use App\Http\Controllers\Manufacturing\WorkOrderController;
+use App\Http\Controllers\Masters\AgentController;
+use App\Http\Controllers\Masters\BOMController;
+use App\Http\Controllers\Masters\BuyerController;
+use App\Http\Controllers\Masters\CategoryController;
+use App\Http\Controllers\Masters\DocumentFormatController;
+use App\Http\Controllers\Masters\FobValueController;
+use App\Http\Controllers\Masters\GarmentStyleController;
+use App\Http\Controllers\Masters\GeoController;
+use App\Http\Controllers\Masters\JobberController;
+use App\Http\Controllers\Masters\MarkupController;
+use App\Http\Controllers\Masters\ProductController;
+use App\Http\Controllers\Masters\StyleCostingController;
+use App\Http\Controllers\Masters\SupplierController;
 use App\Http\Controllers\Procurement\InwardEntryController;
 use App\Http\Controllers\Procurement\PurchaseOrderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Reports\ReportsController;
 use App\Http\Controllers\Sales\InquiryController;
 use App\Http\Controllers\Sales\OrderConfirmationController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\UserManagement\PermissionController;
 use App\Http\Controllers\UserManagement\RoleController;
 use App\Http\Controllers\UserManagement\UserController;
-use App\Http\Controllers\DashboardController;
-
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'));
@@ -83,12 +83,10 @@ Route::middleware('auth')->group(function () {
         Route::patch('categories/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])
             ->name('categories.toggle-status');
         Route::resource('categories', CategoryController::class);
-        Route::get('bom', [\App\Http\Controllers\Masters\BOMController::class, 'index'])->name('bom.index');
+        Route::get('bom', [BOMController::class, 'index'])->name('bom.index');
         Route::post('styles/{style}/comments', [GarmentStyleController::class, 'storeComment'])->name('styles.comments.store');
         Route::post('styles/{style}/approve-bom', [GarmentStyleController::class, 'approveBom'])->name('styles.approve-bom');
         Route::resource('styles', GarmentStyleController::class);
-
-
 
         // Declared before the resource so "check-code" is not swallowed by
         // products/{product}.
@@ -278,6 +276,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('production-lines', [ProductionLineController::class, 'index'])->name('production-lines.index');
     Route::post('production-lines/outputs', [ProductionLineController::class, 'storeOutput'])->name('production-lines.outputs.store');
+    Route::get('floor/scan', [FloorScanController::class, 'form'])->name('floor.scan');
+    Route::post('floor/scan', [FloorScanController::class, 'store'])->name('floor.scan.store');
 
     Route::get('manufacturing', [ManufacturingController::class, 'index'])->name('manufacturing.index');
     Route::get('manufacturing/create', [ManufacturingController::class, 'create'])->name('manufacturing.create');
@@ -290,8 +290,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('manufacturing/{order}', [ManufacturingController::class, 'destroy'])->name('manufacturing.destroy');
     Route::post('manufacturing/{order}/update-stage', [ManufacturingController::class, 'updateStage'])->name('manufacturing.update-stage');
     Route::get('manufacturing/{order}/job-work-challan', [ManufacturingController::class, 'jobWorkChallanPdf'])->name('manufacturing.job-work-challan');
-
-
+    Route::get('manufacturing/{order}/bundle-ticket', [FloorScanController::class, 'ticket'])->name('manufacturing.bundle-ticket');
 
     /*
     |--------------------------------------------------------------------------

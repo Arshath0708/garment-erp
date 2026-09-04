@@ -103,6 +103,7 @@
                     <li>
                         <a href="{{ route('manufacturing.edit', $order) }}">{{ $order->order_number }}</a>
                         — {{ $order->current_stage }} ({{ number_format($order->total_qty) }} pcs)
+                        <a href="{{ route('manufacturing.bundle-ticket', $order) }}" class="small ms-1">bundle ticket</a>
                     </li>
                 @endforeach
             </ul>

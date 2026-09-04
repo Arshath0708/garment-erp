@@ -57,6 +57,7 @@
                 <li class="nav-item" data-nav-label="time and action tna"><a href="{{ route('time-and-action.index') }}" class="nav-link {{ $active('time-and-action.*') }}"><i class="nav-icon bi bi-calendar-week"></i><p>Time &amp; Action</p></a></li>
                 <li class="nav-item" data-nav-label="production planning"><a href="{{ route('manufacturing.index') }}" class="nav-link {{ $active('manufacturing.*') }}"><i class="nav-icon bi bi-diagram-3"></i><p>Production Planning</p></a></li>
                 <li class="nav-item" data-nav-label="line efficiency sewing"><a href="{{ route('production-lines.index') }}" class="nav-link {{ $active('production-lines.*') }}"><i class="nav-icon bi bi-speedometer2"></i><p>Line efficiency</p></a></li>
+                <li class="nav-item" data-nav-label="phone scan barcode floor"><a href="{{ route('floor.scan') }}" class="nav-link {{ $active('floor.*') }}"><i class="nav-icon bi bi-upc-scan"></i><p>Phone scan</p></a></li>
 
                 <li class="nav-header">Inventory &amp; Job Work</li>
                 <li class="nav-item" data-nav-label="fabric accessory stock"><a href="{{ route('inventory.index') }}" class="nav-link {{ $active('inventory.*') }}"><i class="nav-icon bi bi-boxes"></i><p>Fabric &amp; Accessory Stock</p></a></li>
