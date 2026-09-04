@@ -67,7 +67,8 @@
                 <li class="nav-header">Packing, Shipment &amp; Billing</li>
                 <li class="nav-item" data-nav-label="packing cartons"><a href="{{ route('export.packing.index') }}" class="nav-link {{ $active('export.packing.*') }}"><i class="nav-icon bi bi-box-seam"></i><p>Packing &amp; Cartons</p></a></li>
                 <li class="nav-item" data-nav-label="export docs invoices"><a href="{{ route('export.documents.index') }}" class="nav-link {{ $active('export.documents.*') }}"><i class="nav-icon bi bi-file-earmark-pdf"></i><p>Export Docs &amp; Invoices</p></a></li>
-                <li class="nav-item" data-nav-label="billing payments"><a href="{{ route('finance.purchase-bills.index') }}" class="nav-link {{ $active('finance.*') }}"><i class="nav-icon bi bi-cash-stack"></i><p>Billing &amp; Payments</p></a></li>
+                <li class="nav-item" data-nav-label="billing payments"><a href="{{ route('finance.purchase-bills.index') }}" class="nav-link {{ $active('finance.*') && ! request()->routeIs('finance.tally*') }}"><i class="nav-icon bi bi-cash-stack"></i><p>Billing &amp; Payments</p></a></li>
+                <li class="nav-item" data-nav-label="tally gst posting"><a href="{{ route('finance.tally.settings') }}" class="nav-link {{ $active('finance.tally*') }}"><i class="nav-icon bi bi-hdd-network"></i><p>Tally</p></a></li>
 
                 <li class="nav-header">Intelligent OCR &amp; Reports</li>
                 <li class="nav-item" data-nav-label="ocr document verification"><a href="{{ route('export.ocr.index') }}" class="nav-link {{ $active('export.ocr.*') }}"><i class="nav-icon bi bi-stars"></i><p>OCR Document Verification</p></a></li>

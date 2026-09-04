@@ -26,6 +26,7 @@ use App\Http\Controllers\Export\ExportDocumentOcrController;
 use App\Http\Controllers\Export\PackingController;
 use App\Http\Controllers\Finance\DebitNoteController;
 use App\Http\Controllers\Finance\FinanceController;
+use App\Http\Controllers\Finance\TallyController;
 use App\Http\Controllers\Procurement\InwardEntryController;
 use App\Http\Controllers\Procurement\PurchaseOrderController;
 use App\Http\Controllers\ProfileController;
@@ -367,6 +368,15 @@ Route::middleware('auth')->group(function () {
         Route::get('agent-commission', [FinanceController::class, 'agentCommission'])
             ->middleware('permission:agent-commission.view')
             ->name('agent-commission.index');
+        Route::get('tally', [TallyController::class, 'settings'])->name('tally.settings');
+        Route::put('tally', [TallyController::class, 'updateSettings'])->name('tally.settings.update');
+        Route::get('tally/logs', [TallyController::class, 'logs'])->name('tally.logs');
+        Route::post('tally/export-documents/{document}', [TallyController::class, 'exportDocument'])
+            ->name('tally.export-documents');
+        Route::put('tally/export-documents/{document}/gst-irn', [TallyController::class, 'saveGstIrn'])
+            ->name('tally.gst-irn');
+        Route::post('tally/debit-notes/{debitNote}', [TallyController::class, 'debitNote'])
+            ->name('tally.debit-notes');
     });
 
     Route::prefix('reports')->name('reports.')->group(function () {

@@ -160,6 +160,7 @@ return [
             // going out; the key stays, the label says which direction.
             'foreign-payment'  => ['label' => 'Buyer Receipts',    'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
             'agent-commission' => ['label' => 'Agent Commission',  'built' => true],
+            'tally'            => ['label' => 'Tally',             'actions' => ['view', 'edit', 'post'], 'built' => true],
         ],
 
         /*
@@ -231,7 +232,7 @@ return [
                 'purchase-order.*', 'inward-entry.*',
                 'packing.*', 'export-document.*',
                 'purchase-bill.*', 'debit-note.*', 'payment.*', 'foreign-payment.*',
-                'agent-commission.*',
+                'agent-commission.*', 'tally.*',
                 'outstanding.*', 'report.*',
             ],
         ],
@@ -256,7 +257,7 @@ return [
                 'product.view', 'buyer.view', 'supplier.view', 'agent.view', 'markup.view',
                 'purchase-order.view', 'inward-entry.view', 'export-document.view',
                 'purchase-bill.*', 'debit-note.*', 'payment.*', 'foreign-payment.*',
-                'agent-commission.*',
+                'agent-commission.*', 'tally.*',
                 'outstanding.*', 'report.view', 'report.export',
             ],
         ],
