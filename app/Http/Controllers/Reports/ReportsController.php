@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Reports;
 use App\Http\Controllers\Controller;
 use App\Models\ExportDocument;
 use App\Models\PurchaseOrder;
+use App\Services\Reports\OrderProfitService;
 use Illuminate\View\View;
 
 class ReportsController extends Controller
@@ -42,6 +43,13 @@ class ReportsController extends Controller
         ];
 
         return view('reports.index', compact('stats'));
+    }
+
+    public function orderProfit(OrderProfitService $profit): View
+    {
+        return view('reports.order-profit', [
+            'rows' => $profit->rows(),
+        ]);
     }
 }
 

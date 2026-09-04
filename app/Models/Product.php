@@ -41,6 +41,7 @@ class Product extends Model
         'status',
         'item_kind',
         'qty_on_hand',
+        'reorder_level',
         'remarks',
         'comments',
     ];
@@ -63,7 +64,14 @@ class Product extends Model
             'fabric_width_inch' => 'decimal:3',
             'sq_mtr_per_unit'   => 'decimal:4',
             'qty_on_hand'       => 'decimal:3',
+            'reorder_level'     => 'decimal:3',
         ];
+    }
+
+    public function isBelowReorder(): bool
+    {
+        return (float) $this->reorder_level > 0
+            && (float) $this->qty_on_hand <= (float) $this->reorder_level;
     }
 
     /*

@@ -106,6 +106,16 @@ class ProductionOrder extends Model
         return $this->hasMany(ProductionOrderMaterial::class);
     }
 
+    public function qcChecks(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductionQcCheck::class)->latest('id');
+    }
+
+    public function jobWorkVouchers(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(JobWorkVoucher::class);
+    }
+
     /**
      * Qty for one stage + size. Missing keys read as 0.
      */

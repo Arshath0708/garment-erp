@@ -32,6 +32,21 @@
             </li>
         </ul>
 
+        <ul class="navbar-nav align-items-center me-2 me-lg-3 flex-grow-1" style="max-width: 22rem;">
+            <li class="nav-item w-100">
+                <div class="erp-global-search" id="erp-global-search">
+                    <label class="visually-hidden" for="erp-global-search-input">Find order, style, PO</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="search" id="erp-global-search-input" class="form-control"
+                               placeholder="Find order, style, PO" autocomplete="off"
+                               data-search-url="{{ route('search') }}">
+                    </div>
+                    <div class="erp-global-search-results d-none" id="erp-global-search-results" role="listbox"></div>
+                </div>
+            </li>
+        </ul>
+
         <ul class="navbar-nav ms-auto align-items-center gap-2">
             <li class="nav-item">
                 <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2 px-3 rounded-pill" id="themeToggleBtn" onclick="toggleGarmentTheme()">
@@ -92,5 +107,63 @@
         const savedTheme = localStorage.getItem('garment_theme') || 'dark';
         document.documentElement.setAttribute('data-bs-theme', savedTheme);
         updateThemeUI(savedTheme);
+
+        const input = document.getElementById('erp-global-search-input');
+        const box = document.getElementById('erp-global-search-results');
+        const wrap = document.getElementById('erp-global-search');
+        if (!input || !box || !wrap) {
+            return;
+        }
+
+        const url = input.getAttribute('data-search-url');
+        let timer = null;
+
+        const hide = () => box.classList.add('d-none');
+
+        const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+
+        const render = (results) => {
+            if (!results.length) {
+                box.innerHTML = '<div class="px-3 py-2 small text-body-secondary">No matches</div>';
+                box.classList.remove('d-none');
+                return;
+            }
+            let html = '';
+            let lastGroup = '';
+            results.forEach((row) => {
+                if (row.group !== lastGroup) {
+                    html += '<div class="erp-global-search-group">' + esc(row.group) + '</div>';
+                    lastGroup = row.group;
+                }
+                html += '<a class="erp-global-search-item" href="' + esc(row.url) + '">' + esc(row.label) + '</a>';
+            });
+            box.innerHTML = html;
+            box.classList.remove('d-none');
+        };
+
+        input.addEventListener('input', function () {
+            const q = this.value.trim();
+            clearTimeout(timer);
+            if (q.length < 2) {
+                hide();
+                return;
+            }
+            timer = setTimeout(function () {
+                fetch(url + '?q=' + encodeURIComponent(q), {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                    .then((r) => r.json())
+                    .then((data) => render(data.results || []))
+                    .catch(() => hide());
+            }, 200);
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!wrap.contains(e.target)) {
+                hide();
+            }
+        });
     });
 </script>

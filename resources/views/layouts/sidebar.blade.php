@@ -42,6 +42,7 @@
                 <li class="nav-item" data-nav-label="customers buyers"><a href="{{ route('masters.buyers.index') }}" class="nav-link {{ $active('masters.buyers.*') }}"><i class="nav-icon bi bi-person-badge"></i><p>Customers / Buyers</p></a></li>
                 <li class="nav-item" data-nav-label="style master tech pack"><a href="{{ route('masters.styles.index') }}" class="nav-link {{ $active('masters.styles.*') }}"><i class="nav-icon bi bi-scissors"></i><p>Style Master &amp; Tech Pack</p></a></li>
                 <li class="nav-item" data-nav-label="bom consumption"><a href="{{ route('masters.bom.index') }}" class="nav-link {{ $active('masters.bom.*') }}"><i class="nav-icon bi bi-calculator"></i><p>BOM &amp; Consumption</p></a></li>
+                <li class="nav-item" data-nav-label="style costing cost sheet"><a href="{{ route('style-costings.index') }}" class="nav-link {{ $active('style-costings.*') }}"><i class="nav-icon bi bi-currency-rupee"></i><p>Style Costing</p></a></li>
                 <li class="nav-item" data-nav-label="item master trims fabric"><a href="{{ route('masters.products.index') }}" class="nav-link {{ $active('masters.products.*') }}"><i class="nav-icon bi bi-box-seam"></i><p>Item Master (Trims/Fabric)</p></a></li>
                 <li class="nav-item" data-nav-label="suppliers"><a href="{{ route('masters.suppliers.index') }}" class="nav-link {{ $active('masters.suppliers.*') }}"><i class="nav-icon bi bi-truck"></i><p>Suppliers Master</p></a></li>
                 <li class="nav-item" data-nav-label="jobbers job worker"><a href="{{ route('masters.jobbers.index') }}" class="nav-link {{ $active('masters.jobbers.*') }}"><i class="nav-icon bi bi-building-gear"></i><p>Job Worker / Jobbers</p></a></li>
@@ -55,12 +56,13 @@
                 <li class="nav-item" data-nav-label="work orders"><a href="{{ route('work-orders.index') }}" class="nav-link {{ $active('work-orders.*') }}"><i class="nav-icon bi bi-clipboard-check"></i><p>Work Orders</p></a></li>
                 <li class="nav-item" data-nav-label="time and action tna"><a href="{{ route('time-and-action.index') }}" class="nav-link {{ $active('time-and-action.*') }}"><i class="nav-icon bi bi-calendar-week"></i><p>Time &amp; Action</p></a></li>
                 <li class="nav-item" data-nav-label="production planning"><a href="{{ route('manufacturing.index') }}" class="nav-link {{ $active('manufacturing.*') }}"><i class="nav-icon bi bi-diagram-3"></i><p>Production Planning</p></a></li>
+                <li class="nav-item" data-nav-label="line efficiency sewing"><a href="{{ route('production-lines.index') }}" class="nav-link {{ $active('production-lines.*') }}"><i class="nav-icon bi bi-speedometer2"></i><p>Line efficiency</p></a></li>
 
                 <li class="nav-header">Inventory &amp; Job Work</li>
                 <li class="nav-item" data-nav-label="fabric accessory stock"><a href="{{ route('inventory.index') }}" class="nav-link {{ $active('inventory.*') }}"><i class="nav-icon bi bi-boxes"></i><p>Fabric &amp; Accessory Stock</p></a></li>
                 <li class="nav-item" data-nav-label="fabric trims po"><a href="{{ route('procurement.purchase-orders.index') }}" class="nav-link {{ $active('procurement.purchase-orders.*') }}"><i class="nav-icon bi bi-cart-plus"></i><p>Fabric &amp; Trims PO</p></a></li>
                 <li class="nav-item" data-nav-label="goods inward"><a href="{{ route('procurement.inward-entries.index') }}" class="nav-link {{ $active('procurement.inward-entries.*') }}"><i class="nav-icon bi bi-box-arrow-in-down"></i><p>Goods Inward</p></a></li>
-                <li class="nav-item" data-nav-label="job work issue receive"><a href="{{ route('masters.jobbers.index') }}" class="nav-link"><i class="nav-icon bi bi-arrow-left-right"></i><p>Job Work Issue / Receive</p></a></li>
+                <li class="nav-item" data-nav-label="job work issue receive"><a href="{{ route('job-work.index') }}" class="nav-link {{ $active('job-work.*') }}"><i class="nav-icon bi bi-arrow-left-right"></i><p>Job Work Issue / Receive</p></a></li>
 
                 <li class="nav-header">Packing, Shipment &amp; Billing</li>
                 <li class="nav-item" data-nav-label="packing cartons"><a href="{{ route('export.packing.index') }}" class="nav-link {{ $active('export.packing.*') }}"><i class="nav-icon bi bi-box-seam"></i><p>Packing &amp; Cartons</p></a></li>

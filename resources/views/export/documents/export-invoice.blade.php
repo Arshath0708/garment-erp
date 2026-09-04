@@ -1,3 +1,4 @@
+@php $layout = $layout ?? 'standard'; @endphp
 <!DOCTYPE html>
 <html>
 <head>
@@ -18,6 +19,12 @@
     .items th { background: #f2f2f2; text-align: left; }
     .sign-block { margin-top: 10px; }
     .small { font-size: 8.5px; }
+    @if($layout === 'compact')
+        body { font-size: 8.5px; }
+        .title { font-size: 12px; }
+        .frame td, .frame th { padding: 3px 5px; }
+        .items th, .items td { padding: 2px 4px; font-size: 8px; }
+    @endif
 </style>
 </head>
 <body>
@@ -28,8 +35,13 @@
         </div>
     @endif
 
-    <p class="title">EXPORT INVOICE</p>
-    <p class="subtitle">{{ $variantTitle }}</p>
+    @if($layout === 'letterhead')
+        <p class="title">{{ $document->buyer?->name_on_export_invoice ?: $document->buyer?->company_name }}</p>
+        <p class="subtitle">EXPORT INVOICE — {{ $variantTitle }}</p>
+    @else
+        <p class="title">EXPORT INVOICE</p>
+        <p class="subtitle">{{ $variantTitle }}</p>
+    @endif
 
     <table class="frame" style="margin-bottom:0">
         <tr>

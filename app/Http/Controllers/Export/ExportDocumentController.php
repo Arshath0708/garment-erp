@@ -225,8 +225,12 @@ class ExportDocumentController extends Controller implements HasMiddleware
         $document = $this->loadForInvoiceDocument($document);
         $company = CompanyProfile::current();
         $variantTitle = $views[$variant];
+        $layout = $document->buyer?->invoice_layout ?: 'standard';
+        if (! array_key_exists($layout, \App\Models\Buyer::INVOICE_LAYOUTS)) {
+            $layout = 'standard';
+        }
 
-        $pdf = Pdf::loadView('export.documents.export-invoice', compact('document', 'company', 'variant', 'variantTitle'));
+        $pdf = Pdf::loadView('export.documents.export-invoice', compact('document', 'company', 'variant', 'variantTitle', 'layout'));
         $filename = $this->documentFilename($document, "export-invoice-{$variant}");
 
         $this->documents->attachGeneratedFile($document, 'export_invoice', $variant, $this->storeGeneratedPdf($pdf, $document, "export-invoice-{$variant}"), $filename);
@@ -379,6 +383,13 @@ class ExportDocumentController extends Controller implements HasMiddleware
 
         $itemIds = array_map('intval', (array) $request->input('item_ids', []));
 
+        if ($request->boolean('raise_all')) {
+            $itemIds = $orderConfirmation->items()
+                ->whereNull('export_document_id')
+                ->pluck('id')
+                ->all();
+        }
+
         if (empty($itemIds)) {
             return back()->with('warning', 'Select at least one item to raise an Export Document.');
         }
@@ -390,8 +401,8 @@ class ExportDocumentController extends Controller implements HasMiddleware
         }
 
         return redirect()
-            ->route('export.documents.show', $document)
-            ->with('success', "Export Document \"{$document->doc_num}\" raised with the 26-point checklist ready to track.");
+            ->route('export.documents.show', ['document' => $document, 'tab' => 'generate'])
+            ->with('success', "Export Document \"{$document->doc_num}\" raised. Invoice no. {$document->invoice_no} prefilled from OC — generate Export Invoice when ready.");
     }
 
     public function destroy(ExportDocument $document): RedirectResponse

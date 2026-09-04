@@ -9,6 +9,7 @@ use App\Models\TimeAndActionStep;
 use App\Models\WorkOrder;
 use App\Services\NumberSeriesService;
 use App\Support\FinancialYear;
+use App\Support\StyleCostingGate;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -81,6 +82,11 @@ class WorkOrderService
     {
         if ($workOrder->status === 'released') {
             return $workOrder;
+        }
+
+        $style = $workOrder->garmentStyle ?? GarmentStyle::query()->find($workOrder->garment_style_id);
+        if ($style) {
+            StyleCostingGate::assertApproved($style);
         }
 
         $workOrder->update([

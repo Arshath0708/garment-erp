@@ -109,7 +109,7 @@ class ManufacturingController extends Controller
 
         $salesOrders = OrderConfirmation::query()->orderByDesc('id')->get();
         $jobbers = Supplier::query()->ofParty('jobber')->orderBy('company_name')->get();
-        $order->load(['garmentStyle.comments', 'buyer', 'orderConfirmation', 'jobber', 'materials.product']);
+        $order->load(['garmentStyle.comments', 'buyer', 'orderConfirmation', 'jobber', 'materials.product', 'qcChecks.creator']);
         $planRows = $this->materials->preview($order->garmentStyle, (int) $order->total_qty, $order);
 
         return view('manufacturing.edit', compact('order', 'styles', 'salesOrders', 'jobbers', 'planRows'));
@@ -171,6 +171,51 @@ class ManufacturingController extends Controller
         $this->workOrders->markActualForProduction($order->fresh());
 
         return back()->with('success', "Manufacturing stage updated for {$order->order_number}!");
+    }
+
+    public function storeQcCheck(Request $request, ProductionOrder $order): RedirectResponse
+    {
+        $validated = $request->validate([
+            'stage'           => ['required', Rule::in(array_keys(ProductionOrder::STAGE_KEYS))],
+            'checked_qty'     => ['required', 'integer', 'min:1'],
+            'passed_qty'      => ['required', 'integer', 'min:0'],
+            'failed_qty'      => ['required', 'integer', 'min:0'],
+            'notes'           => ['nullable', 'string', 'max:2000'],
+            'hold_work_order' => ['nullable', 'boolean'],
+        ]);
+
+        if ($validated['passed_qty'] + $validated['failed_qty'] > $validated['checked_qty']) {
+            throw ValidationException::withMessages([
+                'failed_qty' => 'Pass + fail cannot exceed pieces checked.',
+            ]);
+        }
+
+        $result = $validated['failed_qty'] > 0 ? 'fail' : 'pass';
+        $held = false;
+        if ($result === 'fail' && $request->boolean('hold_work_order') && $order->work_order_id) {
+            $workOrder = $order->workOrder;
+            if ($workOrder && $workOrder->isReleased()) {
+                $this->workOrders->hold($workOrder);
+                $held = true;
+            }
+        }
+
+        $order->qcChecks()->create([
+            'stage'           => $validated['stage'],
+            'checked_qty'     => $validated['checked_qty'],
+            'passed_qty'      => $validated['passed_qty'],
+            'failed_qty'      => $validated['failed_qty'],
+            'result'          => $result,
+            'notes'           => $validated['notes'] ?? null,
+            'held_work_order' => $held,
+            'created_by'      => auth()->id(),
+        ]);
+
+        $msg = $result === 'fail'
+            ? 'QC fail recorded.'.($held ? ' Work order put on Hold.' : '')
+            : 'QC pass recorded.';
+
+        return back()->with('success', $msg);
     }
 
     /**

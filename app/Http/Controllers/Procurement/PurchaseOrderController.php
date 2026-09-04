@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Procurement\StorePurchaseOrderRequest;
 use App\Http\Requests\Procurement\UpdatePurchaseOrderRequest;
 use App\Models\OrderConfirmation;
+use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
 use App\Services\Procurement\PurchaseOrderService;
@@ -13,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class PurchaseOrderController extends Controller implements HasMiddleware
@@ -56,14 +58,27 @@ class PurchaseOrderController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('procurement.purchase-orders.create', $this->formData());
+        $prefillProduct = $request->filled('product_id')
+            ? Product::query()->find($request->integer('product_id'))
+            : null;
+
+        return view('procurement.purchase-orders.create', $this->formData() + [
+            'prefillProduct' => $prefillProduct,
+        ]);
     }
 
     public function store(StorePurchaseOrderRequest $request): RedirectResponse
     {
-        $po = $this->purchaseOrders->create($request->validated());
+        try {
+            $po = $this->purchaseOrders->create($request->validated());
+        } catch (ValidationException $e) {
+            return back()
+                ->withInput()
+                ->withErrors($e->errors())
+                ->with('warning', collect($e->errors())->flatten()->first());
+        }
 
         return redirect()
             ->route('procurement.purchase-orders.index')
@@ -91,7 +106,14 @@ class PurchaseOrderController extends Controller implements HasMiddleware
 
     public function update(UpdatePurchaseOrderRequest $request, PurchaseOrder $purchaseOrder): RedirectResponse
     {
-        $this->purchaseOrders->update($purchaseOrder, $request->validated());
+        try {
+            $this->purchaseOrders->update($purchaseOrder, $request->validated());
+        } catch (ValidationException $e) {
+            return back()
+                ->withInput()
+                ->withErrors($e->errors())
+                ->with('warning', collect($e->errors())->flatten()->first());
+        }
 
         return redirect()
             ->route('procurement.purchase-orders.index')

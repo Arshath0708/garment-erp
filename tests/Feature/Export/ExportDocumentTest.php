@@ -8,7 +8,9 @@ use App\Models\Currency;
 use App\Models\DocumentChecklistType;
 use App\Models\DocumentFormat;
 use App\Models\ExportDocument;
+use App\Models\GarmentStyle;
 use App\Models\OrderConfirmation;
+use App\Models\StyleStock;
 use App\Models\User;
 use Database\Seeders\DocumentChecklistTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -102,9 +104,10 @@ class ExportDocumentTest extends TestCase
             ]);
 
         $document = ExportDocument::first();
-        $response->assertRedirect(route('export.documents.show', $document));
+        $response->assertRedirect(route('export.documents.show', ['document' => $document, 'tab' => 'generate']));
 
         $this->assertNotNull($document);
+        $this->assertSame($document->doc_num, $document->invoice_no);
         $this->assertSame($this->oc->id, $document->order_confirmation_id);
         $this->assertSame('draft', $document->status);
         $this->assertCount(1, $document->items);
@@ -375,6 +378,39 @@ class ExportDocumentTest extends TestCase
             ->assertOk()
             ->assertSee('id="add-carton"', false)
             ->assertSee('addCartonBtn.addEventListener', false);
+    }
+
+    public function test_saving_cartons_posts_finished_garment_stock(): void
+    {
+        GarmentStyle::create([
+            'style_number' => 'D-100',
+            'name'         => 'Packed Tee',
+            'status'       => 'Active',
+        ]);
+
+        $document = $this->raiseDocument();
+
+        $this->actingAs($this->admin)
+            ->put(route('export.documents.update', $document), [
+                'cartons' => [
+                    [
+                        'carton_no' => 'C1',
+                        'lines'     => [
+                            ['description' => 'Cotton T-Shirt', 'unit' => 'PCS', 'qty' => 120],
+                        ],
+                    ],
+                ],
+            ])
+            ->assertRedirect(route('export.documents.show', $document));
+
+        $this->assertSame(120, $document->fresh()->fg_posted_qty);
+        $this->assertSame(120, (int) StyleStock::query()->value('qty_on_hand'));
+
+        $this->actingAs($this->admin)
+            ->get(route('inventory.index'))
+            ->assertOk()
+            ->assertSee('Finished garments', false)
+            ->assertSee('D-100', false);
     }
 
     private function raiseDocument(): ExportDocument

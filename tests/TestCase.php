@@ -29,4 +29,26 @@ abstract class TestCase extends BaseTestCase
 
         return $app;
     }
+
+    /**
+     * Draft work orders stay allowed without this. Release and raised POs need a signed sheet.
+     */
+    protected function approveStyleCosting(\App\Models\GarmentStyle $style, float $cmCost = 10): \App\Models\StyleCosting
+    {
+        $costing = new \App\Models\StyleCosting([
+            'costing_date'       => now()->toDateString(),
+            'garment_style_id'   => $style->id,
+            'cm_cost'            => $cmCost,
+            'other_cost'         => 0,
+            'material_cost'      => 0,
+            'total_cost_per_pc'  => $cmCost,
+            'status'             => 'approved',
+            'approved_at'        => now(),
+        ]);
+        $costing->financial_year = \App\Support\FinancialYear::current();
+        $costing->costing_num = 'CS-T-'.$style->id.'-'.uniqid();
+        $costing->save();
+
+        return $costing;
+    }
 }

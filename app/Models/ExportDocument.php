@@ -57,6 +57,7 @@ class ExportDocument extends Model
         'shipment_date',
         'remarks',
         'status',
+        'fg_posted_qty',
 
         'invoice_no',
         'invoice_date',

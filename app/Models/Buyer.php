@@ -42,12 +42,19 @@ class Buyer extends Model
         ['label' => 'GROSS WT',    'is_required' => false, 'placeholder' => 'GROSS WT:'],
     ];
 
+    public const INVOICE_LAYOUTS = [
+        'standard'  => 'Standard export invoice',
+        'letterhead' => 'Buyer letterhead (buyer name first)',
+        'compact'   => 'Compact packing-style invoice',
+    ];
+
     /**
      * @var list<string>
      */
     protected $fillable = [
         'company_name',
         'name_on_export_invoice',
+        'invoice_layout',
         'contact_person',
         'contact_designation_id',
         'email',

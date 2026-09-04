@@ -13,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use RuntimeException;
 
@@ -113,7 +114,13 @@ class WorkOrderController extends Controller implements HasMiddleware
 
     public function release(WorkOrder $workOrder): RedirectResponse
     {
-        $this->workOrders->release($workOrder);
+        try {
+            $this->workOrders->release($workOrder);
+        } catch (ValidationException $e) {
+            return back()
+                ->withErrors($e->errors())
+                ->with('warning', collect($e->errors())->flatten()->first());
+        }
 
         return back()->with('success', "Work order {$workOrder->wo_num} released. Production can be launched against it.");
     }

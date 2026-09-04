@@ -137,6 +137,11 @@ class Inquiry extends Model
         return $this->hasMany(InquiryFollowUp::class)->orderByDesc('follow_up_date')->orderByDesc('id');
     }
 
+    public function orderConfirmations(): HasMany
+    {
+        return $this->hasMany(OrderConfirmation::class, 'source_inquiry_id')->latest('id');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Derived

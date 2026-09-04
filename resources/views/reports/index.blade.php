@@ -28,6 +28,7 @@
         <x-ui.card title="Report Links">
             <ul class="mb-0">
                 <li><a href="{{ route('reports.outstanding.index') }}">Outstanding</a></li>
+                <li><a href="{{ route('reports.order-profit') }}">Profit per order (plan vs actual)</a></li>
                 <li class="text-body-secondary">More report exports can be added on this page based on demo feedback.</li>
             </ul>
         </x-ui.card>

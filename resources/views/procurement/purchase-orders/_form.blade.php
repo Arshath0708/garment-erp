@@ -1,4 +1,4 @@
-@props(['purchaseOrder' => null])
+@props(['purchaseOrder' => null, 'prefillProduct' => null])
 
 @php
     $isEdit = (bool) $purchaseOrder;
@@ -56,8 +56,25 @@
 
 <x-ui.form-section title="PO Items" icon="bi-table"
                    subtitle="₹ price ← Inquiry costing · OC FOB → Export Invoice · HSN ← Product Master">
+    @if($prefillProduct)
+        <div class="alert alert-info py-2 small">
+            Prefilling {{ $prefillProduct->name }} ({{ $prefillProduct->item_group_code }}) from low-stock reorder. Confirm supplier, qty and rate before saving as Draft.
+        </div>
+    @endif
     <div id="items-wrap">
-        @php $existingItems = old('items', $isEdit ? $purchaseOrder->items : []); @endphp
+        @php
+            $existingItems = old('items', $isEdit ? $purchaseOrder->items : []);
+            if (! $isEdit && empty($existingItems) && $prefillProduct) {
+                $existingItems = [[
+                    'design_no'   => $prefillProduct->item_group_code,
+                    'description' => $prefillProduct->name,
+                    'product_id'  => $prefillProduct->id,
+                    'unit'        => $prefillProduct->unit_po,
+                    'cost_price'  => '',
+                    'colours'     => [],
+                ]];
+            }
+        @endphp
 
         @foreach($existingItems as $item)
             @php
@@ -70,7 +87,7 @@
                 $iCostPrice = $isArr ? ($item['cost_price'] ?? '') : $item->cost_price;
                 $iRemarks = $isArr ? ($item['remarks'] ?? '') : $item->remarks;
                 $iColours = $isArr ? ($item['colours'] ?? []) : $item->colours;
-                $iProductLabel = $isArr ? null : $item->product?->name;
+                $iProductLabel = $isArr ? ($prefillProduct?->name ?? null) : $item->product?->name;
             @endphp
             <div class="inquiry-item border rounded p-3 mb-3" data-item
                  data-product-id="{{ $iProduct }}" data-product-label="{{ $iProductLabel }}" data-unit="{{ $iUnit }}">
