@@ -7,6 +7,7 @@ use App\Http\Controllers\Masters\CategoryController;
 use App\Http\Controllers\Masters\GarmentStyleController;
 use App\Http\Controllers\Manufacturing\JobWorkVoucherController;
 use App\Http\Controllers\Manufacturing\ManufacturingController;
+use App\Http\Controllers\Manufacturing\ProductionCapaController;
 use App\Http\Controllers\Manufacturing\ProductionLineController;
 use App\Http\Controllers\Manufacturing\WorkOrderController;
 use App\Http\Controllers\SearchController;
@@ -280,6 +281,8 @@ Route::middleware('auth')->group(function () {
     Route::post('production-lines/outputs', [ProductionLineController::class, 'storeOutput'])->name('production-lines.outputs.store');
 
     Route::get('manufacturing', [ManufacturingController::class, 'index'])->name('manufacturing.index');
+    Route::get('manufacturing/capa', [ProductionCapaController::class, 'index'])->name('manufacturing.capa.index');
+    Route::post('manufacturing/capa/{qcCheck}/close', [ProductionCapaController::class, 'close'])->name('manufacturing.capa.close');
     Route::get('manufacturing/create', [ManufacturingController::class, 'create'])->name('manufacturing.create');
     Route::get('manufacturing/material-plan', [ManufacturingController::class, 'materialPlan'])->name('manufacturing.material-plan');
     Route::post('manufacturing', [ManufacturingController::class, 'store'])->name('manufacturing.store');

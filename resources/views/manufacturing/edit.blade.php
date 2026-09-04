@@ -217,7 +217,7 @@
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small">Fail</label>
-                    <input type="number" min="0" name="failed_qty" class="form-control form-control-sm" value="0" required>
+                    <input type="number" min="0" name="failed_qty" id="qc-failed-qty" class="form-control form-control-sm" value="0" required>
                 </div>
                 <div class="col-md-3">
                     <div class="form-check mt-4">
@@ -225,11 +225,31 @@
                         <label class="form-check-label small" for="hold-wo">Hold work order if fail</label>
                     </div>
                 </div>
-                <div class="col-12">
-                    <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Defect code / CAPA note"></textarea>
+                <div class="col-md-6" id="qc-defect-wrap">
+                    <label class="form-label small">Defect code <span class="text-danger">*</span> <span class="text-body-secondary fw-normal">(required if fail)</span></label>
+                    <select name="defect_code_id" class="form-select form-select-sm @error('defect_code_id') is-invalid @enderror">
+                        <option value="">— Select —</option>
+                        @foreach($defectCodes ?? [] as $code)
+                            <option value="{{ $code->id }}" @selected(old('defect_code_id') == $code->id)>{{ $code->label() }}</option>
+                        @endforeach
+                    </select>
+                    @error('defect_code_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">CAPA due</label>
+                    <input type="date" name="capa_due_date" class="form-control form-control-sm" value="{{ old('capa_due_date') }}">
                 </div>
                 <div class="col-12">
+                    <label class="form-label small">CAPA fix plan <span class="text-danger">*</span> <span class="text-body-secondary fw-normal">(required if fail)</span></label>
+                    <textarea name="capa_plan" class="form-control form-control-sm @error('capa_plan') is-invalid @enderror" rows="2" placeholder="What will be fixed, by whom, and how">{{ old('capa_plan') }}</textarea>
+                    @error('capa_plan') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-12">
+                    <textarea name="notes" class="form-control form-control-sm" rows="1" placeholder="Extra notes (optional)">{{ old('notes') }}</textarea>
+                </div>
+                <div class="col-12 d-flex gap-2 align-items-center">
                     <button class="btn btn-sm btn-primary">Save QC check</button>
+                    <a href="{{ route('manufacturing.capa.index') }}" class="small">Open CAPA list</a>
                 </div>
             </form>
             @if($order->qcChecks->isNotEmpty())
@@ -243,7 +263,8 @@
                                 <th class="text-end">Pass</th>
                                 <th class="text-end">Fail</th>
                                 <th>Result</th>
-                                <th>Notes</th>
+                                <th>Defect</th>
+                                <th>CAPA</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -258,7 +279,16 @@
                                         <span class="badge text-bg-{{ $check->isFail() ? 'danger' : 'success' }}">{{ $check->isFail() ? 'Fail' : 'Pass' }}</span>
                                         @if($check->held_work_order)<span class="badge text-bg-warning">WO Hold</span>@endif
                                     </td>
-                                    <td class="small">{{ $check->notes ?: '—' }}</td>
+                                    <td class="small">{{ $check->defectCode?->label() ?? '—' }}</td>
+                                    <td class="small">
+                                        @if($check->capa_status)
+                                            <span class="badge text-bg-{{ $check->capa_status === 'open' ? 'warning' : 'secondary' }}">{{ ucfirst($check->capa_status) }}</span>
+                                            @if($check->capa_due_date)<div class="text-body-secondary">Due {{ $check->capa_due_date->format('d M Y') }}</div>@endif
+                                            <div>{{ \Illuminate\Support\Str::limit($check->capa_plan, 80) }}</div>
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
