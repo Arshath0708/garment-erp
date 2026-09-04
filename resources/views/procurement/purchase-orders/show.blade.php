@@ -68,7 +68,9 @@
                         <th>Product / HSN</th>
                         <th>Colour / Size</th>
                         <th>Unit</th>
-                        <th class="text-end">₹ / Unit</th>
+                        @canany(['cost-price.view', 'purchase-order.edit'])
+                            <th class="text-end">₹ / Unit</th>
+                        @endcanany
                         <th class="text-end">Qty</th>
                         <th class="text-end">Amount</th>
                         <th class="text-end">OC FOB</th>
@@ -100,7 +102,9 @@
                                 @endforelse
                             </td>
                             <td>{{ $item->unit ?? '—' }}</td>
-                            <td class="text-end">{{ $item->cost_price !== null ? number_format((float) $item->cost_price, 2) : '—' }}</td>
+                            @canany(['cost-price.view', 'purchase-order.edit'])
+                                <td class="text-end">{{ $item->cost_price !== null ? number_format((float) $item->cost_price, 2) : '—' }}</td>
+                            @endcanany
                             <td class="text-end">{{ $item->qty }}</td>
                             <td class="text-end">{{ number_format((float) $item->amount, 2) }}</td>
                             <td class="text-end text-body-secondary">
@@ -108,13 +112,13 @@
                             </td>
                         </tr>
                     @empty
-                        <x-ui.empty-state :colspan="9" icon="bi-box-seam" title="No items" />
+                        <x-ui.empty-state :colspan="auth()->user()?->canAny(['cost-price.view', 'purchase-order.edit']) ? 9 : 8" icon="bi-box-seam" title="No items" />
                     @endforelse
                 </tbody>
                 @if($purchaseOrder->items->isNotEmpty())
                     <tfoot>
                         <tr class="fw-semibold table-light">
-                            <td colspan="6" class="text-end">Total</td>
+                            <td colspan="{{ auth()->user()?->canAny(['cost-price.view', 'purchase-order.edit']) ? 6 : 5 }}" class="text-end">Total</td>
                             <td class="text-end">{{ $purchaseOrder->items->sum('qty') }}</td>
                             <td class="text-end">{{ number_format($purchaseOrder->totalAmount(), 2) }}</td>
                             <td></td>

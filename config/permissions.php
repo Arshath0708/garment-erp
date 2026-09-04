@@ -30,10 +30,9 @@ return [
     | Override in .env for anything other than local development.
     */
     'super_admin' => [
-        'email'    => env('SUPER_ADMIN_EMAIL', 'admin@garment.com'),
+        'email' => env('SUPER_ADMIN_EMAIL', 'admin@garment.com'),
         'password' => env('SUPER_ADMIN_PASSWORD', 'garment@123'),
     ],
-
 
     /*
     |--------------------------------------------------------------------------
@@ -49,14 +48,14 @@ return [
     |--------------------------------------------------------------------------
     */
     'action_labels' => [
-        'view'     => 'View',
-        'create'   => 'Create',
-        'edit'     => 'Edit',
-        'delete'   => 'Delete',
-        'approve'  => 'Approve',
-        'export'   => 'Export',
+        'view' => 'View',
+        'create' => 'Create',
+        'edit' => 'Edit',
+        'delete' => 'Delete',
+        'approve' => 'Approve',
+        'export' => 'Export',
         'generate' => 'Generate',
-        'sync'     => 'Sync',
+        'sync' => 'Sync',
     ],
 
     /*
@@ -114,37 +113,37 @@ return [
          * be declared here the day someone needs to edit them in the UI.
          */
         'Masters' => [
-            'category'  => ['label' => 'Categories'],
+            'category' => ['label' => 'Categories'],
             'po-format' => ['label' => 'Order Formats'],
-            'product'   => ['label' => 'Products'],
-            'buyer'     => ['label' => 'Buyers'],
-            'supplier'  => ['label' => 'Suppliers'],
-            'jobber'    => ['label' => 'Jobbers'],
-            'agent'     => ['label' => 'Agents'],
+            'product' => ['label' => 'Products'],
+            'buyer' => ['label' => 'Buyers'],
+            'supplier' => ['label' => 'Suppliers'],
+            'jobber' => ['label' => 'Jobbers'],
+            'agent' => ['label' => 'Agents'],
             'fob-value' => ['label' => 'FOB Values'],
-            'markup'    => ['label' => 'Markup'],
+            'markup' => ['label' => 'Markup'],
             'style-costing' => ['label' => 'Style Costing', 'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
         ],
 
         'Sales' => [
-            'inquiry'            => ['label' => 'Inquiries',           'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => true],
+            'inquiry' => ['label' => 'Inquiries',           'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => true],
             'order-confirmation' => ['label' => 'Order Confirmations', 'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => true],
         ],
 
         'Manufacturing' => [
             'work-order' => ['label' => 'Work Orders', 'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
-            'job-work'   => ['label' => 'Job Work Issue / Receive', 'actions' => ['view', 'create', 'edit', 'delete'], 'built' => true],
+            'job-work' => ['label' => 'Job Work Issue / Receive', 'actions' => ['view', 'create', 'edit', 'delete'], 'built' => true],
         ],
 
         'Procurement' => [
             'purchase-order' => ['label' => 'Purchase Orders', 'actions' => ['view', 'create', 'edit', 'delete', 'approve', 'export'], 'built' => true],
             // "approve" is the QC pass: the receiver records what arrived, the
             // checker approves what is good. Two people, one screen, one row.
-            'inward-entry'   => ['label' => 'Goods Inward',    'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
+            'inward-entry' => ['label' => 'Goods Inward',    'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
         ],
 
         'Export' => [
-            'packing'         => ['label' => 'Packing',           'built' => true],
+            'packing' => ['label' => 'Packing',           'built' => true],
             // Phase 1 built: the Export Document header + 26-row checklist
             // tracker (raise from OC, upload/generate/manual per row). The
             // document-generation logic behind "generate"/"export" (Packing
@@ -153,12 +152,12 @@ return [
         ],
 
         'Finance' => [
-            'purchase-bill'    => ['label' => 'Purchase Bills',    'built' => true],
-            'debit-note'       => ['label' => 'Debit Notes',       'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
-            'payment'          => ['label' => 'Supplier Payments', 'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
+            'purchase-bill' => ['label' => 'Purchase Bills',    'built' => true],
+            'debit-note' => ['label' => 'Debit Notes',       'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
+            'payment' => ['label' => 'Supplier Payments', 'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
             // Money coming IN from the buyer. "Foreign Payments" read as money
             // going out; the key stays, the label says which direction.
-            'foreign-payment'  => ['label' => 'Buyer Receipts',    'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
+            'foreign-payment' => ['label' => 'Buyer Receipts',    'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
             'agent-commission' => ['label' => 'Agent Commission',  'built' => true],
         ],
 
@@ -168,7 +167,7 @@ return [
          */
         'Reports' => [
             'outstanding' => ['label' => 'Outstanding', 'actions' => ['view', 'export'], 'built' => true],
-            'report'      => ['label' => 'Reports',     'actions' => ['view', 'export'], 'built' => true],
+            'report' => ['label' => 'Reports',     'actions' => ['view', 'export'], 'built' => true],
         ],
 
         /*
@@ -191,12 +190,17 @@ return [
          * has anything in here now.
          */
         'Administration' => [
-            'user'             => ['label' => 'Users'],
-            'role'             => ['label' => 'Roles'],
-            'permission'       => ['label' => 'Permissions', 'actions' => ['view', 'sync']],
+            'user' => ['label' => 'Users'],
+            'role' => ['label' => 'Roles'],
+            'permission' => ['label' => 'Permissions', 'actions' => ['view', 'sync']],
             // Our own company's details, printed on every export document
             // (invoice, bank docs, ...) — see CompanyProfile::current().
-            'company-profile'  => ['label' => 'Company Profile', 'actions' => ['view', 'edit']],
+            'company-profile' => ['label' => 'Company Profile', 'actions' => ['view', 'edit']],
+            // Field-level: internal ₹ cost on inquiry / OC / PO show. Not a
+            // menu — operators with purchase-order.view still see the order,
+            // just not the cost column. Merchandising raises POs without this;
+            // Admin and Accounts get it for pricing and bills.
+            'cost-price' => ['label' => 'Cost Price (field)', 'actions' => ['view'], 'built' => true],
         ],
 
     ],
@@ -233,6 +237,7 @@ return [
                 'purchase-bill.*', 'debit-note.*', 'payment.*', 'foreign-payment.*',
                 'agent-commission.*',
                 'outstanding.*', 'report.*',
+                'cost-price.view',
             ],
         ],
 
@@ -258,6 +263,7 @@ return [
                 'purchase-bill.*', 'debit-note.*', 'payment.*', 'foreign-payment.*',
                 'agent-commission.*',
                 'outstanding.*', 'report.view', 'report.export',
+                'cost-price.view',
             ],
         ],
 
