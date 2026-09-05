@@ -217,13 +217,13 @@
                                 @endforeach
                             </select>
                         </div>
-                        @if(auth()->user()?->hasRole('Super Admin'))
+                        @can('cost-price.view')
                             <div class="col-md-3">
                                 <label class="form-label small">Cost Price / Unit (₹)</label>
                                 <input type="number" step="0.01" min="0" class="form-control form-control-sm js-field" data-field="cost_price" value="{{ $iCostPrice }}">
                                 <div class="form-text">Internal — feeds Purchase Order</div>
                             </div>
-                        @endif
+                        @endcan
                         <div class="col-md-6">
                             <label class="form-label small">Item Remarks</label>
                             <input type="text" class="form-control form-control-sm js-field" data-field="remarks" maxlength="500" value="{{ $iRemarks }}">
@@ -744,7 +744,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (modeSelect.value === 'direct') return;
 
         itemsWrap.querySelectorAll(':scope > .inquiry-item').forEach(function (itemEl, i) {
-            const field = (name) => itemEl.querySelector('[data-field="' + name + '"]').value;
+            const field = (name) => {
+                const el = itemEl.querySelector('[data-field="' + name + '"]');
+                return el ? el.value : '';
+            };
 
             appendHidden('items[' + i + '][design_no]', field('design_no'));
             appendHidden('items[' + i + '][description]', field('description'));
@@ -753,7 +756,9 @@ document.addEventListener('DOMContentLoaded', function () {
             appendHidden('items[' + i + '][unit]', field('unit'));
             appendHidden('items[' + i + '][fob_value_id]', field('fob_value_id'));
             appendHidden('items[' + i + '][price]', field('price'));
-            appendHidden('items[' + i + '][cost_price]', field('cost_price'));
+            if (itemEl.querySelector('[data-field="cost_price"]')) {
+                appendHidden('items[' + i + '][cost_price]', field('cost_price'));
+            }
             appendHidden('items[' + i + '][remarks]', field('remarks'));
 
             itemEl.querySelectorAll(':scope .colours-wrap > .inquiry-colour').forEach(function (colourEl, j) {
@@ -841,13 +846,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         @endforeach
                     </select>
                 </div>
-                @if(auth()->user()?->hasRole('Super Admin'))
+                @can('cost-price.view')
                     <div class="col-md-3">
                         <label class="form-label small">Cost Price / Unit (₹)</label>
                         <input type="number" step="0.01" min="0" class="form-control form-control-sm js-field" data-field="cost_price">
                         <div class="form-text">Internal — feeds Purchase Order</div>
                     </div>
-                @endif
+                @endcan
                 <div class="col-md-6">
                     <label class="form-label small">Item Remarks</label>
                     <input type="text" class="form-control form-control-sm js-field" data-field="remarks" maxlength="500">

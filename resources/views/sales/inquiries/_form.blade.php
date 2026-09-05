@@ -797,7 +797,10 @@ document.addEventListener('DOMContentLoaded', function () {
         form.querySelectorAll('input[data-generated]').forEach(function (el) { el.remove(); });
 
         itemsWrap.querySelectorAll(':scope > .inquiry-item').forEach(function (itemEl, i) {
-            const field = (name) => itemEl.querySelector('[data-field="' + name + '"]').value;
+            const field = (name) => {
+                const el = itemEl.querySelector('[data-field="' + name + '"]');
+                return el ? el.value : '';
+            };
 
             appendHidden('items[' + i + '][design_no]', field('design_no'));
             appendHidden('items[' + i + '][description]', field('description'));
@@ -806,7 +809,9 @@ document.addEventListener('DOMContentLoaded', function () {
             appendHidden('items[' + i + '][unit]', field('unit'));
             appendHidden('items[' + i + '][fob_value_id]', field('fob_value_id'));
             appendHidden('items[' + i + '][price]', field('price'));
-            appendHidden('items[' + i + '][cost_price]', field('cost_price'));
+            if (itemEl.querySelector('[data-field="cost_price"]')) {
+                appendHidden('items[' + i + '][cost_price]', field('cost_price'));
+            }
             appendHidden('items[' + i + '][status]', field('status'));
             appendHidden('items[' + i + '][remarks]', field('remarks'));
 

@@ -25,55 +25,75 @@ abstract class OrderConfirmationRequest extends FormRequest
         return $this->user()->can($this->permission());
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->user()?->can('cost-price.view')) {
+            return;
+        }
+
+        $items = $this->input('items');
+        if (! is_array($items)) {
+            return;
+        }
+
+        foreach ($items as $i => $item) {
+            if (is_array($item)) {
+                unset($items[$i]['cost_price']);
+            }
+        }
+
+        $this->merge(['items' => $items]);
+    }
+
     public function rules(): array
     {
         $requiredUnlessDraft = 'required_unless:status,draft';
 
         return [
-            'mode'           => ['required', Rule::in(array_keys(OrderConfirmation::MODES))],
-            'oc_date'        => ['required', 'date'],
-            'buyer_ref'      => ['nullable', 'string', 'max:100'],
-            'buyer_id'       => [$requiredUnlessDraft, 'nullable', 'integer', Rule::exists('buyers', 'id')],
-            'category_id'    => [$requiredUnlessDraft, 'nullable', 'integer', Rule::exists('categories', 'id')],
+            'mode' => ['required', Rule::in(array_keys(OrderConfirmation::MODES))],
+            'oc_date' => ['required', 'date'],
+            'buyer_ref' => ['nullable', 'string', 'max:100'],
+            'buyer_id' => [$requiredUnlessDraft, 'nullable', 'integer', Rule::exists('buyers', 'id')],
+            'category_id' => [$requiredUnlessDraft, 'nullable', 'integer', Rule::exists('categories', 'id')],
             'document_format_id' => [$requiredUnlessDraft, 'nullable', 'integer', Rule::exists('document_formats', 'id')],
 
-            'agent_id'               => ['nullable', 'integer', Rule::exists('agents', 'id')],
-            'agent_commission_type'  => ['nullable', 'required_with:agent_commission_value', Rule::in(['percent', 'flat'])],
+            'agent_id' => ['nullable', 'integer', Rule::exists('agents', 'id')],
+            'agent_commission_type' => ['nullable', 'required_with:agent_commission_value', Rule::in(['percent', 'flat'])],
             'agent_commission_value' => ['nullable', 'numeric', 'min:0', 'max:99999999.9999'],
 
             'currency_id' => [$requiredUnlessDraft, 'nullable', 'integer', Rule::exists('currencies', 'id')],
-            'incoterm'    => ['nullable', 'string', 'max:20'],
+            'incoterm' => ['nullable', 'string', 'max:20'],
 
-            'ship_method'    => ['nullable', 'string', 'max:60'],
-            'shipment_date'  => ['nullable', 'string', 'max:60'],
-            'pol'            => ['nullable', 'string', 'max:120'],
-            'pod'            => ['nullable', 'string', 'max:120'],
-            'payment_terms'  => ['nullable', 'string', 'max:120'],
+            'ship_method' => ['nullable', 'string', 'max:60'],
+            'shipment_date' => ['nullable', 'string', 'max:60'],
+            'pol' => ['nullable', 'string', 'max:120'],
+            'pod' => ['nullable', 'string', 'max:120'],
+            'payment_terms' => ['nullable', 'string', 'max:120'],
 
             'delivery_details' => [$requiredUnlessDraft, 'nullable', 'string'],
-            'packing_details'  => [$requiredUnlessDraft, 'nullable', 'string'],
-            'remarks'          => ['nullable', 'string', 'max:2000'],
+            'packing_details' => [$requiredUnlessDraft, 'nullable', 'string'],
+            'remarks' => ['nullable', 'string', 'max:2000'],
 
             'status' => ['required', Rule::in(array_keys(OrderConfirmation::STATUSES))],
 
-            'items'                        => ['nullable', 'array', 'max:200'],
-            'items.*.design_no'            => ['nullable', 'string', 'max:150'],
-            'items.*.description'          => ['nullable', 'string', 'max:2000'],
-            'items.*.product_id'           => ['nullable', 'integer', Rule::exists('products', 'id')],
-            'items.*.supplier_id'          => ['nullable', 'integer', Rule::exists('suppliers', 'id')],
-            'items.*.unit'                 => ['nullable', 'string', 'max:20'],
-            'items.*.fob_value_id'         => ['nullable', 'integer', Rule::exists('fob_values', 'id')],
-            'items.*.price'                => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
-            'items.*.cost_price'           => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
-            'items.*.remarks'              => ['nullable', 'string', 'max:1000'],
+            'items' => ['nullable', 'array', 'max:200'],
+            'items.*.design_no' => ['nullable', 'string', 'max:150'],
+            'items.*.description' => ['nullable', 'string', 'max:2000'],
+            'items.*.product_id' => ['nullable', 'integer', Rule::exists('products', 'id')],
+            'items.*.supplier_id' => ['nullable', 'integer', Rule::exists('suppliers', 'id')],
+            'items.*.unit' => ['nullable', 'string', 'max:20'],
+            'items.*.fob_value_id' => ['nullable', 'integer', Rule::exists('fob_values', 'id')],
+            'items.*.price' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+            'items.*.cost_price' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+            'items.*.remarks' => ['nullable', 'string', 'max:1000'],
 
-            'items.*.colours'                => ['nullable', 'array', 'max:50'],
-            'items.*.colours.*.colour'       => ['nullable', 'string', 'max:60'],
-            'items.*.colours.*.sizes'        => ['nullable', 'array', 'max:50'],
+            'items.*.colours' => ['nullable', 'array', 'max:50'],
+            'items.*.colours.*.colour' => ['nullable', 'string', 'max:60'],
+            'items.*.colours.*.sizes' => ['nullable', 'array', 'max:50'],
             'items.*.colours.*.sizes.*.size' => ['nullable', 'string', 'max:20'],
-            'items.*.colours.*.sizes.*.qty'  => ['nullable', 'integer', 'min:0', 'max:999999'],
+            'items.*.colours.*.sizes.*.qty' => ['nullable', 'integer', 'min:0', 'max:999999'],
 
-            'items.*.custom'   => ['nullable', 'array', 'max:20'],
+            'items.*.custom' => ['nullable', 'array', 'max:20'],
             'items.*.custom.*' => ['nullable', 'string', 'max:255'],
         ];
     }
@@ -96,12 +116,12 @@ abstract class OrderConfirmationRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'buyer_id'           => 'buyer',
-            'category_id'        => 'category',
+            'buyer_id' => 'buyer',
+            'category_id' => 'category',
             'document_format_id' => 'order format',
-            'currency_id'        => 'currency',
-            'delivery_details'   => 'delivery details',
-            'packing_details'    => 'packing details',
+            'currency_id' => 'currency',
+            'delivery_details' => 'delivery details',
+            'packing_details' => 'packing details',
         ];
     }
 }
