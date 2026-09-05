@@ -39,7 +39,7 @@ class Breadcrumbs
             $isCanonical = $name === $matched['index'];
             $trail[] = [
                 'label' => $matched['screen'],
-                'url'   => $isCanonical ? null : route($matched['index']),
+                'url' => $isCanonical ? null : route($matched['index']),
             ];
 
             if (! $isCanonical) {
@@ -95,6 +95,7 @@ class Breadcrumbs
             'finance.agent-commission' => ['module' => 'Packing, Shipment & Billing', 'module_url' => route('export.packing.index'), 'screen' => 'Agent Commission', 'index' => 'finance.agent-commission.index'],
             'reports.outstanding' => ['module' => 'Intelligent OCR & Reports', 'module_url' => route('export.ocr.index'), 'screen' => 'Outstanding', 'index' => 'reports.outstanding.index'],
             'reports.order-profit' => ['module' => 'Intelligent OCR & Reports', 'module_url' => route('export.ocr.index'), 'screen' => 'Profit per order', 'index' => 'reports.order-profit'],
+            'reports.factory-board' => ['module' => 'Intelligent OCR & Reports', 'module_url' => route('export.ocr.index'), 'screen' => 'Factory board', 'index' => 'reports.factory-board'],
             'reports' => ['module' => 'Intelligent OCR & Reports', 'module_url' => route('export.ocr.index'), 'screen' => 'ERP Reports & Outstanding', 'index' => 'reports.index'],
             'user-management.users' => ['module' => 'Account', 'module_url' => route('profile.edit'), 'screen' => 'Users', 'index' => 'user-management.users.index'],
             'user-management.roles' => ['module' => 'Account', 'module_url' => route('profile.edit'), 'screen' => 'Roles', 'index' => 'user-management.roles.index'],
@@ -110,6 +111,7 @@ class Breadcrumbs
             str_ends_with($name, '.create') => 'New',
             str_ends_with($name, '.edit') => 'Edit',
             str_ends_with($name, '.show') => 'View',
+            str_ends_with($name, '.export') => 'Export',
             default => null,
         };
     }
