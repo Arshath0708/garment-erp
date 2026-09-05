@@ -510,5 +510,10 @@ class InwardEntryTest extends TestCase
 
         $this->assertNotNull($inward->fresh()->stores_received_at);
         $this->assertEquals('28.000', (string) $product->fresh()->qty_on_hand);
+
+        $this->assertDatabaseHas('stock_lots', [
+            'product_id' => $product->id,
+            'qty_on_hand' => 18,
+        ]);
     }
 }

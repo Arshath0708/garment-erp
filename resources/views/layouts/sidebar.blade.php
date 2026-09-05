@@ -59,7 +59,10 @@
                 <li class="nav-item" data-nav-label="line efficiency sewing"><a href="{{ route('production-lines.index') }}" class="nav-link {{ $active('production-lines.*') }}"><i class="nav-icon bi bi-speedometer2"></i><p>Line efficiency</p></a></li>
 
                 <li class="nav-header">Inventory &amp; Job Work</li>
-                <li class="nav-item" data-nav-label="fabric accessory stock"><a href="{{ route('inventory.index') }}" class="nav-link {{ $active('inventory.*') }}"><i class="nav-icon bi bi-boxes"></i><p>Fabric &amp; Accessory Stock</p></a></li>
+                <li class="nav-item" data-nav-label="fabric accessory stock"><a href="{{ route('inventory.index') }}" class="nav-link {{ $active('inventory.index') || $active('inventory.lots') }}"><i class="nav-icon bi bi-boxes"></i><p>Fabric &amp; Accessory Stock</p></a></li>
+                @can('warehouse.view')
+                    <li class="nav-item" data-nav-label="godowns warehouses lots"><a href="{{ route('inventory.warehouses.index') }}" class="nav-link {{ $active('inventory.warehouses.*') }}"><i class="nav-icon bi bi-building"></i><p>Godowns</p></a></li>
+                @endcan
                 <li class="nav-item" data-nav-label="fabric trims po"><a href="{{ route('procurement.purchase-orders.index') }}" class="nav-link {{ $active('procurement.purchase-orders.*') }}"><i class="nav-icon bi bi-cart-plus"></i><p>Fabric &amp; Trims PO</p></a></li>
                 <li class="nav-item" data-nav-label="goods inward"><a href="{{ route('procurement.inward-entries.index') }}" class="nav-link {{ $active('procurement.inward-entries.*') }}"><i class="nav-icon bi bi-box-arrow-in-down"></i><p>Goods Inward</p></a></li>
                 <li class="nav-item" data-nav-label="job work issue receive"><a href="{{ route('job-work.index') }}" class="nav-link {{ $active('job-work.*') }}"><i class="nav-icon bi bi-arrow-left-right"></i><p>Job Work Issue / Receive</p></a></li>

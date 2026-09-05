@@ -124,6 +124,7 @@ return [
             'fob-value' => ['label' => 'FOB Values'],
             'markup'    => ['label' => 'Markup'],
             'style-costing' => ['label' => 'Style Costing', 'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
+            'warehouse' => ['label' => 'Godowns / Warehouses', 'built' => true],
         ],
 
         'Sales' => [
@@ -226,7 +227,7 @@ return [
             'permissions' => [
                 'user.*', 'role.view', 'company-profile.*',
                 'category.*', 'po-format.*', 'product.*', 'buyer.*', 'supplier.*', 'jobber.*',
-                'agent.*', 'fob-value.*', 'markup.*', 'style-costing.*',
+                'agent.*', 'fob-value.*', 'markup.*', 'style-costing.*', 'warehouse.*',
                 'inquiry.*', 'order-confirmation.*',
                 'work-order.*', 'job-work.*',
                 'purchase-order.*', 'inward-entry.*',
@@ -241,7 +242,7 @@ return [
             'description' => 'Handles inquiry to purchase order, suppliers and products.',
             'permissions' => [
                 'category.view', 'po-format.view', 'product.*', 'buyer.view',
-                'supplier.*', 'agent.view',
+                'supplier.*', 'agent.view', 'warehouse.view',
                 'inquiry.*', 'order-confirmation.*',
                 'style-costing.*',
                 'work-order.*', 'job-work.*',
@@ -294,7 +295,7 @@ return [
         'Quality Checker' => [
             'description' => 'Inspects goods inward and records pass/reject quantity.',
             'permissions' => [
-                'product.view', 'supplier.view',
+                'product.view', 'supplier.view', 'warehouse.view',
                 'purchase-order.view',
                 'inward-entry.view', 'inward-entry.edit', 'inward-entry.approve',
                 'debit-note.view', 'debit-note.create',
