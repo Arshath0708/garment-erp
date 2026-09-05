@@ -29,6 +29,7 @@ class FinanceAndReportsPagesTest extends TestCase
             'agent-commission.view',
             'outstanding.view',
             'report.view',
+            'tally.view',
         ] as $perm) {
             Permission::firstOrCreate(['name' => $perm]);
         }
@@ -43,6 +44,7 @@ class FinanceAndReportsPagesTest extends TestCase
             'agent-commission.view',
             'outstanding.view',
             'report.view',
+            'tally.view',
         ]);
     }
 
@@ -63,6 +65,7 @@ class FinanceAndReportsPagesTest extends TestCase
         $this->get(route('finance.supplier-payments.index'))->assertOk();
         $this->get(route('finance.buyer-receipts.index'))->assertOk();
         $this->get(route('finance.agent-commission.index'))->assertOk();
+        $this->get(route('finance.tally.settings'))->assertOk();
         $this->get(route('reports.index'))->assertOk();
         $this->get(route('reports.outstanding.index'))->assertOk();
     }
