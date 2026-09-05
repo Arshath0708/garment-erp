@@ -1,42 +1,42 @@
 <?php
 
-use App\Http\Controllers\Inventory\InventoryController;
-use App\Http\Controllers\Masters\BuyerController;
-use App\Http\Controllers\Masters\AgentController;
-use App\Http\Controllers\Masters\CategoryController;
-use App\Http\Controllers\Masters\GarmentStyleController;
-use App\Http\Controllers\Manufacturing\JobWorkVoucherController;
-use App\Http\Controllers\Manufacturing\ManufacturingController;
-use App\Http\Controllers\Manufacturing\ProductionLineController;
-use App\Http\Controllers\Manufacturing\WorkOrderController;
-use App\Http\Controllers\SearchController;
-
-use App\Http\Controllers\Masters\DocumentFormatController;
-use App\Http\Controllers\Masters\FobValueController;
-use App\Http\Controllers\Masters\GeoController;
-use App\Http\Controllers\Masters\JobberController;
-use App\Http\Controllers\Masters\MarkupController;
-use App\Http\Controllers\Masters\ProductController;
-use App\Http\Controllers\Masters\StyleCostingController;
-use App\Http\Controllers\Masters\SupplierController;
 use App\Http\Controllers\Administration\CompanyProfileController;
+use App\Http\Controllers\Communication\WhatsappController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Export\ExportDocumentChecklistController;
 use App\Http\Controllers\Export\ExportDocumentController;
 use App\Http\Controllers\Export\ExportDocumentOcrController;
 use App\Http\Controllers\Export\PackingController;
 use App\Http\Controllers\Finance\DebitNoteController;
 use App\Http\Controllers\Finance\FinanceController;
+use App\Http\Controllers\Inventory\InventoryController;
+use App\Http\Controllers\Manufacturing\JobWorkVoucherController;
+use App\Http\Controllers\Manufacturing\ManufacturingController;
+use App\Http\Controllers\Manufacturing\ProductionLineController;
+use App\Http\Controllers\Manufacturing\WorkOrderController;
+use App\Http\Controllers\Masters\AgentController;
+use App\Http\Controllers\Masters\BOMController;
+use App\Http\Controllers\Masters\BuyerController;
+use App\Http\Controllers\Masters\CategoryController;
+use App\Http\Controllers\Masters\DocumentFormatController;
+use App\Http\Controllers\Masters\FobValueController;
+use App\Http\Controllers\Masters\GarmentStyleController;
+use App\Http\Controllers\Masters\GeoController;
+use App\Http\Controllers\Masters\JobberController;
+use App\Http\Controllers\Masters\MarkupController;
+use App\Http\Controllers\Masters\ProductController;
+use App\Http\Controllers\Masters\StyleCostingController;
+use App\Http\Controllers\Masters\SupplierController;
 use App\Http\Controllers\Procurement\InwardEntryController;
 use App\Http\Controllers\Procurement\PurchaseOrderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Reports\ReportsController;
 use App\Http\Controllers\Sales\InquiryController;
 use App\Http\Controllers\Sales\OrderConfirmationController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\UserManagement\PermissionController;
 use App\Http\Controllers\UserManagement\RoleController;
 use App\Http\Controllers\UserManagement\UserController;
-use App\Http\Controllers\DashboardController;
-
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'));
@@ -83,12 +83,10 @@ Route::middleware('auth')->group(function () {
         Route::patch('categories/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])
             ->name('categories.toggle-status');
         Route::resource('categories', CategoryController::class);
-        Route::get('bom', [\App\Http\Controllers\Masters\BOMController::class, 'index'])->name('bom.index');
+        Route::get('bom', [BOMController::class, 'index'])->name('bom.index');
         Route::post('styles/{style}/comments', [GarmentStyleController::class, 'storeComment'])->name('styles.comments.store');
         Route::post('styles/{style}/approve-bom', [GarmentStyleController::class, 'approveBom'])->name('styles.approve-bom');
         Route::resource('styles', GarmentStyleController::class);
-
-
 
         // Declared before the resource so "check-code" is not swallowed by
         // products/{product}.
@@ -291,8 +289,6 @@ Route::middleware('auth')->group(function () {
     Route::post('manufacturing/{order}/update-stage', [ManufacturingController::class, 'updateStage'])->name('manufacturing.update-stage');
     Route::get('manufacturing/{order}/job-work-challan', [ManufacturingController::class, 'jobWorkChallanPdf'])->name('manufacturing.job-work-challan');
 
-
-
     /*
     |--------------------------------------------------------------------------
     | Export
@@ -368,6 +364,14 @@ Route::middleware('auth')->group(function () {
             ->middleware('permission:agent-commission.view')
             ->name('agent-commission.index');
     });
+
+    Route::get('whatsapp', [WhatsappController::class, 'settings'])->name('whatsapp.settings');
+    Route::put('whatsapp', [WhatsappController::class, 'updateSettings'])->name('whatsapp.settings.update');
+    Route::get('whatsapp/logs', [WhatsappController::class, 'logs'])->name('whatsapp.logs');
+    Route::post('whatsapp/purchase-orders/{purchaseOrder}', [WhatsappController::class, 'purchaseOrder'])
+        ->name('whatsapp.purchase-orders');
+    Route::post('whatsapp/time-and-action/{step}', [WhatsappController::class, 'tnaStep'])
+        ->name('whatsapp.tna-steps');
 
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('outstanding', [ReportsController::class, 'outstanding'])

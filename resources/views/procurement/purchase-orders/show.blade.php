@@ -150,6 +150,10 @@
             </div>
         </div>
 
+        <div class="mb-4">
+            <x-whatsapp.notify :purchase-order="$purchaseOrder" />
+        </div>
+
         <h6 class="fw-semibold mb-2">Module Connections</h6>
         <div class="d-flex flex-wrap gap-2 mb-4">
             <span class="badge text-bg-light border fw-normal">OC Module — contract no. links, items &amp; sizes inherited</span>
