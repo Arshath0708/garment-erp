@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Manufacturing;
 
 use App\Http\Controllers\Controller;
 use App\Models\CompanyProfile;
+use App\Models\DefectCode;
 use App\Models\GarmentStyle;
 use App\Models\ProductionOrder;
 use App\Models\OrderConfirmation;
@@ -109,10 +110,11 @@ class ManufacturingController extends Controller
 
         $salesOrders = OrderConfirmation::query()->orderByDesc('id')->get();
         $jobbers = Supplier::query()->ofParty('jobber')->orderBy('company_name')->get();
-        $order->load(['garmentStyle.comments', 'buyer', 'orderConfirmation', 'jobber', 'materials.product', 'qcChecks.creator']);
+        $order->load(['garmentStyle.comments', 'buyer', 'orderConfirmation', 'jobber', 'materials.product', 'qcChecks.creator', 'qcChecks.defectCode', 'qcChecks.capaCloser']);
         $planRows = $this->materials->preview($order->garmentStyle, (int) $order->total_qty, $order);
+        $defectCodes = DefectCode::query()->where('is_active', true)->orderBy('code')->get();
 
-        return view('manufacturing.edit', compact('order', 'styles', 'salesOrders', 'jobbers', 'planRows'));
+        return view('manufacturing.edit', compact('order', 'styles', 'salesOrders', 'jobbers', 'planRows', 'defectCodes'));
     }
 
     public function update(Request $request, ProductionOrder $order): RedirectResponse
@@ -180,7 +182,10 @@ class ManufacturingController extends Controller
             'checked_qty'     => ['required', 'integer', 'min:1'],
             'passed_qty'      => ['required', 'integer', 'min:0'],
             'failed_qty'      => ['required', 'integer', 'min:0'],
+            'defect_code_id'  => ['nullable', 'integer', 'exists:defect_codes,id'],
             'notes'           => ['nullable', 'string', 'max:2000'],
+            'capa_plan'       => ['nullable', 'string', 'max:4000'],
+            'capa_due_date'   => ['nullable', 'date'],
             'hold_work_order' => ['nullable', 'boolean'],
         ]);
 
@@ -191,6 +196,20 @@ class ManufacturingController extends Controller
         }
 
         $result = $validated['failed_qty'] > 0 ? 'fail' : 'pass';
+
+        if ($result === 'fail') {
+            $failErrors = [];
+            if (empty($validated['defect_code_id'])) {
+                $failErrors['defect_code_id'] = 'Pick a defect code when pieces fail.';
+            }
+            if (blank($validated['capa_plan'] ?? null)) {
+                $failErrors['capa_plan'] = 'Write a CAPA fix plan when pieces fail.';
+            }
+            if ($failErrors !== []) {
+                throw ValidationException::withMessages($failErrors);
+            }
+        }
+
         $held = false;
         if ($result === 'fail' && $request->boolean('hold_work_order') && $order->work_order_id) {
             $workOrder = $order->workOrder;
@@ -206,13 +225,17 @@ class ManufacturingController extends Controller
             'passed_qty'      => $validated['passed_qty'],
             'failed_qty'      => $validated['failed_qty'],
             'result'          => $result,
+            'defect_code_id'  => $result === 'fail' ? ($validated['defect_code_id'] ?? null) : null,
             'notes'           => $validated['notes'] ?? null,
+            'capa_plan'       => $result === 'fail' ? ($validated['capa_plan'] ?? null) : null,
+            'capa_due_date'   => $result === 'fail' ? ($validated['capa_due_date'] ?? null) : null,
+            'capa_status'     => $result === 'fail' ? 'open' : null,
             'held_work_order' => $held,
             'created_by'      => auth()->id(),
         ]);
 
         $msg = $result === 'fail'
-            ? 'QC fail recorded.'.($held ? ' Work order put on Hold.' : '')
+            ? 'QC fail recorded with CAPA.'.($held ? ' Work order put on Hold.' : '')
             : 'QC pass recorded.';
 
         return back()->with('success', $msg);

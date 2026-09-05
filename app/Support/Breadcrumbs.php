@@ -80,6 +80,7 @@ class Breadcrumbs
             'work-orders' => ['module' => 'Manufacturing Processes', 'module_url' => route('work-orders.index'), 'screen' => 'Work Orders', 'index' => 'work-orders.index'],
             'time-and-action' => ['module' => 'Manufacturing Processes', 'module_url' => route('work-orders.index'), 'screen' => 'Time & Action', 'index' => 'time-and-action.index'],
             'production-lines' => ['module' => 'Manufacturing Processes', 'module_url' => route('work-orders.index'), 'screen' => 'Line efficiency', 'index' => 'production-lines.index'],
+            'manufacturing.capa' => ['module' => 'Manufacturing Processes', 'module_url' => route('work-orders.index'), 'screen' => 'QC CAPA', 'index' => 'manufacturing.capa.index'],
             'manufacturing' => ['module' => 'Manufacturing Processes', 'module_url' => route('manufacturing.index'), 'screen' => 'Production Planning', 'index' => 'manufacturing.index'],
             'inventory' => ['module' => 'Inventory & Job Work', 'module_url' => route('inventory.index'), 'screen' => 'Fabric & Accessory Stock', 'index' => 'inventory.index'],
             'job-work' => ['module' => 'Inventory & Job Work', 'module_url' => route('job-work.index'), 'screen' => 'Job Work Issue / Receive', 'index' => 'job-work.index'],

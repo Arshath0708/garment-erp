@@ -55,7 +55,8 @@
                 <li class="nav-header">Manufacturing Processes</li>
                 <li class="nav-item" data-nav-label="work orders"><a href="{{ route('work-orders.index') }}" class="nav-link {{ $active('work-orders.*') }}"><i class="nav-icon bi bi-clipboard-check"></i><p>Work Orders</p></a></li>
                 <li class="nav-item" data-nav-label="time and action tna"><a href="{{ route('time-and-action.index') }}" class="nav-link {{ $active('time-and-action.*') }}"><i class="nav-icon bi bi-calendar-week"></i><p>Time &amp; Action</p></a></li>
-                <li class="nav-item" data-nav-label="production planning"><a href="{{ route('manufacturing.index') }}" class="nav-link {{ $active('manufacturing.*') }}"><i class="nav-icon bi bi-diagram-3"></i><p>Production Planning</p></a></li>
+                <li class="nav-item" data-nav-label="production planning"><a href="{{ route('manufacturing.index') }}" class="nav-link {{ $active('manufacturing.index') || $active('manufacturing.create') || $active('manufacturing.show') || $active('manufacturing.edit') }}"><i class="nav-icon bi bi-diagram-3"></i><p>Production Planning</p></a></li>
+                <li class="nav-item" data-nav-label="qc capa defect"><a href="{{ route('manufacturing.capa.index') }}" class="nav-link {{ $active('manufacturing.capa.*') }}"><i class="nav-icon bi bi-clipboard2-check"></i><p>QC CAPA</p></a></li>
                 <li class="nav-item" data-nav-label="line efficiency sewing"><a href="{{ route('production-lines.index') }}" class="nav-link {{ $active('production-lines.*') }}"><i class="nav-icon bi bi-speedometer2"></i><p>Line efficiency</p></a></li>
 
                 <li class="nav-header">Inventory &amp; Job Work</li>
