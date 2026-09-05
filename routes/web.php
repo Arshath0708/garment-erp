@@ -206,6 +206,8 @@ Route::middleware('auth')->group(function () {
         // real OC rather than only flipping item status.
         Route::post('inquiries/{inquiry}/convert-to-oc', [OrderConfirmationController::class, 'convertFromInquiry'])
             ->name('inquiries.convert-to-oc');
+        Route::post('inquiries/{inquiry}/convert-to-invoice', [OrderConfirmationController::class, 'convertToInvoice'])
+            ->name('inquiries.convert-to-invoice');
 
         Route::get('inquiries/{inquiry}/pdf', [InquiryController::class, 'pdf'])
             ->name('inquiries.pdf');
@@ -216,6 +218,8 @@ Route::middleware('auth')->group(function () {
 
         Route::post('order-confirmations/{orderConfirmation}/raise-purchase-orders', [OrderConfirmationController::class, 'raisePurchaseOrders'])
             ->name('order-confirmations.raise-purchase-orders');
+        Route::post('order-confirmations/{orderConfirmation}/raise-invoice', [OrderConfirmationController::class, 'raiseInvoice'])
+            ->name('order-confirmations.raise-invoice');
         Route::post('order-confirmations/{orderConfirmation}/raise-export-document', [ExportDocumentController::class, 'raiseFromOrderConfirmation'])
             ->name('order-confirmations.raise-export-document');
         Route::resource('order-confirmations', OrderConfirmationController::class)

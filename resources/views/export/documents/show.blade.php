@@ -21,7 +21,22 @@
             @if($document->shipment_date)
                 <span class="text-body-secondary small">&middot; {{ $document->shipment_date->format('d M Y') }}</span>
             @endif
+            @if($document->invoice_no)
+                <span class="text-body-secondary small">&middot; Invoice {{ $document->invoice_no }}</span>
+            @endif
         </div>
+
+        @can('export-document.generate')
+            <div class="alert alert-success d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <div class="small mb-0">
+                    <strong>Export invoice ready.</strong>
+                    Buyer, items, prices and refs came from the sales order — download without re-typing.
+                </div>
+                <a href="{{ route('export.documents.export-invoice', [$document, 'for-buyer']) }}" class="btn btn-sm btn-success">
+                    <i class="bi bi-download me-1"></i> Download invoice (buyer)
+                </a>
+            </div>
+        @endcan
 
         @php
             $canEdit = auth()->user()->can('export-document.edit');
