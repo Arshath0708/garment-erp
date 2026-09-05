@@ -38,7 +38,7 @@ class ProductionLineController extends Controller implements HasMiddleware
             ->get();
 
         return view('production-lines.index', [
-            'lines'  => $lines,
+            'lines' => $lines,
             'recent' => $recent,
             'orders' => ProductionOrder::query()->latest('id')->limit(80)->get(['id', 'order_number']),
         ]);
@@ -47,14 +47,15 @@ class ProductionLineController extends Controller implements HasMiddleware
     public function storeOutput(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'production_line_id'  => ['required', 'integer', 'exists:production_lines,id'],
+            'production_line_id' => ['required', 'integer', 'exists:production_lines,id'],
             'production_order_id' => ['nullable', 'integer', 'exists:production_orders,id'],
-            'output_date'         => ['required', 'date'],
-            'pcs'                 => ['required', 'integer', 'min:0'],
-            'notes'               => ['nullable', 'string', 'max:500'],
+            'output_date' => ['required', 'date'],
+            'pcs' => ['required', 'integer', 'min:0'],
+            'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
         $data['created_by'] = $request->user()?->id;
+        $data['source'] = 'desk';
         ProductionLineOutput::create($data);
 
         $line = ProductionLine::query()->find($data['production_line_id']);

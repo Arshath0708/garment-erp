@@ -39,7 +39,7 @@ class Breadcrumbs
             $isCanonical = $name === $matched['index'];
             $trail[] = [
                 'label' => $matched['screen'],
-                'url'   => $isCanonical ? null : route($matched['index']),
+                'url' => $isCanonical ? null : route($matched['index']),
             ];
 
             if (! $isCanonical) {
@@ -80,6 +80,7 @@ class Breadcrumbs
             'work-orders' => ['module' => 'Manufacturing Processes', 'module_url' => route('work-orders.index'), 'screen' => 'Work Orders', 'index' => 'work-orders.index'],
             'time-and-action' => ['module' => 'Manufacturing Processes', 'module_url' => route('work-orders.index'), 'screen' => 'Time & Action', 'index' => 'time-and-action.index'],
             'production-lines' => ['module' => 'Manufacturing Processes', 'module_url' => route('work-orders.index'), 'screen' => 'Line efficiency', 'index' => 'production-lines.index'],
+            'floor' => ['module' => 'Manufacturing Processes', 'module_url' => route('production-lines.index'), 'screen' => 'Phone scan', 'index' => 'floor.scan'],
             'manufacturing' => ['module' => 'Manufacturing Processes', 'module_url' => route('manufacturing.index'), 'screen' => 'Production Planning', 'index' => 'manufacturing.index'],
             'inventory' => ['module' => 'Inventory & Job Work', 'module_url' => route('inventory.index'), 'screen' => 'Fabric & Accessory Stock', 'index' => 'inventory.index'],
             'job-work' => ['module' => 'Inventory & Job Work', 'module_url' => route('job-work.index'), 'screen' => 'Job Work Issue / Receive', 'index' => 'job-work.index'],
