@@ -12,6 +12,7 @@ use App\Http\Controllers\Finance\FinanceController;
 use App\Http\Controllers\Finance\TallyController;
 use App\Http\Controllers\Inventory\InventoryController;
 use App\Http\Controllers\Inventory\WarehouseController;
+use App\Http\Controllers\Manufacturing\FloorScanController;
 use App\Http\Controllers\Manufacturing\JobWorkVoucherController;
 use App\Http\Controllers\Manufacturing\ManufacturingController;
 use App\Http\Controllers\Manufacturing\ProductionLineController;
@@ -282,6 +283,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('production-lines', [ProductionLineController::class, 'index'])->name('production-lines.index');
     Route::post('production-lines/outputs', [ProductionLineController::class, 'storeOutput'])->name('production-lines.outputs.store');
+    Route::get('floor/scan', [FloorScanController::class, 'form'])->name('floor.scan');
+    Route::post('floor/scan', [FloorScanController::class, 'store'])->name('floor.scan.store');
 
     Route::get('manufacturing', [ManufacturingController::class, 'index'])->name('manufacturing.index');
     Route::get('manufacturing/create', [ManufacturingController::class, 'create'])->name('manufacturing.create');
@@ -294,6 +297,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('manufacturing/{order}', [ManufacturingController::class, 'destroy'])->name('manufacturing.destroy');
     Route::post('manufacturing/{order}/update-stage', [ManufacturingController::class, 'updateStage'])->name('manufacturing.update-stage');
     Route::get('manufacturing/{order}/job-work-challan', [ManufacturingController::class, 'jobWorkChallanPdf'])->name('manufacturing.job-work-challan');
+    Route::get('manufacturing/{order}/bundle-ticket', [FloorScanController::class, 'ticket'])->name('manufacturing.bundle-ticket');
 
     /*
     |--------------------------------------------------------------------------

@@ -80,6 +80,7 @@ class Breadcrumbs
             'work-orders' => ['module' => 'Manufacturing Processes', 'module_url' => route('work-orders.index'), 'screen' => 'Work Orders', 'index' => 'work-orders.index'],
             'time-and-action' => ['module' => 'Manufacturing Processes', 'module_url' => route('work-orders.index'), 'screen' => 'Time & Action', 'index' => 'time-and-action.index'],
             'production-lines' => ['module' => 'Manufacturing Processes', 'module_url' => route('work-orders.index'), 'screen' => 'Line efficiency', 'index' => 'production-lines.index'],
+            'floor' => ['module' => 'Manufacturing Processes', 'module_url' => route('production-lines.index'), 'screen' => 'Phone scan', 'index' => 'floor.scan'],
             'manufacturing' => ['module' => 'Manufacturing Processes', 'module_url' => route('manufacturing.index'), 'screen' => 'Production Planning', 'index' => 'manufacturing.index'],
             'inventory.warehouses' => ['module' => 'Inventory & Job Work', 'module_url' => route('inventory.index'), 'screen' => 'Godowns', 'index' => 'inventory.warehouses.index'],
             'inventory.lots' => ['module' => 'Inventory & Job Work', 'module_url' => route('inventory.index'), 'screen' => 'Lots / rolls', 'index' => 'inventory.lots'],
@@ -115,11 +116,8 @@ class Breadcrumbs
             str_ends_with($name, '.create') => 'New',
             str_ends_with($name, '.edit') => 'Edit',
             str_ends_with($name, '.show') => 'View',
-<<<<<<< HEAD
             str_ends_with($name, '.export') => 'Export',
-=======
             str_ends_with($name, '.logs') => 'Log',
->>>>>>> origin/feat/factory-ops
             default => null,
         };
     }
