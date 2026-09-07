@@ -71,7 +71,8 @@
                 <li class="nav-header">Packing, Shipment &amp; Billing</li>
                 <li class="nav-item" data-nav-label="packing cartons"><a href="{{ route('export.packing.index') }}" class="nav-link {{ $active('export.packing.*') }}"><i class="nav-icon bi bi-box-seam"></i><p>Packing &amp; Cartons</p></a></li>
                 <li class="nav-item" data-nav-label="export docs invoices"><a href="{{ route('export.documents.index') }}" class="nav-link {{ $active('export.documents.*') }}"><i class="nav-icon bi bi-file-earmark-pdf"></i><p>Export Docs &amp; Invoices</p></a></li>
-                <li class="nav-item" data-nav-label="billing payments"><a href="{{ route('finance.purchase-bills.index') }}" class="nav-link {{ $active('finance.*') && ! request()->routeIs('finance.tally*') }}"><i class="nav-icon bi bi-cash-stack"></i><p>Billing &amp; Payments</p></a></li>
+                <li class="nav-item" data-nav-label="billing payments"><a href="{{ route('finance.purchase-bills.index') }}" class="nav-link {{ $active('finance.purchase-bills.*') }}"><i class="nav-icon bi bi-cash-stack"></i><p>Billing &amp; Payments</p></a></li>
+                <li class="nav-item" data-nav-label="debit notes job work"><a href="{{ route('finance.debit-notes.index') }}" class="nav-link {{ $active('finance.debit-notes.*') }}"><i class="nav-icon bi bi-receipt"></i><p>Debit Notes</p></a></li>
                 <li class="nav-item" data-nav-label="tally gst posting"><a href="{{ route('finance.tally.settings') }}" class="nav-link {{ $active('finance.tally*') }}"><i class="nav-icon bi bi-hdd-network"></i><p>Tally</p></a></li>
                 @can('whatsapp.view')
                     <li class="nav-item" data-nav-label="whatsapp alerts po"><a href="{{ route('whatsapp.settings') }}" class="nav-link {{ $active('whatsapp.*') }}"><i class="nav-icon bi bi-whatsapp"></i><p>WhatsApp</p></a></li>
