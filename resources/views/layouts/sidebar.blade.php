@@ -58,9 +58,13 @@
                 <li class="nav-item" data-nav-label="production planning"><a href="{{ route('manufacturing.index') }}" class="nav-link {{ $active('manufacturing.index') || $active('manufacturing.create') || $active('manufacturing.show') || $active('manufacturing.edit') }}"><i class="nav-icon bi bi-diagram-3"></i><p>Production Planning</p></a></li>
                 <li class="nav-item" data-nav-label="qc capa defect"><a href="{{ route('manufacturing.capa.index') }}" class="nav-link {{ $active('manufacturing.capa.*') }}"><i class="nav-icon bi bi-clipboard2-check"></i><p>QC CAPA</p></a></li>
                 <li class="nav-item" data-nav-label="line efficiency sewing"><a href="{{ route('production-lines.index') }}" class="nav-link {{ $active('production-lines.*') }}"><i class="nav-icon bi bi-speedometer2"></i><p>Line efficiency</p></a></li>
+                <li class="nav-item" data-nav-label="phone scan barcode floor"><a href="{{ route('floor.scan') }}" class="nav-link {{ $active('floor.*') }}"><i class="nav-icon bi bi-upc-scan"></i><p>Phone scan</p></a></li>
 
                 <li class="nav-header">Inventory &amp; Job Work</li>
-                <li class="nav-item" data-nav-label="fabric accessory stock"><a href="{{ route('inventory.index') }}" class="nav-link {{ $active('inventory.*') }}"><i class="nav-icon bi bi-boxes"></i><p>Fabric &amp; Accessory Stock</p></a></li>
+                <li class="nav-item" data-nav-label="fabric accessory stock"><a href="{{ route('inventory.index') }}" class="nav-link {{ $active('inventory.index') || $active('inventory.lots') }}"><i class="nav-icon bi bi-boxes"></i><p>Fabric &amp; Accessory Stock</p></a></li>
+                @can('warehouse.view')
+                    <li class="nav-item" data-nav-label="godowns warehouses lots"><a href="{{ route('inventory.warehouses.index') }}" class="nav-link {{ $active('inventory.warehouses.*') }}"><i class="nav-icon bi bi-building"></i><p>Godowns</p></a></li>
+                @endcan
                 <li class="nav-item" data-nav-label="fabric trims po"><a href="{{ route('procurement.purchase-orders.index') }}" class="nav-link {{ $active('procurement.purchase-orders.*') }}"><i class="nav-icon bi bi-cart-plus"></i><p>Fabric &amp; Trims PO</p></a></li>
                 <li class="nav-item" data-nav-label="goods inward"><a href="{{ route('procurement.inward-entries.index') }}" class="nav-link {{ $active('procurement.inward-entries.*') }}"><i class="nav-icon bi bi-box-arrow-in-down"></i><p>Goods Inward</p></a></li>
                 <li class="nav-item" data-nav-label="job work issue receive"><a href="{{ route('job-work.index') }}" class="nav-link {{ $active('job-work.*') }}"><i class="nav-icon bi bi-arrow-left-right"></i><p>Job Work Issue / Receive</p></a></li>
@@ -68,7 +72,12 @@
                 <li class="nav-header">Packing, Shipment &amp; Billing</li>
                 <li class="nav-item" data-nav-label="packing cartons"><a href="{{ route('export.packing.index') }}" class="nav-link {{ $active('export.packing.*') }}"><i class="nav-icon bi bi-box-seam"></i><p>Packing &amp; Cartons</p></a></li>
                 <li class="nav-item" data-nav-label="export docs invoices"><a href="{{ route('export.documents.index') }}" class="nav-link {{ $active('export.documents.*') }}"><i class="nav-icon bi bi-file-earmark-pdf"></i><p>Export Docs &amp; Invoices</p></a></li>
-                <li class="nav-item" data-nav-label="billing payments"><a href="{{ route('finance.purchase-bills.index') }}" class="nav-link {{ $active('finance.*') }}"><i class="nav-icon bi bi-cash-stack"></i><p>Billing &amp; Payments</p></a></li>
+                <li class="nav-item" data-nav-label="billing payments"><a href="{{ route('finance.purchase-bills.index') }}" class="nav-link {{ $active('finance.purchase-bills.*') }}"><i class="nav-icon bi bi-cash-stack"></i><p>Billing &amp; Payments</p></a></li>
+                <li class="nav-item" data-nav-label="debit notes job work"><a href="{{ route('finance.debit-notes.index') }}" class="nav-link {{ $active('finance.debit-notes.*') }}"><i class="nav-icon bi bi-receipt"></i><p>Debit Notes</p></a></li>
+                <li class="nav-item" data-nav-label="tally gst posting"><a href="{{ route('finance.tally.settings') }}" class="nav-link {{ $active('finance.tally*') }}"><i class="nav-icon bi bi-hdd-network"></i><p>Tally</p></a></li>
+                @can('whatsapp.view')
+                    <li class="nav-item" data-nav-label="whatsapp alerts po"><a href="{{ route('whatsapp.settings') }}" class="nav-link {{ $active('whatsapp.*') }}"><i class="nav-icon bi bi-whatsapp"></i><p>WhatsApp</p></a></li>
+                @endcan
 
                 <li class="nav-header">Intelligent OCR &amp; Reports</li>
                 <li class="nav-item" data-nav-label="ocr document verification"><a href="{{ route('export.ocr.index') }}" class="nav-link {{ $active('export.ocr.*') }}"><i class="nav-icon bi bi-stars"></i><p>OCR Document Verification</p></a></li>

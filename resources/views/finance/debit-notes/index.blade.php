@@ -18,6 +18,7 @@
                         <th class="text-end">Qty</th>
                         <th class="text-end">Amount</th>
                         <th>Status</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -37,9 +38,22 @@
                             <td class="text-end">{{ $note->qty ?: '—' }}</td>
                             <td class="text-end">{{ number_format((float) $note->amount, 2) }}</td>
                             <td>{{ \App\Models\DebitNote::STATUSES[$note->status] ?? $note->status }}</td>
+                            <td class="text-nowrap">
+                                @can('tally.post')
+                                    <form action="{{ route('finance.tally.debit-notes', $note) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">XML</button>
+                                    </form>
+                                    <form action="{{ route('finance.tally.debit-notes', $note) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <input type="hidden" name="mode" value="post">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">Tally</button>
+                                    </form>
+                                @endcan
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="text-center text-body-secondary">No debit notes yet. Raise one from a job-work receive with damage.</td></tr>
+                        <tr><td colspan="9" class="text-center text-body-secondary">No debit notes yet. Raise one from a job-work receive with damage.</td></tr>
                     @endforelse
                 </tbody>
             </table>

@@ -13,6 +13,7 @@ class ProductionLineOutput extends Model
         'output_date',
         'pcs',
         'notes',
+        'source',
         'created_by',
     ];
 
@@ -20,7 +21,7 @@ class ProductionLineOutput extends Model
     {
         return [
             'output_date' => 'date',
-            'pcs'         => 'integer',
+            'pcs' => 'integer',
         ];
     }
 
