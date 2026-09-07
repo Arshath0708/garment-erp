@@ -39,7 +39,7 @@ class Breadcrumbs
             $isCanonical = $name === $matched['index'];
             $trail[] = [
                 'label' => $matched['screen'],
-                'url'   => $isCanonical ? null : route($matched['index']),
+                'url' => $isCanonical ? null : route($matched['index']),
             ];
 
             if (! $isCanonical) {
@@ -80,7 +80,11 @@ class Breadcrumbs
             'work-orders' => ['module' => 'Manufacturing Processes', 'module_url' => route('work-orders.index'), 'screen' => 'Work Orders', 'index' => 'work-orders.index'],
             'time-and-action' => ['module' => 'Manufacturing Processes', 'module_url' => route('work-orders.index'), 'screen' => 'Time & Action', 'index' => 'time-and-action.index'],
             'production-lines' => ['module' => 'Manufacturing Processes', 'module_url' => route('work-orders.index'), 'screen' => 'Line efficiency', 'index' => 'production-lines.index'],
+            'manufacturing.capa' => ['module' => 'Manufacturing Processes', 'module_url' => route('work-orders.index'), 'screen' => 'QC CAPA', 'index' => 'manufacturing.capa.index'],
+            'floor' => ['module' => 'Manufacturing Processes', 'module_url' => route('production-lines.index'), 'screen' => 'Phone scan', 'index' => 'floor.scan'],
             'manufacturing' => ['module' => 'Manufacturing Processes', 'module_url' => route('manufacturing.index'), 'screen' => 'Production Planning', 'index' => 'manufacturing.index'],
+            'inventory.warehouses' => ['module' => 'Inventory & Job Work', 'module_url' => route('inventory.index'), 'screen' => 'Godowns', 'index' => 'inventory.warehouses.index'],
+            'inventory.lots' => ['module' => 'Inventory & Job Work', 'module_url' => route('inventory.index'), 'screen' => 'Lots / rolls', 'index' => 'inventory.lots'],
             'inventory' => ['module' => 'Inventory & Job Work', 'module_url' => route('inventory.index'), 'screen' => 'Fabric & Accessory Stock', 'index' => 'inventory.index'],
             'job-work' => ['module' => 'Inventory & Job Work', 'module_url' => route('job-work.index'), 'screen' => 'Job Work Issue / Receive', 'index' => 'job-work.index'],
             'procurement.purchase-orders' => ['module' => 'Inventory & Job Work', 'module_url' => route('inventory.index'), 'screen' => 'Fabric & Trims PO', 'index' => 'procurement.purchase-orders.index'],
@@ -93,8 +97,11 @@ class Breadcrumbs
             'finance.supplier-payments' => ['module' => 'Packing, Shipment & Billing', 'module_url' => route('export.packing.index'), 'screen' => 'Supplier Payments', 'index' => 'finance.supplier-payments.index'],
             'finance.buyer-receipts' => ['module' => 'Packing, Shipment & Billing', 'module_url' => route('export.packing.index'), 'screen' => 'Buyer Receipts', 'index' => 'finance.buyer-receipts.index'],
             'finance.agent-commission' => ['module' => 'Packing, Shipment & Billing', 'module_url' => route('export.packing.index'), 'screen' => 'Agent Commission', 'index' => 'finance.agent-commission.index'],
+            'finance.tally' => ['module' => 'Packing, Shipment & Billing', 'module_url' => route('export.packing.index'), 'screen' => 'Tally', 'index' => 'finance.tally.settings'],
+            'whatsapp' => ['module' => 'Packing, Shipment & Billing', 'module_url' => route('export.packing.index'), 'screen' => 'WhatsApp', 'index' => 'whatsapp.settings'],
             'reports.outstanding' => ['module' => 'Intelligent OCR & Reports', 'module_url' => route('export.ocr.index'), 'screen' => 'Outstanding', 'index' => 'reports.outstanding.index'],
             'reports.order-profit' => ['module' => 'Intelligent OCR & Reports', 'module_url' => route('export.ocr.index'), 'screen' => 'Profit per order', 'index' => 'reports.order-profit'],
+            'reports.factory-board' => ['module' => 'Intelligent OCR & Reports', 'module_url' => route('export.ocr.index'), 'screen' => 'Factory board', 'index' => 'reports.factory-board'],
             'reports' => ['module' => 'Intelligent OCR & Reports', 'module_url' => route('export.ocr.index'), 'screen' => 'ERP Reports & Outstanding', 'index' => 'reports.index'],
             'user-management.users' => ['module' => 'Account', 'module_url' => route('profile.edit'), 'screen' => 'Users', 'index' => 'user-management.users.index'],
             'user-management.roles' => ['module' => 'Account', 'module_url' => route('profile.edit'), 'screen' => 'Roles', 'index' => 'user-management.roles.index'],
@@ -110,6 +117,8 @@ class Breadcrumbs
             str_ends_with($name, '.create') => 'New',
             str_ends_with($name, '.edit') => 'Edit',
             str_ends_with($name, '.show') => 'View',
+            str_ends_with($name, '.export') => 'Export',
+            str_ends_with($name, '.logs') => 'Log',
             default => null,
         };
     }

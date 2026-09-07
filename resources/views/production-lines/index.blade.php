@@ -2,7 +2,12 @@
     <x-slot name="header">Line efficiency</x-slot>
 
     <x-ui.card title="Sewing line output" variant="primary">
-        <p class="text-body-secondary small mb-3">Log today’s pcs against each line’s target. Efficiency = pcs ÷ target.</p>
+        <x-slot name="actions">
+            <a href="{{ route('floor.scan') }}" class="btn btn-sm btn-success">
+                <i class="bi bi-upc-scan me-1"></i> Phone scan
+            </a>
+        </x-slot>
+        <p class="text-body-secondary small mb-3">Log today’s pcs against each line’s target. Efficiency = pcs ÷ target. Operators can also scan a bundle ticket on a phone — no computer on the line.</p>
 
         <div class="table-responsive mb-4">
             <table class="table table-bordered align-middle mb-0">
