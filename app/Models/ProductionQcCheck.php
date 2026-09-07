@@ -12,6 +12,11 @@ class ProductionQcCheck extends Model
         'fail' => 'Fail',
     ];
 
+    public const CAPA_STATUSES = [
+        'open'   => 'Open',
+        'closed' => 'Closed',
+    ];
+
     protected $fillable = [
         'production_order_id',
         'stage',
@@ -19,7 +24,13 @@ class ProductionQcCheck extends Model
         'passed_qty',
         'failed_qty',
         'result',
+        'defect_code_id',
         'notes',
+        'capa_plan',
+        'capa_due_date',
+        'capa_status',
+        'capa_closed_at',
+        'capa_closed_by',
         'held_work_order',
         'created_by',
     ];
@@ -27,10 +38,12 @@ class ProductionQcCheck extends Model
     protected function casts(): array
     {
         return [
-            'checked_qty'      => 'integer',
-            'passed_qty'       => 'integer',
-            'failed_qty'       => 'integer',
-            'held_work_order'  => 'boolean',
+            'checked_qty'     => 'integer',
+            'passed_qty'      => 'integer',
+            'failed_qty'      => 'integer',
+            'held_work_order' => 'boolean',
+            'capa_due_date'   => 'date',
+            'capa_closed_at'  => 'datetime',
         ];
     }
 
@@ -39,14 +52,29 @@ class ProductionQcCheck extends Model
         return $this->belongsTo(ProductionOrder::class);
     }
 
+    public function defectCode(): BelongsTo
+    {
+        return $this->belongsTo(DefectCode::class);
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function capaCloser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'capa_closed_by');
+    }
+
     public function isFail(): bool
     {
         return $this->result === 'fail';
+    }
+
+    public function hasOpenCapa(): bool
+    {
+        return $this->capa_status === 'open';
     }
 
     public function stageLabel(): string
