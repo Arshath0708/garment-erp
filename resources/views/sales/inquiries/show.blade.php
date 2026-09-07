@@ -15,6 +15,15 @@
                             <i class="bi bi-arrow-right-circle me-1"></i> Convert to OC
                         </button>
                     </form>
+                    @can('export-document.create')
+                        <form action="{{ route('sales.inquiries.convert-to-invoice', $inquiry) }}" method="POST" class="d-inline"
+                              onsubmit="return confirm('Create sales order and raise export invoice in one step? Buyer, items and prices copy from this enquiry.');">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-receipt me-1"></i> Convert to order &amp; raise invoice
+                            </button>
+                        </form>
+                    @endcan
                 @endif
             @endcan
             @can('inquiry.edit')

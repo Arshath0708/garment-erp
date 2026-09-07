@@ -13,6 +13,7 @@ use App\Models\DocumentFormat;
 use App\Models\FobValue;
 use App\Models\Inquiry;
 use App\Models\OrderConfirmation;
+use App\Services\Sales\OfferToInvoiceService;
 use App\Services\Sales\OrderConfirmationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,8 +24,10 @@ use RuntimeException;
 
 class OrderConfirmationController extends Controller implements HasMiddleware
 {
-    public function __construct(private readonly OrderConfirmationService $confirmations)
-    {
+    public function __construct(
+        private readonly OrderConfirmationService $confirmations,
+        private readonly OfferToInvoiceService $offerToInvoice,
+    ) {
     }
 
     /**
@@ -34,10 +37,11 @@ class OrderConfirmationController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('permission:order-confirmation.view', only: ['index', 'show']),
-            new Middleware('permission:order-confirmation.create', only: ['create', 'store', 'convertFromInquiry']),
+            new Middleware('permission:order-confirmation.create', only: ['create', 'store', 'convertFromInquiry', 'convertToInvoice']),
             new Middleware('permission:order-confirmation.edit', only: ['edit', 'update']),
             new Middleware('permission:order-confirmation.delete', only: ['destroy']),
             new Middleware('permission:order-confirmation.approve', only: ['raisePurchaseOrders']),
+            new Middleware('permission:export-document.create', only: ['convertToInvoice', 'raiseInvoice']),
         ];
     }
 
@@ -131,6 +135,43 @@ class OrderConfirmationController extends Controller implements HasMiddleware
         return redirect()
             ->route('sales.order-confirmations.show', $oc)
             ->with('success', "Order Confirmation \"{$oc->oc_num}\" created from inquiry \"{$inquiry->inquiry_no}\".");
+    }
+
+    /**
+     * One click: confirmed enquiry → confirmed OC → Export Document (invoice no. ready).
+     */
+    public function convertToInvoice(Inquiry $inquiry): RedirectResponse
+    {
+        try {
+            $document = $this->offerToInvoice->fromInquiry($inquiry);
+        } catch (RuntimeException $e) {
+            return back()->with('warning', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('export.documents.show', ['document' => $document, 'tab' => 'generate'])
+            ->with('success', "Sales order + invoice ready. Export Document \"{$document->doc_num}\" · Invoice {$document->invoice_no}. Download Export Invoice below — no re-typing.");
+    }
+
+    /**
+     * One click from OC: confirm if still draft/sent, raise all lines to Export Document.
+     */
+    public function raiseInvoice(OrderConfirmation $orderConfirmation): RedirectResponse
+    {
+        $needsConfirm = $orderConfirmation->status !== 'confirmed';
+        if ($needsConfirm && ! request()->user()?->can('order-confirmation.approve') && ! request()->user()?->can('order-confirmation.edit')) {
+            return back()->with('warning', 'Confirm the OC first, or ask someone with approve rights to raise the invoice.');
+        }
+
+        try {
+            $document = $this->offerToInvoice->fromOrderConfirmation($orderConfirmation, confirmIfDraft: true);
+        } catch (RuntimeException $e) {
+            return back()->with('warning', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('export.documents.show', ['document' => $document, 'tab' => 'generate'])
+            ->with('success', "Invoice path ready. Export Document \"{$document->doc_num}\" · Invoice {$document->invoice_no}. Download Export Invoice below.");
     }
 
     /**

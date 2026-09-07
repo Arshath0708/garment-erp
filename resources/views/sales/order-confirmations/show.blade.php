@@ -73,7 +73,29 @@
             // and ExportDocumentController::raiseFromOrderConfirmation().
             $canRaise = auth()->user()->can('order-confirmation.approve') && $orderConfirmation->status === 'confirmed';
             $canShip = auth()->user()->can('export-document.create') && $orderConfirmation->status === 'confirmed';
+            $canOneClickInvoice = auth()->user()->can('export-document.create')
+                && $orderConfirmation->items->contains(fn ($i) => blank($i->export_document_id))
+                && (
+                    $orderConfirmation->status === 'confirmed'
+                    || auth()->user()->can('order-confirmation.approve')
+                    || auth()->user()->can('order-confirmation.edit')
+                );
         @endphp
+
+        @if($canOneClickInvoice)
+            <div class="alert alert-primary d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <div class="small mb-0">
+                    <strong>One-click invoice.</strong>
+                    Confirm this order if needed, copy all unshipped lines to an Export Document, and open the invoice tab — no re-typing.
+                </div>
+                <form action="{{ route('sales.order-confirmations.raise-invoice', $orderConfirmation) }}" method="POST" class="m-0">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-primary">
+                        <i class="bi bi-receipt me-1"></i> Raise invoice (all lines)
+                    </button>
+                </form>
+            </div>
+        @endif
 
         @if($orderConfirmation->items->isNotEmpty())
             <h6 class="fw-semibold mb-2">Items</h6>
