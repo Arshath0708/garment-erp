@@ -26,6 +26,9 @@
                         <th>Planned</th>
                         <th>Actual</th>
                         <th>Status</th>
+                        @can('whatsapp.send')
+                            <th class="text-end">WhatsApp</th>
+                        @endcan
                     </tr>
                 </thead>
                 <tbody>
@@ -47,9 +50,18 @@
                                     <span class="small text-danger ms-1">{{ $step->daysLate() }}d late</span>
                                 @endif
                             </td>
+                            @can('whatsapp.send')
+                                <td class="text-end">
+                                    @if($step->isLate())
+                                        <x-whatsapp.notify :step="$step" compact />
+                                    @else
+                                        <span class="text-body-secondary">—</span>
+                                    @endif
+                                </td>
+                            @endcan
                         </tr>
                     @empty
-                        <x-ui.empty-state colspan="7"
+                        <x-ui.empty-state colspan="{{ auth()->user()?->can('whatsapp.send') ? 8 : 7 }}"
                                           icon="bi-calendar-week"
                                           title="{{ $lateOnly ? 'Nothing late' : 'No T&A rows yet' }}"
                                           message="Release a work order to build the calendar from its target date." />

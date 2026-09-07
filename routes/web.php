@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Administration\CompanyProfileController;
+use App\Http\Controllers\Communication\WhatsappController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Export\ExportDocumentChecklistController;
 use App\Http\Controllers\Export\ExportDocumentController;
@@ -378,6 +379,14 @@ Route::middleware('auth')->group(function () {
         Route::post('tally/debit-notes/{debitNote}', [TallyController::class, 'debitNote'])
             ->name('tally.debit-notes');
     });
+
+    Route::get('whatsapp', [WhatsappController::class, 'settings'])->name('whatsapp.settings');
+    Route::put('whatsapp', [WhatsappController::class, 'updateSettings'])->name('whatsapp.settings.update');
+    Route::get('whatsapp/logs', [WhatsappController::class, 'logs'])->name('whatsapp.logs');
+    Route::post('whatsapp/purchase-orders/{purchaseOrder}', [WhatsappController::class, 'purchaseOrder'])
+        ->name('whatsapp.purchase-orders');
+    Route::post('whatsapp/time-and-action/{step}', [WhatsappController::class, 'tnaStep'])
+        ->name('whatsapp.tna-steps');
 
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('outstanding', [ReportsController::class, 'outstanding'])
