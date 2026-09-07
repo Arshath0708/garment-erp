@@ -110,6 +110,11 @@ class Product extends Model
         return $this->hasMany(GarmentStyleMaterial::class);
     }
 
+    public function stockLots(): HasMany
+    {
+        return $this->hasMany(StockLot::class);
+    }
+
     /**
      * The incentive row for one scheme, or null. Lets a Blade form ask for
      * `$product->incentive('rosctl')?->percent_1` without three eager loads

@@ -31,7 +31,8 @@ class NavigationLayoutTest extends TestCase
             ->assertSee('Style Costing', false)
             ->assertSee('Job Work Issue', false)
             ->assertSee('Line efficiency', false)
-            ->assertSee('Find order, style, PO', false);
+            ->assertSee('Find order, style, PO', false)
+            ->assertSee('Tally', false);
     }
 
     public function test_inward_index_breadcrumb_is_home_module_screen(): void
