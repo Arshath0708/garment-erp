@@ -56,6 +56,7 @@ return [
         'export' => 'Export',
         'generate' => 'Generate',
         'sync' => 'Sync',
+        'send' => 'Send',
     ],
 
     /*
@@ -123,6 +124,7 @@ return [
             'fob-value' => ['label' => 'FOB Values'],
             'markup' => ['label' => 'Markup'],
             'style-costing' => ['label' => 'Style Costing', 'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
+            'warehouse' => ['label' => 'Godowns / Warehouses', 'built' => true],
         ],
 
         'Sales' => [
@@ -159,6 +161,7 @@ return [
             // going out; the key stays, the label says which direction.
             'foreign-payment' => ['label' => 'Buyer Receipts',    'actions' => ['view', 'create', 'edit', 'delete', 'approve'], 'built' => true],
             'agent-commission' => ['label' => 'Agent Commission',  'built' => true],
+            'tally'            => ['label' => 'Tally',             'actions' => ['view', 'edit', 'post'], 'built' => true],
         ],
 
         /*
@@ -201,6 +204,7 @@ return [
             // just not the cost column. Merchandising raises POs without this;
             // Admin and Accounts get it for pricing and bills.
             'cost-price' => ['label' => 'Cost Price (field)', 'actions' => ['view'], 'built' => true],
+            'whatsapp' => ['label' => 'WhatsApp', 'actions' => ['view', 'edit', 'send'], 'built' => true],
         ],
 
     ],
@@ -229,15 +233,16 @@ return [
             'permissions' => [
                 'user.*', 'role.view', 'company-profile.*',
                 'category.*', 'po-format.*', 'product.*', 'buyer.*', 'supplier.*', 'jobber.*',
-                'agent.*', 'fob-value.*', 'markup.*', 'style-costing.*',
+                'agent.*', 'fob-value.*', 'markup.*', 'style-costing.*', 'warehouse.*',
                 'inquiry.*', 'order-confirmation.*',
                 'work-order.*', 'job-work.*',
                 'purchase-order.*', 'inward-entry.*',
                 'packing.*', 'export-document.*',
                 'purchase-bill.*', 'debit-note.*', 'payment.*', 'foreign-payment.*',
-                'agent-commission.*',
+                'agent-commission.*', 'tally.*',
                 'outstanding.*', 'report.*',
                 'cost-price.view',
+                'whatsapp.*',
             ],
         ],
 
@@ -245,13 +250,14 @@ return [
             'description' => 'Handles inquiry to purchase order, suppliers and products.',
             'permissions' => [
                 'category.view', 'po-format.view', 'product.*', 'buyer.view',
-                'supplier.*', 'agent.view',
+                'supplier.*', 'agent.view', 'warehouse.view',
                 'inquiry.*', 'order-confirmation.*',
                 'style-costing.*',
                 'work-order.*', 'job-work.*',
                 'purchase-order.*', 'inward-entry.view',
                 'export-document.view',
                 'outstanding.view', 'report.view', 'report.export',
+                'whatsapp.view', 'whatsapp.send',
             ],
         ],
 
@@ -261,9 +267,10 @@ return [
                 'product.view', 'buyer.view', 'supplier.view', 'agent.view', 'markup.view',
                 'purchase-order.view', 'inward-entry.view', 'export-document.view',
                 'purchase-bill.*', 'debit-note.*', 'payment.*', 'foreign-payment.*',
-                'agent-commission.*',
+                'agent-commission.*', 'tally.*',
                 'outstanding.*', 'report.view', 'report.export',
                 'cost-price.view',
+                'whatsapp.view', 'whatsapp.send',
             ],
         ],
 
@@ -299,7 +306,7 @@ return [
         'Quality Checker' => [
             'description' => 'Inspects goods inward and records pass/reject quantity.',
             'permissions' => [
-                'product.view', 'supplier.view',
+                'product.view', 'supplier.view', 'warehouse.view',
                 'purchase-order.view',
                 'inward-entry.view', 'inward-entry.edit', 'inward-entry.approve',
                 'debit-note.view', 'debit-note.create',
