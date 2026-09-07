@@ -99,6 +99,7 @@ class Breadcrumbs
             'whatsapp' => ['module' => 'Packing, Shipment & Billing', 'module_url' => route('export.packing.index'), 'screen' => 'WhatsApp', 'index' => 'whatsapp.settings'],
             'reports.outstanding' => ['module' => 'Intelligent OCR & Reports', 'module_url' => route('export.ocr.index'), 'screen' => 'Outstanding', 'index' => 'reports.outstanding.index'],
             'reports.order-profit' => ['module' => 'Intelligent OCR & Reports', 'module_url' => route('export.ocr.index'), 'screen' => 'Profit per order', 'index' => 'reports.order-profit'],
+            'reports.factory-board' => ['module' => 'Intelligent OCR & Reports', 'module_url' => route('export.ocr.index'), 'screen' => 'Factory board', 'index' => 'reports.factory-board'],
             'reports' => ['module' => 'Intelligent OCR & Reports', 'module_url' => route('export.ocr.index'), 'screen' => 'ERP Reports & Outstanding', 'index' => 'reports.index'],
             'user-management.users' => ['module' => 'Account', 'module_url' => route('profile.edit'), 'screen' => 'Users', 'index' => 'user-management.users.index'],
             'user-management.roles' => ['module' => 'Account', 'module_url' => route('profile.edit'), 'screen' => 'Roles', 'index' => 'user-management.roles.index'],
@@ -114,7 +115,11 @@ class Breadcrumbs
             str_ends_with($name, '.create') => 'New',
             str_ends_with($name, '.edit') => 'Edit',
             str_ends_with($name, '.show') => 'View',
+<<<<<<< HEAD
+            str_ends_with($name, '.export') => 'Export',
+=======
             str_ends_with($name, '.logs') => 'Log',
+>>>>>>> origin/feat/factory-ops
             default => null,
         };
     }

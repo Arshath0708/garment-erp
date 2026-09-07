@@ -68,5 +68,6 @@ class FinanceAndReportsPagesTest extends TestCase
         $this->get(route('finance.tally.settings'))->assertOk();
         $this->get(route('reports.index'))->assertOk();
         $this->get(route('reports.outstanding.index'))->assertOk();
+        $this->get(route('reports.factory-board'))->assertOk();
     }
 }

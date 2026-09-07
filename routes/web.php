@@ -395,6 +395,12 @@ Route::middleware('auth')->group(function () {
         Route::get('order-profit', [ReportsController::class, 'orderProfit'])
             ->middleware('permission:report.view')
             ->name('order-profit');
+        Route::get('factory-board/export', [ReportsController::class, 'factoryBoardExport'])
+            ->middleware('permission:report.export')
+            ->name('factory-board.export');
+        Route::get('factory-board', [ReportsController::class, 'factoryBoard'])
+            ->middleware('permission:report.view')
+            ->name('factory-board');
         Route::get('/', [ReportsController::class, 'index'])
             ->middleware('permission:report.view')
             ->name('index');
