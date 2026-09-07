@@ -28,6 +28,34 @@
         </div>
     @endif
 
+    <!-- Factory Floor Barcode & Order Quick Scanner Search -->
+    <div class="card shadow-sm border-0 mb-4 bg-body border-start border-primary border-4 p-3">
+        <div class="row align-items-center g-3">
+            <div class="col-md-5">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-2 bg-primary bg-opacity-10 text-primary rounded-3">
+                        <i class="bi bi-upc-scan fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0 text-dark">Factory Barcode & Ticket Scan</h6>
+                        <span class="text-body-secondary small">Scan bundle tag or type Order # / Style No</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <div class="input-group input-group-lg">
+                    <span class="input-group-text bg-primary text-white border-primary"><i class="bi bi-upc-scan"></i></span>
+                    <input type="text" id="manufacturing-scan-input" class="form-control form-control-lg fw-bold border-primary"
+                           placeholder="Scan barcode or type PO / Style #"
+                           enterkeyhint="search" autofocus autocomplete="off" style="min-height: 52px; font-size: 1.1rem;">
+                    <button type="button" class="btn btn-outline-secondary" id="btn-clear-scan" title="Clear Search" style="min-height: 52px; min-width: 48px;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Manufacturing Stage Pipeline Guide -->
     @php
         $activePipeline = request('stage');
@@ -63,7 +91,11 @@
     <!-- Production Orders Grid -->
     <div class="row g-4">
         @forelse ($orders as $order)
-            <div class="col-lg-6">
+            <div class="col-lg-6" data-order-card
+                 data-order-number="{{ $order->order_number }}"
+                 data-style-number="{{ $order->garmentStyle?->style_number }}"
+                 data-buyer-style="{{ $order->garmentStyle?->buyer_style_no }}"
+                 data-factory-style="{{ $order->garmentStyle?->factory_style_no }}">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-header bg-body border-0 py-3 d-flex justify-content-between align-items-center">
                         <div>
@@ -179,24 +211,24 @@
                             <span>Notes: {{ $order->notes ?: 'Operating normally' }}</span>
                         </div>
                     </div>
-                    <div class="card-footer bg-body border-0 py-3 d-flex justify-content-between align-items-center">
+                    <div class="card-footer bg-body border-0 py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
                         <div>
                             <form action="{{ route('manufacturing.destroy', $order) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this production order?');">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Production Order">
-                                    <i class="bi bi-trash"></i> Delete
+                                <button type="submit" class="btn btn-outline-danger touch-action-btn" title="Delete Production Order">
+                                    <i class="bi bi-trash me-1"></i> Delete
                                 </button>
                             </form>
                         </div>
-                        <div class="d-flex gap-2">
-                            <a href="{{ route('manufacturing.job-work-challan', $order) }}" class="btn btn-sm btn-outline-primary" title="Size-wise job-work delivery challan">
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="{{ route('manufacturing.job-work-challan', $order) }}" class="btn btn-outline-primary touch-action-btn" title="Size-wise job-work delivery challan">
                                 <i class="bi bi-file-earmark-pdf me-1"></i> Challan
                             </a>
-                            <a href="{{ route('manufacturing.edit', $order) }}" class="btn btn-sm btn-outline-secondary">
+                            <a href="{{ route('manufacturing.edit', $order) }}" class="btn btn-outline-secondary touch-action-btn">
                                 <i class="bi bi-pencil-square me-1"></i> Edit Order
                             </a>
-                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#updateStageModal{{ $order->id }}">
+                            <button class="btn btn-primary touch-action-btn fw-bold px-3" data-bs-toggle="modal" data-bs-target="#updateStageModal{{ $order->id }}">
                                 <i class="bi bi-pencil-square me-1"></i> Update Stage Quantities
                             </button>
                         </div>
@@ -206,18 +238,18 @@
             </div>
 
             <div class="modal fade" id="updateStageModal{{ $order->id }}" tabindex="-1">
-                <div class="modal-dialog modal-xl">
+                <div class="modal-dialog modal-xl modal-fullscreen-lg-down">
                     <div class="modal-content">
                         <form action="{{ route('manufacturing.update-stage', $order) }}" method="POST">
                             @csrf
-                            <div class="modal-header">
-                                <h5 class="modal-title">Update Production Stage — {{ $order->order_number }}</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <div class="modal-header bg-dark text-white">
+                                <h5 class="modal-title fw-bold">Update Production Stage — {{ $order->order_number }}</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold">Current Active Stage</label>
-                                    <select name="current_stage" class="form-select js-current-stage">
+                            <div class="modal-body p-3 p-md-4">
+                                <div class="mb-4 p-3 bg-body-tertiary rounded border">
+                                    <label class="form-label fw-bold text-primary fs-6">Current Active Stage</label>
+                                    <select name="current_stage" class="form-select form-select-lg fw-bold js-current-stage" style="min-height: 48px;">
                                         <option value="Cutting" {{ $order->current_stage == 'Cutting' ? 'selected' : '' }}>Cutting</option>
                                         <option value="Printing" {{ $order->current_stage == 'Printing' ? 'selected' : '' }}>Printing / Embroidery</option>
                                         <option value="Stitching" {{ $order->current_stage == 'Stitching' ? 'selected' : '' }}>Stitching</option>
@@ -229,9 +261,11 @@
                                 </div>
                                 @include('manufacturing._size_matrix', ['order' => $order])
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary">Save Progress</button>
+                            <div class="modal-footer p-3 bg-light">
+                                <button type="button" class="btn btn-secondary py-2 px-4 touch-action-btn" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary py-2 px-4 touch-action-btn fw-bold fs-6">
+                                    <i class="bi bi-check-circle me-1"></i> Save Progress
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -244,4 +278,71 @@
             </div>
         @endforelse
     </div>
+
+    <style>
+        .touch-action-btn {
+            min-height: 48px !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+    </style>
+
+    @push('scripts')
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const scanInput = document.getElementById('manufacturing-scan-input');
+        const clearBtn = document.getElementById('btn-clear-scan');
+        if (!scanInput) return;
+
+        function filterOrders() {
+            const query = (scanInput.value || '').trim().toLowerCase();
+            const cards = document.querySelectorAll('[data-order-card]');
+            let visibleCount = 0;
+
+            cards.forEach(card => {
+                const num = (card.getAttribute('data-order-number') || '').toLowerCase();
+                const style = (card.getAttribute('data-style-number') || '').toLowerCase();
+                const buyerStyle = (card.getAttribute('data-buyer-style') || '').toLowerCase();
+                const factoryStyle = (card.getAttribute('data-factory-style') || '').toLowerCase();
+
+                const match = !query || num.includes(query) || style.includes(query) || buyerStyle.includes(query) || factoryStyle.includes(query);
+                card.style.display = match ? '' : 'none';
+                if (match) visibleCount++;
+            });
+        }
+
+        scanInput.addEventListener('input', filterOrders);
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function () {
+                scanInput.value = '';
+                filterOrders();
+                scanInput.focus();
+            });
+        }
+
+        // Handle Enter key for hardware / keyboard barcode scanners
+        scanInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const visibleCards = Array.from(document.querySelectorAll('[data-order-card]')).filter(c => c.style.display !== 'none');
+                if (visibleCards.length === 1) {
+                    const modalBtn = visibleCards[0].querySelector('[data-bs-target^="#updateStageModal"]');
+                    if (modalBtn) modalBtn.click();
+                }
+            }
+        });
+
+        // Auto-focus active inputs when stage update modal opens
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('shown.bs.modal', function () {
+                const firstInput = modal.querySelector('input.js-size-qty:not([readonly])');
+                if (firstInput) firstInput.focus();
+            });
+        });
+    });
+    </script>
+    @endpush
 </x-app-layout>

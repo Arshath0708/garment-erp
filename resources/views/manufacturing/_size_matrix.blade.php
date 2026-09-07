@@ -36,23 +36,23 @@
                     </td>
                     @foreach ($sizes as $size)
                         <td>
-                            <input type="number" min="0" step="1"
+                            <input type="number" min="0" step="1" inputmode="numeric" pattern="[0-9]*"
                                    name="{{ $inputName }}[{{ $key }}][{{ $size }}]"
-                                   class="form-control form-control-sm text-center js-size-qty"
+                                   class="form-control text-center js-size-qty size-matrix-touch-input"
                                    data-size="{{ $size }}"
                                    value="{{ old("{$inputName}.{$key}.{$size}", $order?->sizeQty($key, $size) ?? 0) }}">
                         </td>
                     @endforeach
-                    <td class="text-center fw-bold js-size-row-total">{{ number_format($rowTotal) }}</td>
+                    <td class="text-center fw-bold js-size-row-total text-dark fs-6">{{ number_format($rowTotal) }}</td>
                     <td>
-                        <input type="number" min="0" step="1"
+                        <input type="number" min="0" step="1" inputmode="numeric" pattern="[0-9]*"
                                name="damage[{{ $key }}]"
-                               class="form-control form-control-sm text-center js-stage-damage"
+                               class="form-control text-center js-stage-damage size-matrix-touch-input border-danger-subtle text-danger fw-bold"
                                value="{{ $rowDamage }}">
                     </td>
                     <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 js-autofill-stage" data-stage="{{ $key }}" title="Copy remaining balance from previous stage">
-                            <i class="bi bi-arrow-down-short"></i> Fill
+                        <button type="button" class="btn btn-outline-primary py-2 px-2 js-autofill-stage touch-target-btn w-100" data-stage="{{ $key }}" title="Copy remaining balance from previous stage">
+                            <i class="bi bi-arrow-down-short me-1"></i>Fill
                         </button>
                     </td>
                 </tr>
@@ -60,6 +60,29 @@
         </tbody>
     </table>
 </div>
+
+<style>
+    /* Factory Floor Mobile Touch & Contrast Styles */
+    .size-matrix-touch-input {
+        min-height: 48px !important;
+        font-size: 16px !important; /* Prevents auto-zoom on mobile safari/chrome */
+        font-weight: 600;
+        border-color: #64748b !important;
+        padding: 6px !important;
+    }
+    .size-matrix-touch-input:focus {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.25) !important;
+        background-color: #f8fafc !important;
+    }
+    .touch-target-btn {
+        min-height: 48px !important;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
 <p class="form-text mb-0 mt-2">Select <strong>Current Active Stage</strong> first, then enter that stage’s sizes. Later stages stay locked (Printing selected → Stitching cannot be typed). Each size cannot exceed the same size in the previous stage. <strong>Total Damage</strong> is one number per stage.</p>
 <div class="alert alert-danger py-2 small mt-2 mb-0 d-none js-stage-flow-error" role="alert" style="white-space: pre-line"></div>
 

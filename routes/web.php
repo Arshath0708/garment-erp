@@ -412,6 +412,15 @@ Route::middleware('auth')->group(function () {
         Route::get('factory-board', [ReportsController::class, 'factoryBoard'])
             ->middleware('permission:report.view')
             ->name('factory-board');
+        Route::get('export/open-pos', [ReportsController::class, 'openPosCsv'])
+            ->middleware('permission:report.view')
+            ->name('open-pos.csv');
+        Route::get('export/open-exports', [ReportsController::class, 'openExportsCsv'])
+            ->middleware('permission:report.view')
+            ->name('open-exports.csv');
+        Route::get('export/open-capa', [ReportsController::class, 'openCapaCsv'])
+            ->middleware('permission:report.view')
+            ->name('open-capa.csv');
         Route::get('/', [ReportsController::class, 'index'])
             ->middleware('permission:report.view')
             ->name('index');
