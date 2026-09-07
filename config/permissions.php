@@ -199,6 +199,11 @@ return [
             // Our own company's details, printed on every export document
             // (invoice, bank docs, ...) — see CompanyProfile::current().
             'company-profile' => ['label' => 'Company Profile', 'actions' => ['view', 'edit']],
+            // Field-level: internal ₹ cost on inquiry / OC / PO show. Not a
+            // menu — operators with purchase-order.view still see the order,
+            // just not the cost column. Merchandising raises POs without this;
+            // Admin and Accounts get it for pricing and bills.
+            'cost-price' => ['label' => 'Cost Price (field)', 'actions' => ['view'], 'built' => true],
             'whatsapp' => ['label' => 'WhatsApp', 'actions' => ['view', 'edit', 'send'], 'built' => true],
         ],
 
@@ -236,6 +241,7 @@ return [
                 'purchase-bill.*', 'debit-note.*', 'payment.*', 'foreign-payment.*',
                 'agent-commission.*', 'tally.*',
                 'outstanding.*', 'report.*',
+                'cost-price.view',
                 'whatsapp.*',
             ],
         ],
@@ -263,6 +269,7 @@ return [
                 'purchase-bill.*', 'debit-note.*', 'payment.*', 'foreign-payment.*',
                 'agent-commission.*', 'tally.*',
                 'outstanding.*', 'report.view', 'report.export',
+                'cost-price.view',
                 'whatsapp.view', 'whatsapp.send',
             ],
         ],
