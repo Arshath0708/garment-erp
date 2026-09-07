@@ -97,8 +97,10 @@ class Breadcrumbs
             'finance.buyer-receipts' => ['module' => 'Packing, Shipment & Billing', 'module_url' => route('export.packing.index'), 'screen' => 'Buyer Receipts', 'index' => 'finance.buyer-receipts.index'],
             'finance.agent-commission' => ['module' => 'Packing, Shipment & Billing', 'module_url' => route('export.packing.index'), 'screen' => 'Agent Commission', 'index' => 'finance.agent-commission.index'],
             'finance.tally' => ['module' => 'Packing, Shipment & Billing', 'module_url' => route('export.packing.index'), 'screen' => 'Tally', 'index' => 'finance.tally.settings'],
+            'whatsapp' => ['module' => 'Packing, Shipment & Billing', 'module_url' => route('export.packing.index'), 'screen' => 'WhatsApp', 'index' => 'whatsapp.settings'],
             'reports.outstanding' => ['module' => 'Intelligent OCR & Reports', 'module_url' => route('export.ocr.index'), 'screen' => 'Outstanding', 'index' => 'reports.outstanding.index'],
             'reports.order-profit' => ['module' => 'Intelligent OCR & Reports', 'module_url' => route('export.ocr.index'), 'screen' => 'Profit per order', 'index' => 'reports.order-profit'],
+            'reports.factory-board' => ['module' => 'Intelligent OCR & Reports', 'module_url' => route('export.ocr.index'), 'screen' => 'Factory board', 'index' => 'reports.factory-board'],
             'reports' => ['module' => 'Intelligent OCR & Reports', 'module_url' => route('export.ocr.index'), 'screen' => 'ERP Reports & Outstanding', 'index' => 'reports.index'],
             'user-management.users' => ['module' => 'Account', 'module_url' => route('profile.edit'), 'screen' => 'Users', 'index' => 'user-management.users.index'],
             'user-management.roles' => ['module' => 'Account', 'module_url' => route('profile.edit'), 'screen' => 'Roles', 'index' => 'user-management.roles.index'],
@@ -114,6 +116,8 @@ class Breadcrumbs
             str_ends_with($name, '.create') => 'New',
             str_ends_with($name, '.edit') => 'Edit',
             str_ends_with($name, '.show') => 'View',
+            str_ends_with($name, '.export') => 'Export',
+            str_ends_with($name, '.logs') => 'Log',
             default => null,
         };
     }
