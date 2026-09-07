@@ -9,7 +9,9 @@ use App\Http\Controllers\Export\ExportDocumentOcrController;
 use App\Http\Controllers\Export\PackingController;
 use App\Http\Controllers\Finance\DebitNoteController;
 use App\Http\Controllers\Finance\FinanceController;
+use App\Http\Controllers\Finance\TallyController;
 use App\Http\Controllers\Inventory\InventoryController;
+use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\Manufacturing\JobWorkVoucherController;
 use App\Http\Controllers\Manufacturing\ManufacturingController;
 use App\Http\Controllers\Manufacturing\ProductionLineController;
@@ -247,6 +249,10 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
+    Route::get('inventory/lots', [InventoryController::class, 'lots'])->name('inventory.lots');
+    Route::resource('inventory/warehouses', WarehouseController::class)
+        ->parameters(['warehouses' => 'warehouse'])
+        ->names('inventory.warehouses');
 
     Route::get('job-work', [JobWorkVoucherController::class, 'index'])->name('job-work.index');
     Route::get('job-work/create', [JobWorkVoucherController::class, 'create'])->name('job-work.create');
@@ -363,6 +369,15 @@ Route::middleware('auth')->group(function () {
         Route::get('agent-commission', [FinanceController::class, 'agentCommission'])
             ->middleware('permission:agent-commission.view')
             ->name('agent-commission.index');
+        Route::get('tally', [TallyController::class, 'settings'])->name('tally.settings');
+        Route::put('tally', [TallyController::class, 'updateSettings'])->name('tally.settings.update');
+        Route::get('tally/logs', [TallyController::class, 'logs'])->name('tally.logs');
+        Route::post('tally/export-documents/{document}', [TallyController::class, 'exportDocument'])
+            ->name('tally.export-documents');
+        Route::put('tally/export-documents/{document}/gst-irn', [TallyController::class, 'saveGstIrn'])
+            ->name('tally.gst-irn');
+        Route::post('tally/debit-notes/{debitNote}', [TallyController::class, 'debitNote'])
+            ->name('tally.debit-notes');
     });
 
     Route::get('whatsapp', [WhatsappController::class, 'settings'])->name('whatsapp.settings');

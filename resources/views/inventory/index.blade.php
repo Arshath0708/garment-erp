@@ -2,8 +2,14 @@
     <x-slot name="header">Fabric &amp; accessory stock</x-slot>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <p class="text-body-secondary small mb-0">On-hand qty for items on style BOM. New similar orders can use this stock first, or you can buy new.</p>
-        <a href="{{ route('masters.products.create') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Add item</a>
+        <p class="text-body-secondary small mb-0">On-hand qty for items on style BOM. Track by godown and lot/roll after stores receive. New similar orders can use this stock first, or you can buy new.</p>
+        <div class="d-flex gap-2">
+            <a href="{{ route('inventory.lots') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-upc-scan me-1"></i> Lots / rolls</a>
+            @can('warehouse.view')
+                <a href="{{ route('inventory.warehouses.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-building me-1"></i> Godowns ({{ $warehouseCount ?? 0 }})</a>
+            @endcan
+            <a href="{{ route('masters.products.create') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Add item</a>
+        </div>
     </div>
 
     @if(($lowStock ?? collect())->isNotEmpty())
@@ -74,6 +80,7 @@
                             <th>Type</th>
                             <th>Unit</th>
                             <th class="text-end">Qty on hand</th>
+                            <th class="text-end">Lots</th>
                             <th class="text-end">Reorder</th>
                             <th></th>
                         </tr>
@@ -88,6 +95,13 @@
                                 <td>{{ $kinds[$item->item_kind] ?? $item->item_kind }}</td>
                                 <td>{{ $item->unit_po ?: '—' }}</td>
                                 <td class="text-end fw-bold {{ $item->isBelowReorder() || (float) $item->qty_on_hand <= 0 ? 'text-danger' : '' }}">{{ number_format((float) $item->qty_on_hand, 3) }}</td>
+                                <td class="text-end">
+                                    @if(($item->stock_lots_count ?? 0) > 0)
+                                        <a href="{{ route('inventory.lots', ['product_id' => $item->id]) }}">{{ $item->stock_lots_count }}</a>
+                                    @else
+                                        —
+                                    @endif
+                                </td>
                                 <td class="text-end">{{ (float) $item->reorder_level > 0 ? number_format((float) $item->reorder_level, 3) : '—' }}</td>
                                 <td class="text-end">
                                     @if($item->isBelowReorder())
@@ -97,7 +111,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="6" class="text-center text-body-secondary py-4">No stock items yet. Add fabric/accessories in Item Master.</td></tr>
+                            <tr><td colspan="7" class="text-center text-body-secondary py-4">No stock items yet. Add fabric/accessories in Item Master.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
