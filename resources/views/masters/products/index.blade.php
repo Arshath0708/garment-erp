@@ -109,7 +109,7 @@
                             </td>
                         </tr>
                     @empty
-                        <x-ui.empty-state :colspan="9" icon="bi-box-seam"
+                        <x-ui.empty-state :colspan="10" icon="bi-box-seam"
                                           title="No products yet"
                                           message="Add a category first, then create products under it." />
                     @endforelse

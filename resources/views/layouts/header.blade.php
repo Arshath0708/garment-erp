@@ -104,7 +104,7 @@
     };
 
     document.addEventListener('DOMContentLoaded', function() {
-        const savedTheme = localStorage.getItem('garment_theme') || 'dark';
+        const savedTheme = localStorage.getItem('garment_theme') || 'light';
         document.documentElement.setAttribute('data-bs-theme', savedTheme);
         updateThemeUI(savedTheme);
 

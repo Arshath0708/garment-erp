@@ -111,7 +111,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="7" class="text-center text-body-secondary py-4">No stock items yet. Add fabric/accessories in Item Master.</td></tr>
+                            <x-ui.empty-state colspan="7" icon="bi-box-seam" title="No stock items yet" message="Add fabric or accessories in Item Master." />
                         @endforelse
                     </tbody>
                 </table>
@@ -147,7 +147,7 @@
                                 <td class="text-end fw-bold">{{ number_format($row->qty_on_hand) }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="3" class="text-center text-body-secondary py-4">No packed finished-garment stock yet. Record cartons on the export document.</td></tr>
+                            <x-ui.empty-state colspan="3" icon="bi-box-seam" title="No packed finished-garment stock yet" message="Record cartons on the export document." />
                         @endforelse
                     </tbody>
                 </table>
