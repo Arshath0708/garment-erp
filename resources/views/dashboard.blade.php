@@ -79,7 +79,7 @@
         <div class="col-xl-4 col-md-6 col-12 mb-3">
             <div class="small-box position-relative text-bg-danger shadow-sm rounded-3">
                 <div class="inner p-3">
-                    <h3 class="fw-bold mb-1">${{ number_format($buyerOutstanding, 2) }}</h3>
+                    <h3 class="fw-bold mb-1">{{ number_format($buyerOutstanding, 2) }}</h3>
                     <p class="mb-0">Buyer Outstanding</p>
                 </div>
                 <i class="small-box-icon bi bi-cash-stack opacity-50"></i>
@@ -97,7 +97,7 @@
         <div class="col-xl-4 col-md-6 col-12 mb-3">
             <div class="small-box position-relative text-bg-dark shadow-sm rounded-3">
                 <div class="inner p-3">
-                    <h3 class="fw-bold mb-1">${{ number_format($supplierOutstanding, 2) }}</h3>
+                    <h3 class="fw-bold mb-1">{{ number_format($supplierOutstanding, 2) }}</h3>
                     <p class="mb-0">Supplier Outstanding</p>
                 </div>
                 <i class="small-box-icon bi bi-building opacity-50"></i>
@@ -334,7 +334,6 @@
     </div>
 
     @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             if (typeof ApexCharts === 'undefined') return;

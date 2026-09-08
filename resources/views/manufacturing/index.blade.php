@@ -71,17 +71,17 @@
             ['label' => '9. Packing & Dispatch', 'href' => route('manufacturing.index', ['stage' => 'Packing']), 'key' => 'Packing'],
         ];
     @endphp
-    <div class="card shadow-sm border-0 mb-4 bg-dark text-white p-3">
-        <div class="text-uppercase text-info fw-bold small mb-2"><i class="bi bi-diagram-3-fill me-1"></i> Garment Manufacturing Order Pipeline</div>
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 text-center text-white-50 small">
+    <div class="card shadow-sm border-0 mb-4 bg-body-tertiary border p-3">
+        <div class="text-uppercase text-primary fw-bold small mb-2"><i class="bi bi-diagram-3-fill me-1"></i> Garment Manufacturing Order Pipeline</div>
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 text-center small">
             @foreach ($pipelineSteps as $i => $step)
                 @if($i > 0)
-                    <i class="bi bi-arrow-right"></i>
+                    <i class="bi bi-arrow-right text-body-secondary"></i>
                 @endif
                 @php $isActive = $activePipeline !== null && $activePipeline !== '' && $activePipeline === $step['key']; @endphp
                 <a href="{{ $step['href'] }}"
                    data-pipeline-stage="{{ $step['key'] }}"
-                   class="px-3 py-2 rounded text-decoration-none {{ $isActive ? 'bg-info text-dark fw-bold' : 'bg-secondary bg-opacity-25 text-white' }}">
+                   class="px-3 py-2 rounded text-decoration-none {{ $isActive ? 'bg-primary text-white fw-bold shadow-sm' : 'bg-body border text-body' }}">
                     {{ $step['label'] }}
                 </a>
             @endforeach
