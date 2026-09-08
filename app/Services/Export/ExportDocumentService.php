@@ -10,6 +10,7 @@ use App\Models\NumberSeries;
 use App\Models\OrderConfirmation;
 use App\Models\Port;
 use App\Models\ShipmentMethod;
+use App\Services\Inventory\StyleStockService;
 use App\Services\NumberSeriesService;
 use App\Support\FinancialYear;
 use Illuminate\Http\UploadedFile;
@@ -19,8 +20,10 @@ use RuntimeException;
 
 class ExportDocumentService
 {
-    public function __construct(private readonly NumberSeriesService $numbers)
-    {
+    public function __construct(
+        private readonly NumberSeriesService $numbers,
+        private readonly StyleStockService $styleStock,
+    ) {
     }
 
     /**
@@ -55,6 +58,20 @@ class ExportDocumentService
                 'status'                => 'draft',
             ]);
             $this->assignNumber($doc);
+            $doc->invoice_no = $doc->doc_num;
+            $doc->invoice_date = now()->toDateString();
+            $doc->buyer_ref_no = $oc->buyer_ref;
+            $doc->shipment_date = $oc->shipment_date;
+            $remarkParts = [];
+            if (filled($oc->payment_terms)) {
+                $remarkParts[] = 'Payment: '.$oc->payment_terms;
+            }
+            if (filled($oc->remarks)) {
+                $remarkParts[] = $oc->remarks;
+            }
+            if ($remarkParts !== []) {
+                $doc->remarks = implode("\n", $remarkParts);
+            }
             $doc->save();
 
             foreach ($items->values() as $index => $ocItem) {
@@ -305,6 +322,8 @@ class ExportDocumentService
                     ]);
                 }
             }
+
+            $this->styleStock->syncFromCartons($document->fresh('cartons.lines'));
         });
     }
 

@@ -43,10 +43,36 @@ return [
     | scans (B/L, LEO, container/seal) and suggests reference fields.
     */
     'gemini' => [
-        'key'        => env('GEMINI_API_KEY'),
-        'model'      => env('GEMINI_MODEL', 'gemini-2.5-flash'),
+        'key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
         // Set GEMINI_SSL_VERIFY=false only on local Windows if CA certs are missing.
         'verify_ssl' => filter_var(env('GEMINI_SSL_VERIFY', true), FILTER_VALIDATE_BOOL),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | WhatsApp Cloud API (optional)
+    |--------------------------------------------------------------------------
+    | Settings screen is the primary place to store the token (encrypted).
+    | This env value is only a fallback when the settings row has none.
+    */
+    'whatsapp' => [
+        'token' => env('WHATSAPP_ACCESS_TOKEN'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | GST E-Invoice Suvidha Provider (GSP API)
+    |--------------------------------------------------------------------------
+    */
+    'gst' => [
+        'gsp'           => env('GST_GSP_PROVIDER', 'master_india'),
+        'client_id'     => env('GST_GSP_CLIENT_ID'),
+        'client_secret' => env('GST_GSP_CLIENT_SECRET'),
+        'username'      => env('GST_GSP_USERNAME'),
+        'password'      => env('GST_GSP_PASSWORD'),
+        'base_url'      => env('GST_GSP_BASE_URL', 'https://einvapi.sandbox.nic.in'),
+        'environment'   => env('GST_GSP_ENV', 'sandbox'),
     ],
 
 ];

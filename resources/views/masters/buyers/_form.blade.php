@@ -161,6 +161,12 @@
                     placeholder="Exactly as it must print on the invoice"
                     hint="Leave blank to use the company name." />
 
+        <x-ui.select name="invoice_layout" label="Invoice layout"
+                    :options="\App\Models\Buyer::INVOICE_LAYOUTS"
+                    :selected="$buyer?->invoice_layout ?? 'standard'"
+                    horizontal :placeholder="false"
+                    hint="How this buyer's export invoice prints." />
+
         {{-- Col D — "allow multiple selection in a drop down menu which is
              connected from the category master" --}}
         <x-ui.select name="category_ids" label="Category of Items"

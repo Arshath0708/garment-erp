@@ -5,10 +5,11 @@ namespace App\Services\Procurement;
 use App\Models\InwardEntry;
 use App\Models\InwardEntryItem;
 use App\Models\NumberSeries;
-use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\PurchaseOrderTimelineEntry;
+use App\Models\Warehouse;
+use App\Services\Inventory\StockLotService;
 use App\Services\NumberSeriesService;
 use App\Support\FinancialYear;
 use Illuminate\Support\Facades\DB;
@@ -87,7 +88,6 @@ class InwardEntryService
     {
         return DB::transaction(function () use ($inward, $qcData, $userId) {
             $status = $qcData['status'] ?? 'approved';
-            $alreadyStocked = $inward->status === 'approved';
 
             $inward->update([
                 'status'          => $status,
@@ -117,18 +117,46 @@ class InwardEntryService
                 $this->updatePurchaseOrderStatusAndTimeline($po, $inward);
             }
 
-            if ($status === 'approved' && ! $alreadyStocked) {
-                $inward->load('items');
-                foreach ($inward->items as $line) {
-                    $qty = (float) ($line->passed_qty ?? $line->received_qty ?? 0);
-                    if ($line->product_id && $qty > 0) {
-                        Product::query()->whereKey($line->product_id)->increment('qty_on_hand', $qty);
-                    }
-                }
+            return $inward->refresh();
+        });
+    }
 
-                app(\App\Services\Manufacturing\WorkOrderService::class)
-                    ->markFabricInwardForOc($po?->order_confirmation_id);
+    /**
+     * Stores takes QC-passed qty into stock (godown + lot/roll). QC must not increment qty.
+     *
+     * @param  array{warehouse_id?: int, lot_numbers?: array<int, string>}  $options
+     */
+    public function receiveAtStore(InwardEntry $inward, int $userId, array $options = []): InwardEntry
+    {
+        return DB::transaction(function () use ($inward, $userId, $options) {
+            if ($inward->status !== 'approved') {
+                throw new \RuntimeException('QC must pass before stores can take this inward into stock.');
             }
+
+            if ($inward->isStoresReceived()) {
+                throw new \RuntimeException('This inward is already in stock.');
+            }
+
+            $warehouseId = (int) ($options['warehouse_id'] ?? 0);
+            if ($warehouseId < 1) {
+                $warehouseId = (int) (Warehouse::defaultFabric()?->id ?? 0);
+            }
+            if ($warehouseId < 1) {
+                throw new \RuntimeException('No active godown found. Create a warehouse first.');
+            }
+
+            /** @var array<int, string> $lotNumbers */
+            $lotNumbers = $options['lot_numbers'] ?? [];
+
+            app(StockLotService::class)->receiveFromInward($inward, $warehouseId, $lotNumbers);
+
+            $inward->update([
+                'stores_received_at' => now(),
+                'stores_received_by' => $userId,
+            ]);
+
+            $ocId = $inward->purchaseOrder()->value('order_confirmation_id');
+            app(\App\Services\Manufacturing\WorkOrderService::class)->markFabricInwardForOc($ocId ? (int) $ocId : null);
 
             return $inward->refresh();
         });

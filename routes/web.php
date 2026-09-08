@@ -1,37 +1,46 @@
 <?php
 
-use App\Http\Controllers\Inventory\InventoryController;
-use App\Http\Controllers\Masters\BuyerController;
-use App\Http\Controllers\Masters\AgentController;
-use App\Http\Controllers\Masters\CategoryController;
-use App\Http\Controllers\Masters\GarmentStyleController;
-use App\Http\Controllers\Manufacturing\ManufacturingController;
-use App\Http\Controllers\Manufacturing\WorkOrderController;
-
-use App\Http\Controllers\Masters\DocumentFormatController;
-use App\Http\Controllers\Masters\FobValueController;
-use App\Http\Controllers\Masters\GeoController;
-use App\Http\Controllers\Masters\JobberController;
-use App\Http\Controllers\Masters\MarkupController;
-use App\Http\Controllers\Masters\ProductController;
-use App\Http\Controllers\Masters\SupplierController;
 use App\Http\Controllers\Administration\CompanyProfileController;
+use App\Http\Controllers\Communication\WhatsappController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Export\ExportDocumentChecklistController;
 use App\Http\Controllers\Export\ExportDocumentController;
 use App\Http\Controllers\Export\ExportDocumentOcrController;
 use App\Http\Controllers\Export\PackingController;
+use App\Http\Controllers\Finance\DebitNoteController;
 use App\Http\Controllers\Finance\FinanceController;
+use App\Http\Controllers\Finance\TallyController;
+use App\Http\Controllers\Inventory\InventoryController;
+use App\Http\Controllers\Inventory\WarehouseController;
+use App\Http\Controllers\Manufacturing\FloorScanController;
+use App\Http\Controllers\Manufacturing\JobWorkVoucherController;
+use App\Http\Controllers\Manufacturing\ManufacturingController;
+use App\Http\Controllers\Manufacturing\ProductionCapaController;
+use App\Http\Controllers\Manufacturing\ProductionLineController;
+use App\Http\Controllers\Manufacturing\WorkOrderController;
+use App\Http\Controllers\Masters\AgentController;
+use App\Http\Controllers\Masters\BOMController;
+use App\Http\Controllers\Masters\BuyerController;
+use App\Http\Controllers\Masters\CategoryController;
+use App\Http\Controllers\Masters\DocumentFormatController;
+use App\Http\Controllers\Masters\FobValueController;
+use App\Http\Controllers\Masters\GarmentStyleController;
+use App\Http\Controllers\Masters\GeoController;
+use App\Http\Controllers\Masters\JobberController;
+use App\Http\Controllers\Masters\MarkupController;
+use App\Http\Controllers\Masters\ProductController;
+use App\Http\Controllers\Masters\StyleCostingController;
+use App\Http\Controllers\Masters\SupplierController;
 use App\Http\Controllers\Procurement\InwardEntryController;
 use App\Http\Controllers\Procurement\PurchaseOrderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Reports\ReportsController;
 use App\Http\Controllers\Sales\InquiryController;
 use App\Http\Controllers\Sales\OrderConfirmationController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\UserManagement\PermissionController;
 use App\Http\Controllers\UserManagement\RoleController;
 use App\Http\Controllers\UserManagement\UserController;
-use App\Http\Controllers\DashboardController;
-
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'));
@@ -52,6 +61,8 @@ Route::middleware('auth')->group(function () {
         Route::patch('/profile', 'update')->name('profile.update');
         Route::delete('/profile', 'destroy')->name('profile.destroy');
     });
+
+    Route::get('search', SearchController::class)->name('search');
 
     /*
     |--------------------------------------------------------------------------
@@ -76,11 +87,10 @@ Route::middleware('auth')->group(function () {
         Route::patch('categories/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])
             ->name('categories.toggle-status');
         Route::resource('categories', CategoryController::class);
-        Route::get('bom', [\App\Http\Controllers\Masters\BOMController::class, 'index'])->name('bom.index');
+        Route::get('bom', [BOMController::class, 'index'])->name('bom.index');
         Route::post('styles/{style}/comments', [GarmentStyleController::class, 'storeComment'])->name('styles.comments.store');
+        Route::post('styles/{style}/approve-bom', [GarmentStyleController::class, 'approveBom'])->name('styles.approve-bom');
         Route::resource('styles', GarmentStyleController::class);
-
-
 
         // Declared before the resource so "check-code" is not swallowed by
         // products/{product}.
@@ -198,6 +208,8 @@ Route::middleware('auth')->group(function () {
         // real OC rather than only flipping item status.
         Route::post('inquiries/{inquiry}/convert-to-oc', [OrderConfirmationController::class, 'convertFromInquiry'])
             ->name('inquiries.convert-to-oc');
+        Route::post('inquiries/{inquiry}/convert-to-invoice', [OrderConfirmationController::class, 'convertToInvoice'])
+            ->name('inquiries.convert-to-invoice');
 
         Route::get('inquiries/{inquiry}/pdf', [InquiryController::class, 'pdf'])
             ->name('inquiries.pdf');
@@ -208,6 +220,8 @@ Route::middleware('auth')->group(function () {
 
         Route::post('order-confirmations/{orderConfirmation}/raise-purchase-orders', [OrderConfirmationController::class, 'raisePurchaseOrders'])
             ->name('order-confirmations.raise-purchase-orders');
+        Route::post('order-confirmations/{orderConfirmation}/raise-invoice', [OrderConfirmationController::class, 'raiseInvoice'])
+            ->name('order-confirmations.raise-invoice');
         Route::post('order-confirmations/{orderConfirmation}/raise-export-document', [ExportDocumentController::class, 'raiseFromOrderConfirmation'])
             ->name('order-confirmations.raise-export-document');
         Route::resource('order-confirmations', OrderConfirmationController::class)
@@ -229,6 +243,8 @@ Route::middleware('auth')->group(function () {
             ->name('inward-entries.po-details');
         Route::post('inward-entries/{inwardEntry}/approve', [InwardEntryController::class, 'approve'])
             ->name('inward-entries.approve');
+        Route::post('inward-entries/{inwardEntry}/stores-receive', [InwardEntryController::class, 'receiveAtStore'])
+            ->name('inward-entries.stores-receive');
         Route::resource('inward-entries', InwardEntryController::class)
             ->parameters(['inward-entries' => 'inwardEntry']);
     });
@@ -239,6 +255,16 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
+    Route::get('inventory/lots', [InventoryController::class, 'lots'])->name('inventory.lots');
+    Route::resource('inventory/warehouses', WarehouseController::class)
+        ->parameters(['warehouses' => 'warehouse'])
+        ->names('inventory.warehouses');
+
+    Route::get('job-work', [JobWorkVoucherController::class, 'index'])->name('job-work.index');
+    Route::get('job-work/create', [JobWorkVoucherController::class, 'create'])->name('job-work.create');
+    Route::post('job-work', [JobWorkVoucherController::class, 'store'])->name('job-work.store');
+    Route::get('job-work/{jobWorkVoucher}', [JobWorkVoucherController::class, 'show'])->name('job-work.show');
+    Route::delete('job-work/{jobWorkVoucher}', [JobWorkVoucherController::class, 'destroy'])->name('job-work.destroy');
 
     Route::get('work-orders', [WorkOrderController::class, 'index'])->name('work-orders.index');
     Route::get('work-orders/create', [WorkOrderController::class, 'create'])->name('work-orders.create');
@@ -251,18 +277,34 @@ Route::middleware('auth')->group(function () {
     Route::post('work-orders/{workOrder}/release', [WorkOrderController::class, 'release'])->name('work-orders.release');
     Route::post('work-orders/{workOrder}/hold', [WorkOrderController::class, 'hold'])->name('work-orders.hold');
 
+    Route::get('style-costings', [StyleCostingController::class, 'index'])->name('style-costings.index');
+    Route::get('style-costings/create', [StyleCostingController::class, 'create'])->name('style-costings.create');
+    Route::post('style-costings', [StyleCostingController::class, 'store'])->name('style-costings.store');
+    Route::get('style-costings/{styleCosting}', [StyleCostingController::class, 'show'])->name('style-costings.show');
+    Route::get('style-costings/{styleCosting}/edit', [StyleCostingController::class, 'edit'])->name('style-costings.edit');
+    Route::put('style-costings/{styleCosting}', [StyleCostingController::class, 'update'])->name('style-costings.update');
+    Route::delete('style-costings/{styleCosting}', [StyleCostingController::class, 'destroy'])->name('style-costings.destroy');
+    Route::post('style-costings/{styleCosting}/approve', [StyleCostingController::class, 'approve'])->name('style-costings.approve');
+
+    Route::get('production-lines', [ProductionLineController::class, 'index'])->name('production-lines.index');
+    Route::post('production-lines/outputs', [ProductionLineController::class, 'storeOutput'])->name('production-lines.outputs.store');
+    Route::get('floor/scan', [FloorScanController::class, 'form'])->name('floor.scan');
+    Route::post('floor/scan', [FloorScanController::class, 'store'])->name('floor.scan.store');
+
     Route::get('manufacturing', [ManufacturingController::class, 'index'])->name('manufacturing.index');
+    Route::get('manufacturing/capa', [ProductionCapaController::class, 'index'])->name('manufacturing.capa.index');
+    Route::post('manufacturing/capa/{qcCheck}/close', [ProductionCapaController::class, 'close'])->name('manufacturing.capa.close');
     Route::get('manufacturing/create', [ManufacturingController::class, 'create'])->name('manufacturing.create');
     Route::get('manufacturing/material-plan', [ManufacturingController::class, 'materialPlan'])->name('manufacturing.material-plan');
     Route::post('manufacturing', [ManufacturingController::class, 'store'])->name('manufacturing.store');
+    Route::post('manufacturing/{order}/qc-check', [ManufacturingController::class, 'storeQcCheck'])->name('manufacturing.qc-check');
     Route::get('manufacturing/{order}', [ManufacturingController::class, 'show'])->name('manufacturing.show');
     Route::get('manufacturing/{order}/edit', [ManufacturingController::class, 'edit'])->name('manufacturing.edit');
     Route::put('manufacturing/{order}', [ManufacturingController::class, 'update'])->name('manufacturing.update');
     Route::delete('manufacturing/{order}', [ManufacturingController::class, 'destroy'])->name('manufacturing.destroy');
     Route::post('manufacturing/{order}/update-stage', [ManufacturingController::class, 'updateStage'])->name('manufacturing.update-stage');
     Route::get('manufacturing/{order}/job-work-challan', [ManufacturingController::class, 'jobWorkChallanPdf'])->name('manufacturing.job-work-challan');
-
-
+    Route::get('manufacturing/{order}/bundle-ticket', [FloorScanController::class, 'ticket'])->name('manufacturing.bundle-ticket');
 
     /*
     |--------------------------------------------------------------------------
@@ -325,9 +367,10 @@ Route::middleware('auth')->group(function () {
         Route::get('purchase-bills', [FinanceController::class, 'purchaseBills'])
             ->middleware('permission:purchase-bill.view')
             ->name('purchase-bills.index');
-        Route::get('debit-notes', [FinanceController::class, 'debitNotes'])
-            ->middleware('permission:debit-note.view')
+        Route::get('debit-notes', [DebitNoteController::class, 'index'])
             ->name('debit-notes.index');
+        Route::post('debit-notes', [DebitNoteController::class, 'store'])
+            ->name('debit-notes.store');
         Route::get('supplier-payments', [FinanceController::class, 'supplierPayments'])
             ->middleware('permission:payment.view')
             ->name('supplier-payments.index');
@@ -337,12 +380,47 @@ Route::middleware('auth')->group(function () {
         Route::get('agent-commission', [FinanceController::class, 'agentCommission'])
             ->middleware('permission:agent-commission.view')
             ->name('agent-commission.index');
+        Route::get('tally', [TallyController::class, 'settings'])->name('tally.settings');
+        Route::put('tally', [TallyController::class, 'updateSettings'])->name('tally.settings.update');
+        Route::get('tally/logs', [TallyController::class, 'logs'])->name('tally.logs');
+        Route::post('tally/export-documents/{document}', [TallyController::class, 'exportDocument'])
+            ->name('tally.export-documents');
+        Route::put('tally/export-documents/{document}/gst-irn', [TallyController::class, 'saveGstIrn'])
+            ->name('tally.gst-irn');
+        Route::post('tally/debit-notes/{debitNote}', [TallyController::class, 'debitNote'])
+            ->name('tally.debit-notes');
     });
+
+    Route::get('whatsapp', [WhatsappController::class, 'settings'])->name('whatsapp.settings');
+    Route::put('whatsapp', [WhatsappController::class, 'updateSettings'])->name('whatsapp.settings.update');
+    Route::get('whatsapp/logs', [WhatsappController::class, 'logs'])->name('whatsapp.logs');
+    Route::post('whatsapp/purchase-orders/{purchaseOrder}', [WhatsappController::class, 'purchaseOrder'])
+        ->name('whatsapp.purchase-orders');
+    Route::post('whatsapp/time-and-action/{step}', [WhatsappController::class, 'tnaStep'])
+        ->name('whatsapp.tna-steps');
 
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('outstanding', [ReportsController::class, 'outstanding'])
             ->middleware('permission:outstanding.view')
             ->name('outstanding.index');
+        Route::get('order-profit', [ReportsController::class, 'orderProfit'])
+            ->middleware('permission:report.view')
+            ->name('order-profit');
+        Route::get('factory-board/export', [ReportsController::class, 'factoryBoardExport'])
+            ->middleware('permission:report.export')
+            ->name('factory-board.export');
+        Route::get('factory-board', [ReportsController::class, 'factoryBoard'])
+            ->middleware('permission:report.view')
+            ->name('factory-board');
+        Route::get('export/open-pos', [ReportsController::class, 'openPosCsv'])
+            ->middleware('permission:report.view')
+            ->name('open-pos.csv');
+        Route::get('export/open-exports', [ReportsController::class, 'openExportsCsv'])
+            ->middleware('permission:report.view')
+            ->name('open-exports.csv');
+        Route::get('export/open-capa', [ReportsController::class, 'openCapaCsv'])
+            ->middleware('permission:report.view')
+            ->name('open-capa.csv');
         Route::get('/', [ReportsController::class, 'index'])
             ->middleware('permission:report.view')
             ->name('index');

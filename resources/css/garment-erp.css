@@ -31,6 +31,14 @@ body.garment-erp-theme {
     overflow-x: hidden;
 }
 
+.touch-action-btn {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
 /* ==================== PAGE CONTENT HEADERS ==================== */
 .app-content-header h3,
 .app-content-header h1,

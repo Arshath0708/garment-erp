@@ -3,9 +3,14 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
-
         <title>{{ config('app.name', 'Garment ERP') }}</title>
+
+        <!-- Mobile Web App / PWA Meta Tags -->
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="Garment ERP">
+        <meta name="theme-color" content="#1e293b">
 
 
         <!-- Fonts -->
@@ -177,6 +182,24 @@
             @media (max-width: 575.98px) {
                 .erp-breadcrumb { font-size: .75rem; }
             }
+            .erp-global-search { position: relative; width: 100%; }
+            .erp-global-search-results {
+                position: absolute; top: calc(100% + .25rem); left: 0; right: 0; z-index: 1080;
+                background: var(--bs-body-bg, #fff);
+                border: 1px solid var(--bs-border-color, #e9edf2);
+                border-radius: .5rem;
+                box-shadow: 0 8px 24px rgba(15, 23, 42, .12);
+                max-height: 20rem; overflow-y: auto;
+            }
+            .erp-global-search-group {
+                font-size: .68rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+                color: #9aa4b2; padding: .45rem .75rem .15rem;
+            }
+            .erp-global-search-item {
+                display: block; padding: .4rem .75rem; font-size: .85rem; color: inherit; text-decoration: none;
+            }
+            .erp-global-search-item:hover { background: #f3f6fa; }
+            [data-bs-theme="dark"] .erp-global-search-item:hover { background: #1e293b; }
 
             /* Modules whose screens are not built yet — visible but clearly inert. */
             .app-sidebar .nav-link.soon { color: #a3acb9; cursor: default; }

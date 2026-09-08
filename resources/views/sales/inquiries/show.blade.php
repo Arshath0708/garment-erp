@@ -15,6 +15,15 @@
                             <i class="bi bi-arrow-right-circle me-1"></i> Convert to OC
                         </button>
                     </form>
+                    @can('export-document.create')
+                        <form action="{{ route('sales.inquiries.convert-to-invoice', $inquiry) }}" method="POST" class="d-inline"
+                              onsubmit="return confirm('Create sales order and raise export invoice in one step? Buyer, items and prices copy from this enquiry.');">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-receipt me-1"></i> Convert to order &amp; raise invoice
+                            </button>
+                        </form>
+                    @endcan
                 @endif
             @endcan
             @can('inquiry.edit')
@@ -22,6 +31,11 @@
                     <i class="bi bi-pencil me-1"></i> Edit
                 </a>
             @endcan
+            @foreach($inquiry->orderConfirmations as $oc)
+                <a href="{{ route('sales.order-confirmations.show', $oc) }}" class="btn btn-sm btn-outline-success">
+                    OC {{ $oc->oc_num }}
+                </a>
+            @endforeach
             <a href="{{ route('sales.inquiries.index') }}" class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-arrow-left me-1"></i> Back
             </a>
@@ -84,9 +98,9 @@
                         <th>Unit</th>
                         <th>FOB</th>
                         <th class="text-end">Price</th>
-                        @if(auth()->user()?->hasRole('Super Admin'))
+                        @can('cost-price.view')
                             <th class="text-end text-body-secondary">Cost Price <span class="fw-normal small">(internal)</span></th>
-                        @endif
+                        @endcan
                         <th class="text-end">Qty</th>
                         <th class="text-end">Amount</th>
                         <th>Status</th>
@@ -127,9 +141,9 @@
                             <td>{{ $item->unit ?? '—' }}</td>
                             <td>{{ $item->fobValue?->name ?? '—' }}</td>
                             <td class="text-end">{{ $item->price !== null ? number_format((float) $item->price, 2) : '—' }}</td>
-                            @if(auth()->user()?->hasRole('Super Admin'))
+                            @can('cost-price.view')
                                 <td class="text-end text-body-secondary">{{ $item->cost_price !== null ? number_format((float) $item->cost_price, 2) : '—' }}</td>
-                            @endif
+                            @endcan
                             <td class="text-end">{{ $item->qty }}</td>
                             <td class="text-end">{{ number_format((float) $item->amount, 2) }}</td>
                             <td><span class="badge text-bg-{{ $item->statusColor() }}">{{ $item->statusLabel() }}</span></td>

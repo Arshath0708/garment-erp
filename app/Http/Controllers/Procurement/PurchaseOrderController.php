@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Procurement\StorePurchaseOrderRequest;
 use App\Http\Requests\Procurement\UpdatePurchaseOrderRequest;
 use App\Models\OrderConfirmation;
+use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
 use App\Services\Procurement\PurchaseOrderService;
@@ -13,13 +14,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class PurchaseOrderController extends Controller implements HasMiddleware
 {
-    public function __construct(private readonly PurchaseOrderService $purchaseOrders)
-    {
-    }
+    public function __construct(private readonly PurchaseOrderService $purchaseOrders) {}
 
     /**
      * @return array<int, Middleware>
@@ -50,20 +50,33 @@ class PurchaseOrderController extends Controller implements HasMiddleware
 
         return view('procurement.purchase-orders.index', [
             'purchaseOrders' => $purchaseOrders,
-            'suppliers'      => Supplier::active()->ofParty('supplier')->orderBy('company_name')->get()->pluck('label', 'id'),
-            'statuses'       => PurchaseOrder::STATUSES,
-            'filters'        => $request->only('search', 'status', 'supplier_id', 'sort', 'direction'),
+            'suppliers' => Supplier::active()->ofParty('supplier')->orderBy('company_name')->get()->pluck('label', 'id'),
+            'statuses' => PurchaseOrder::STATUSES,
+            'filters' => $request->only('search', 'status', 'supplier_id', 'sort', 'direction'),
         ]);
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('procurement.purchase-orders.create', $this->formData());
+        $prefillProduct = $request->filled('product_id')
+            ? Product::query()->find($request->integer('product_id'))
+            : null;
+
+        return view('procurement.purchase-orders.create', $this->formData() + [
+            'prefillProduct' => $prefillProduct,
+        ]);
     }
 
     public function store(StorePurchaseOrderRequest $request): RedirectResponse
     {
-        $po = $this->purchaseOrders->create($request->validated());
+        try {
+            $po = $this->purchaseOrders->create($request->validated());
+        } catch (ValidationException $e) {
+            return back()
+                ->withInput()
+                ->withErrors($e->errors())
+                ->with('warning', collect($e->errors())->flatten()->first());
+        }
 
         return redirect()
             ->route('procurement.purchase-orders.index')
@@ -74,7 +87,7 @@ class PurchaseOrderController extends Controller implements HasMiddleware
     {
         return view('procurement.purchase-orders.show', [
             'purchaseOrder' => $purchaseOrder->load([
-                'orderConfirmation.buyer', 'orderConfirmation.category', 'supplier.agent',
+                'orderConfirmation.buyer', 'orderConfirmation.category', 'supplier.agent', 'supplier.primaryContact',
                 'items' => fn ($q) => $q->with(['product', 'colours.sizes', 'sourceItem']),
                 'timelineEntries',
                 'creator', 'updater',
@@ -91,7 +104,14 @@ class PurchaseOrderController extends Controller implements HasMiddleware
 
     public function update(UpdatePurchaseOrderRequest $request, PurchaseOrder $purchaseOrder): RedirectResponse
     {
-        $this->purchaseOrders->update($purchaseOrder, $request->validated());
+        try {
+            $this->purchaseOrders->update($purchaseOrder, $request->validated());
+        } catch (ValidationException $e) {
+            return back()
+                ->withInput()
+                ->withErrors($e->errors())
+                ->with('warning', collect($e->errors())->flatten()->first());
+        }
 
         return redirect()
             ->route('procurement.purchase-orders.index')
@@ -130,7 +150,7 @@ class PurchaseOrderController extends Controller implements HasMiddleware
                 ->get(['id', 'oc_num', 'buyer_id', 'category_id', 'document_format_id', 'delivery_details', 'packing_details']),
 
             'suppliers' => Supplier::active()->ofParty('supplier')->orderBy('company_name')->get()->pluck('label', 'id'),
-            'statuses'  => ['draft' => 'Draft', 'raised' => 'Raised'],
+            'statuses' => ['draft' => 'Draft', 'raised' => 'Raised'],
         ];
     }
 }

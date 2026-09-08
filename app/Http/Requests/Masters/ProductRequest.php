@@ -80,6 +80,7 @@ abstract class ProductRequest extends FormRequest
             'status'                  => ['required', Rule::in(['active', 'inactive'])],
             'item_kind'               => ['nullable', Rule::in(array_keys(\App\Models\Product::KINDS))],
             'qty_on_hand'             => ['nullable', 'numeric', 'min:0', 'max:999999999.999'],
+            'reorder_level'           => ['nullable', 'numeric', 'min:0', 'max:999999999.999'],
             'remarks'                 => ['nullable', 'string', 'max:1000'],
             'comments'                => ['nullable', 'string', 'max:1000'],
 

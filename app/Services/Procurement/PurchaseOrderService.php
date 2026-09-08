@@ -6,6 +6,7 @@ use App\Models\NumberSeries;
 use App\Models\PurchaseOrder;
 use App\Services\NumberSeriesService;
 use App\Support\FinancialYear;
+use App\Support\StyleCostingGate;
 use Illuminate\Support\Facades\DB;
 
 class PurchaseOrderService
@@ -26,6 +27,7 @@ class PurchaseOrderService
 
             $this->syncItems($po, $data['items'] ?? []);
             $this->syncTimeline($po, $data['timeline'] ?? []);
+            $this->assertRaisedHasApprovedCosting($po);
 
             return $po;
         });
@@ -41,6 +43,7 @@ class PurchaseOrderService
 
             $this->syncItems($po, $data['items'] ?? []);
             $this->syncTimeline($po, $data['timeline'] ?? []);
+            $this->assertRaisedHasApprovedCosting($po);
 
             return $po->refresh();
         });
@@ -146,6 +149,17 @@ class PurchaseOrderService
                 'qty'        => filled($row['qty'] ?? null) ? (int) $row['qty'] : null,
                 'sort_order' => $index,
             ]);
+        }
+    }
+
+    private function assertRaisedHasApprovedCosting(PurchaseOrder $po): void
+    {
+        if ($po->status !== 'raised') {
+            return;
+        }
+
+        foreach ($po->fresh('items')->items as $item) {
+            StyleCostingGate::assertDesignApproved($item->design_no);
         }
     }
 }

@@ -120,6 +120,7 @@ class InquiryController extends Controller implements HasMiddleware
                 'buyer', 'category', 'format', 'agent', 'currency', 'source',
                 'items' => fn ($q) => $q->with(['product', 'supplier', 'fobValue', 'colours.sizes', 'bomLines']),
                 'followUps.creator',
+                'orderConfirmations',
                 'creator', 'updater',
             ]),
         ]);
