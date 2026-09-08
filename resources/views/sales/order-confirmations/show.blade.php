@@ -73,7 +73,29 @@
             // and ExportDocumentController::raiseFromOrderConfirmation().
             $canRaise = auth()->user()->can('order-confirmation.approve') && $orderConfirmation->status === 'confirmed';
             $canShip = auth()->user()->can('export-document.create') && $orderConfirmation->status === 'confirmed';
+            $canOneClickInvoice = auth()->user()->can('export-document.create')
+                && $orderConfirmation->items->contains(fn ($i) => blank($i->export_document_id))
+                && (
+                    $orderConfirmation->status === 'confirmed'
+                    || auth()->user()->can('order-confirmation.approve')
+                    || auth()->user()->can('order-confirmation.edit')
+                );
         @endphp
+
+        @if($canOneClickInvoice)
+            <div class="alert alert-primary d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <div class="small mb-0">
+                    <strong>One-click invoice.</strong>
+                    Confirm this order if needed, copy all unshipped lines to an Export Document, and open the invoice tab — no re-typing.
+                </div>
+                <form action="{{ route('sales.order-confirmations.raise-invoice', $orderConfirmation) }}" method="POST" class="m-0">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-primary">
+                        <i class="bi bi-receipt me-1"></i> Raise invoice (all lines)
+                    </button>
+                </form>
+            </div>
+        @endif
 
         @if($orderConfirmation->items->isNotEmpty())
             <h6 class="fw-semibold mb-2">Items</h6>
@@ -98,7 +120,9 @@
                                 <th style="width:32px" title="Raise PO"><i class="bi bi-cart-check"></i></th>
                             @endif
                             @if($canShip)
-                                <th style="width:32px" title="Raise Export Document"><i class="bi bi-box-seam"></i></th>
+                                <th style="width:32px" title="Raise Export Document">
+                                    <input type="checkbox" class="form-check-input" id="js-select-all-export" title="Select all unshipped">
+                                </th>
                             @endif
                             <th>#</th>
                             <th>Design No.</th>
@@ -107,9 +131,9 @@
                             <th>Colour / Size</th>
                             <th>Unit</th>
                             <th class="text-end">FOB</th>
-                            @if(auth()->user()?->hasRole('Super Admin'))
+                            @can('cost-price.view')
                                 <th class="text-end text-body-secondary">Cost Price</th>
-                            @endif
+                            @endcan
                             <th class="text-end">Qty</th>
                             <th class="text-end">Amount</th>
                             <th>PO</th>
@@ -135,7 +159,7 @@
                                         @if($item->isShipped())
                                             <i class="bi bi-check-circle-fill text-success" title="Already on an Export Document"></i>
                                         @else
-                                            <input type="checkbox" name="item_ids[]" value="{{ $item->id }}" class="form-check-input" form="raise-export-form">
+                                            <input type="checkbox" name="item_ids[]" value="{{ $item->id }}" class="form-check-input js-export-item" form="raise-export-form">
                                         @endif
                                     </td>
                                 @endif
@@ -167,9 +191,9 @@
                                 </td>
                                 <td>{{ $item->unit ?? '—' }}</td>
                                 <td class="text-end">{{ $item->price !== null ? number_format((float) $item->price, 2) : '—' }}</td>
-                                @if(auth()->user()?->hasRole('Super Admin'))
+                                @can('cost-price.view')
                                     <td class="text-end text-body-secondary">{{ $item->cost_price !== null ? number_format((float) $item->cost_price, 2) : '—' }}</td>
-                                @endif
+                                @endcan
                                 <td class="text-end">{{ $item->qty }}</td>
                                 <td class="text-end">{{ number_format((float) $item->amount, 2) }}</td>
                                 <td>
@@ -217,7 +241,10 @@
                         <button type="submit" form="raise-export-form" class="btn btn-sm btn-info">
                             <i class="bi bi-box-seam me-1"></i> Raise Export Document for Selected
                         </button>
-                        <div class="form-text">Creates one Export Document with the full document checklist.</div>
+                        <button type="submit" form="raise-export-form" name="raise_all" value="1" class="btn btn-sm btn-outline-info">
+                            Raise all unshipped
+                        </button>
+                        <div class="form-text">Creates one Export Document. Invoice no. and shipment date copy from this OC.</div>
                     </div>
                 @endif
             </div>
@@ -279,4 +306,11 @@
             </dd>
         </dl>
     </x-ui.card>
+    @push('scripts')
+    <script>
+        document.getElementById('js-select-all-export')?.addEventListener('change', function () {
+            document.querySelectorAll('.js-export-item').forEach((el) => { el.checked = this.checked; });
+        });
+    </script>
+    @endpush
 </x-app-layout>

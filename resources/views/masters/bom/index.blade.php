@@ -29,6 +29,7 @@
                         <tr>
                             <th>Material</th>
                             <th>Type</th>
+                            <th>Sizes</th>
                             <th class="text-end">Per pc</th>
                             <th class="text-end">Required</th>
                             <th class="text-end">In stock</th>
@@ -41,6 +42,7 @@
                             <tr>
                                 <td class="fw-semibold">{{ $row['name'] }}</td>
                                 <td>{{ $row['kind_label'] }}</td>
+                                <td class="small">{{ $row['size_range'] ?? 'All sizes' }}</td>
                                 <td class="text-end">{{ number_format($row['qty_per_pc'], 4) }} {{ $row['unit'] }}</td>
                                 <td class="text-end">{{ number_format($row['required_qty'], 3) }}</td>
                                 <td class="text-end">{{ number_format($row['qty_on_hand'], 3) }}</td>
@@ -51,7 +53,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-body-secondary py-4">
+                                <td colspan="8" class="text-center text-body-secondary py-4">
                                     @if ($selected)
                                         No BOM on this style. Open the style and add fabric / accessories.
                                     @else
@@ -76,6 +78,7 @@
                         <th>Name</th>
                         <th>Buyer</th>
                         <th>BOM lines</th>
+                        <th class="text-end">₹ / pc</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -87,11 +90,24 @@
                             <td>{{ $style->buyer?->company_name ?? '—' }}</td>
                             <td>{{ $style->materials->count() }}</td>
                             <td class="text-end">
+                                @php $approvedCosting = $style->latestApprovedCosting(); @endphp
+                                @if($approvedCosting)
+                                    <a href="{{ route('style-costings.show', $approvedCosting) }}" class="text-decoration-none fw-semibold">
+                                        {{ number_format((float) $approvedCosting->total_cost_per_pc, 2) }}
+                                    </a>
+                                @else
+                                    <span class="text-body-secondary">—</span>
+                                @endif
+                            </td>
+                            <td class="text-end text-nowrap">
+                                @can('style-costing.create')
+                                    <a href="{{ route('style-costings.create', ['style_id' => $style->id]) }}" class="btn btn-sm btn-outline-secondary">Cost this style</a>
+                                @endcan
                                 <a href="{{ route('masters.styles.edit', $style) }}" class="btn btn-sm btn-outline-primary">Edit BOM</a>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="text-center py-4 text-body-secondary">No styles.</td></tr>
+                        <tr><td colspan="6" class="text-center py-4 text-body-secondary">No styles.</td></tr>
                     @endforelse
                 </tbody>
             </table>

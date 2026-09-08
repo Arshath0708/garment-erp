@@ -3,6 +3,17 @@
 
     <x-ui.card :title="$document->doc_num" variant="primary">
         <x-slot name="actions">
+            @can('tally.post')
+                <form action="{{ route('finance.tally.export-documents', $document) }}" method="POST" class="d-inline">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">Tally XML</button>
+                </form>
+                <form action="{{ route('finance.tally.export-documents', $document) }}" method="POST" class="d-inline">
+                    @csrf
+                    <input type="hidden" name="mode" value="post">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Post to Tally</button>
+                </form>
+            @endcan
             @can('export-document.edit')
                 <a href="{{ route('export.documents.edit', $document) }}" class="btn btn-sm btn-primary">
                     <i class="bi bi-pencil me-1"></i> Edit
@@ -21,7 +32,60 @@
             @if($document->shipment_date)
                 <span class="text-body-secondary small">&middot; {{ $document->shipment_date->format('d M Y') }}</span>
             @endif
+            @if($document->invoice_no)
+                <span class="text-body-secondary small">&middot; Invoice {{ $document->invoice_no }}</span>
+            @endif
         </div>
+
+        @can('export-document.generate')
+            <div class="alert alert-success d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <div class="small mb-0">
+                    <strong>Export invoice ready.</strong>
+                    Buyer, items, prices and refs came from the sales order — download without re-typing.
+                </div>
+                <a href="{{ route('export.documents.export-invoice', [$document, 'for-buyer']) }}" class="btn btn-sm btn-success">
+                    <i class="bi bi-download me-1"></i> Download invoice (buyer)
+                </a>
+            </div>
+        @endcan
+
+        @canany(['tally.edit', 'tally.view'])
+            <div class="border rounded p-3 mb-3 bg-body-tertiary">
+                <h6 class="fw-semibold mb-2">GST e-invoice (portal)</h6>
+                <p class="small text-body-secondary mb-2">
+                    Generate the e-invoice PDF, upload it on the GST portal, then paste IRN / Ack here.
+                    Tally XML puts the IRN in the sales voucher narration. The portal itself is not called from this ERP yet.
+                </p>
+                @can('tally.edit')
+                    <form action="{{ route('finance.tally.gst-irn', $document) }}" method="POST" class="row g-2 align-items-end">
+                        @csrf
+                        @method('PUT')
+                        <div class="col-md-5">
+                            <label class="form-label small mb-0" for="gst_irn">IRN</label>
+                            <input type="text" name="gst_irn" id="gst_irn" class="form-control form-control-sm"
+                                   value="{{ old('gst_irn', $document->gst_irn) }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small mb-0" for="gst_ack_no">Ack no.</label>
+                            <input type="text" name="gst_ack_no" id="gst_ack_no" class="form-control form-control-sm"
+                                   value="{{ old('gst_ack_no', $document->gst_ack_no) }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small mb-0" for="gst_ack_date">Ack date</label>
+                            <input type="date" name="gst_ack_date" id="gst_ack_date" class="form-control form-control-sm"
+                                   value="{{ old('gst_ack_date', optional($document->gst_ack_date)->format('Y-m-d')) }}">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-sm btn-primary">Save IRN</button>
+                        </div>
+                    </form>
+                @else
+                    <p class="small mb-0">IRN: {{ $document->gst_irn ?: '—' }}
+                        @if($document->gst_ack_no) · Ack {{ $document->gst_ack_no }} @endif
+                    </p>
+                @endcan
+            </div>
+        @endcanany
 
         @php
             $canEdit = auth()->user()->can('export-document.edit');
@@ -675,6 +739,9 @@
     @push('scripts')
     <script>
     document.addEventListener('DOMContentLoaded', function () {
+        if (new URLSearchParams(window.location.search).get('tab') === 'generate') {
+            document.querySelector('[data-bs-target="#tab-generate"]')?.click();
+        }
         document.querySelectorAll('.js-checklist-form').forEach(function (form) {
             const btn = form.querySelector('.js-ocr-extract');
             if (! btn) return;

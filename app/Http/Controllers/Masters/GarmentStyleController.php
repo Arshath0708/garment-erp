@@ -65,6 +65,8 @@ class GarmentStyleController extends Controller
             'materials.*.product_id'   => ['nullable', 'exists:products,id'],
             'materials.*.qty_per_pc'   => ['nullable', 'numeric', 'min:0'],
             'materials.*.unit'         => ['nullable', 'string', 'max:20'],
+            'materials.*.size_from'    => ['nullable', 'string', 'max:10'],
+            'materials.*.size_to'      => ['nullable', 'string', 'max:10'],
         ]);
 
         if ($request->hasFile('logo')) {
@@ -85,7 +87,7 @@ class GarmentStyleController extends Controller
 
     public function show(GarmentStyle $style): View
     {
-        $style->load(['buyer', 'category', 'productionOrders', 'materials.product', 'comments.user']);
+        $style->load(['buyer', 'category', 'productionOrders', 'materials.product', 'comments.user', 'costings', 'stock', 'bomApprover']);
 
         return view('masters.styles.show', compact('style'));
     }
@@ -122,6 +124,8 @@ class GarmentStyleController extends Controller
             'materials.*.product_id'   => ['nullable', 'exists:products,id'],
             'materials.*.qty_per_pc'   => ['nullable', 'numeric', 'min:0'],
             'materials.*.unit'         => ['nullable', 'string', 'max:20'],
+            'materials.*.size_from'    => ['nullable', 'string', 'max:10'],
+            'materials.*.size_to'      => ['nullable', 'string', 'max:10'],
         ]);
 
         if ($request->hasFile('logo')) {
@@ -153,6 +157,39 @@ class GarmentStyleController extends Controller
         ]);
 
         return redirect()->route('masters.styles.show', $style->id)->with('success', 'Style comment added successfully!');
+    }
+
+    public function approveBom(GarmentStyle $style): RedirectResponse
+    {
+        $style->load('materials.product');
+
+        $style->update([
+            'bom_approved_at' => now(),
+            'bom_approved_by' => auth()->id(),
+        ]);
+
+        $style->bomSnapshots()->updateOrCreate(
+            [
+                'garment_style_id' => $style->id,
+                'version'          => (int) ($style->bom_version ?: 1),
+            ],
+            [
+                'materials'   => $style->materials->map(fn ($line) => [
+                    'product_id' => $line->product_id,
+                    'name'       => $line->product?->name,
+                    'qty_per_pc' => (float) $line->qty_per_pc,
+                    'unit'       => $line->unit,
+                    'size_from'  => $line->size_from,
+                    'size_to'    => $line->size_to,
+                ])->values()->all(),
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
+            ]
+        );
+
+        return redirect()
+            ->route('masters.styles.show', $style)
+            ->with('success', "BOM v{$style->bom_version} approved.");
     }
 
     public function destroy(GarmentStyle $style): RedirectResponse
@@ -199,6 +236,9 @@ class GarmentStyleController extends Controller
      */
     private function syncMaterials(GarmentStyle $style, array $rows): void
     {
+        $wasApproved = $style->isBomApproved();
+        $before = $this->materialsFingerprint($style);
+
         $style->materials()->delete();
         $order = 0;
         foreach (array_values($rows) as $row) {
@@ -209,8 +249,33 @@ class GarmentStyleController extends Controller
                 'product_id' => $row['product_id'],
                 'qty_per_pc' => $row['qty_per_pc'] ?? 0,
                 'unit'       => $row['unit'] ?? null,
+                'size_from'  => ($row['size_from'] ?? null) ?: null,
+                'size_to'    => ($row['size_to'] ?? null) ?: null,
                 'sort_order' => $order++,
             ]);
         }
+
+        if ($wasApproved && $before !== $this->materialsFingerprint($style->fresh())) {
+            $style->update([
+                'bom_version'     => ((int) $style->bom_version) + 1,
+                'bom_approved_at' => null,
+                'bom_approved_by' => null,
+            ]);
+        }
+    }
+
+    private function materialsFingerprint(GarmentStyle $style): string
+    {
+        $rows = $style->materials()
+            ->orderBy('sort_order')
+            ->get(['product_id', 'qty_per_pc', 'unit', 'size_from', 'size_to']);
+
+        return md5(json_encode($rows->map(fn ($row) => [
+            (int) $row->product_id,
+            round((float) $row->qty_per_pc, 4),
+            (string) $row->unit,
+            (string) $row->size_from,
+            (string) $row->size_to,
+        ])->values()->all()));
     }
 }

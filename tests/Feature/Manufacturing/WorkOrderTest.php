@@ -195,14 +195,37 @@ class WorkOrderTest extends TestCase
         $this->assertSame('2026-10-21', $workOrder->fresh('steps')->step('fabric_inward')?->planned_date->toDateString());
     }
 
+    public function test_cannot_release_work_order_without_approved_style_costing(): void
+    {
+        $style = GarmentStyle::create([
+            'style_number' => 'ST-WO-NOCOST',
+            'name'         => 'Unsigned Tee',
+            'status'       => 'Active',
+            'target_qty'   => 100,
+        ]);
+        $workOrder = $this->makeWorkOrder($style);
+
+        $this->actingAs($this->user)
+            ->from(route('work-orders.show', $workOrder))
+            ->post(route('work-orders.release', $workOrder))
+            ->assertRedirect(route('work-orders.show', $workOrder))
+            ->assertSessionHasErrors('garment_style_id')
+            ->assertSessionHas('warning');
+
+        $this->assertSame('draft', $workOrder->fresh()->status);
+    }
+
     private function style(): GarmentStyle
     {
-        return GarmentStyle::create([
+        $style = GarmentStyle::create([
             'style_number' => 'ST-WO-'.uniqid(),
             'name'         => 'Work Order Tee',
             'status'       => 'Active',
             'target_qty'   => 500,
         ]);
+        $this->approveStyleCosting($style);
+
+        return $style;
     }
 
     /**

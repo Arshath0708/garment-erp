@@ -315,6 +315,9 @@
                      :placeholder="false" />
         <x-ui.field name="qty_on_hand" label="Qty on hand" :value="$product?->qty_on_hand ?? 0" horizontal
                     type="number" step="0.001" min="0" placeholder="Current stock" />
+        <x-ui.field name="reorder_level" label="Reorder level" :value="$product?->reorder_level ?? 0" horizontal
+                    type="number" step="0.001" min="0" placeholder="Alert when stock falls to this"
+                    hint="Inventory highlights the row and offers Raise PO. Does not auto-create a PO." />
     </div>
 </x-ui.form-section>
 

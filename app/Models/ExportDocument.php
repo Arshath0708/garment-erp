@@ -57,8 +57,12 @@ class ExportDocument extends Model
         'shipment_date',
         'remarks',
         'status',
+        'fg_posted_qty',
 
         'invoice_no',
+        'gst_irn',
+        'gst_ack_no',
+        'gst_ack_date',
         'invoice_date',
         'exporter_ref',
 
@@ -111,6 +115,7 @@ class ExportDocument extends Model
         return [
             'shipment_date'      => 'date',
             'invoice_date'       => 'date',
+            'gst_ack_date'       => 'date',
             'buyer_ref_date'     => 'date',
             'total_cartons'      => 'integer',
             'freight_amount'     => 'decimal:2',

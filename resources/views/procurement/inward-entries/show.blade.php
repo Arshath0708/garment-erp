@@ -239,6 +239,78 @@
             </div>
         </div>
 
+        @if($inwardEntry->status === 'approved')
+            <div class="card border-primary mb-4">
+                <div class="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="bi bi-box-arrow-in-down me-2"></i>Stores receive
+                    </h6>
+                    @if($inwardEntry->isStoresReceived())
+                        <span class="badge text-bg-success"><i class="bi bi-check-circle me-1"></i>In stock</span>
+                    @else
+                        <span class="badge text-bg-info">Awaiting stores</span>
+                    @endif
+                </div>
+                <div class="card-body">
+                    @if($inwardEntry->isStoresReceived())
+                        <p class="mb-0 small text-body-secondary">
+                            Received into stock
+                            {{ $inwardEntry->stores_received_at?->format('d M Y, H:i') }}
+                            @if($inwardEntry->storesReceiver)
+                                by {{ $inwardEntry->storesReceiver->name }}
+                            @endif
+                        </p>
+                    @else
+                        <p class="small text-body-secondary">QC has passed. Stores posts passed qty into a godown as lot/roll rows (and onto item stock). This is a separate step from inspection.</p>
+                        @can('inward-entry.edit')
+                            <form action="{{ route('procurement.inward-entries.stores-receive', $inwardEntry) }}" method="POST" class="vstack gap-3">
+                                @csrf
+                                <div>
+                                    <label class="form-label small mb-1">Godown</label>
+                                    <select name="warehouse_id" class="form-select form-select-sm" required>
+                                        @forelse($warehouses ?? [] as $wh)
+                                            <option value="{{ $wh->id }}" @selected(($defaultWarehouseId ?? null) == $wh->id)>{{ $wh->name }} ({{ $wh->code }})</option>
+                                        @empty
+                                            <option value="">No godowns — create one first</option>
+                                        @endforelse
+                                    </select>
+                                </div>
+                                @if($inwardEntry->items->isNotEmpty())
+                                    <div>
+                                        <label class="form-label small mb-1">Lot / roll no (optional)</label>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm mb-0">
+                                                <thead><tr><th>Item</th><th>Passed</th><th>Lot / roll</th></tr></thead>
+                                                <tbody>
+                                                    @foreach($inwardEntry->items as $line)
+                                                        @php $passQty = (float) ($line->passed_qty ?? $line->received_qty ?? 0); @endphp
+                                                        @if($line->product_id && $passQty > 0)
+                                                            <tr>
+                                                                <td>{{ $line->product?->name ?? '—' }}</td>
+                                                                <td>{{ number_format($passQty, 3) }}</td>
+                                                                <td>
+                                                                    <input type="text" name="lot_numbers[{{ $line->id }}]" class="form-control form-control-sm" maxlength="80" placeholder="Auto from inward no">
+                                                                </td>
+                                                            </tr>
+                                                        @endif
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                @endif
+                                <button type="submit" class="btn btn-primary" @disabled(($warehouses ?? collect())->isEmpty())>
+                                    <i class="bi bi-box-seam me-1"></i> Receive into stock
+                                </button>
+                            </form>
+                        @else
+                            <p class="mb-0 small text-body-secondary">Requires <code>inward-entry.edit</code>.</p>
+                        @endcan
+                    @endif
+                </div>
+            </div>
+        @endif
+
         <h6 class="fw-semibold mb-2">Module Connections</h6>
         <div class="d-flex flex-wrap gap-2 mb-4">
             <span class="badge text-bg-light border fw-normal">PO Module — status updated to {{ $inwardEntry->purchaseOrder?->statusLabel() }}</span>

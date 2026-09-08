@@ -8,6 +8,7 @@ use App\Models\OrderConfirmation;
 use App\Models\PurchaseOrder;
 use App\Services\NumberSeriesService;
 use App\Support\FinancialYear;
+use App\Support\StyleCostingGate;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -77,6 +78,8 @@ class OrderConfirmationService
                 'currency_id'             => $inquiry->currency_id,
                 'delivery_details'        => $inquiry->delivery_details,
                 'packing_details'         => $inquiry->packing_details,
+                'shipment_date'           => $inquiry->expected_shipment_date,
+                'remarks'                 => $inquiry->remarks,
                 'status'                  => 'draft',
             ]);
             $this->assignNumber($oc);
@@ -150,6 +153,15 @@ class OrderConfirmationService
 
             $financialYear = FinancialYear::current();
             $purchaseOrders = new Collection();
+
+            foreach ($items as $supplierItems) {
+                foreach ($supplierItems as $ocItem) {
+                    $style = \App\Models\GarmentStyle::resolveFromDesignNo($ocItem->design_no);
+                    if ($style && ! $style->latestApprovedCosting()) {
+                        StyleCostingGate::failRaise($style);
+                    }
+                }
+            }
 
             foreach ($items as $supplierId => $supplierItems) {
                 $po = new PurchaseOrder([

@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
+use RuntimeException;
 
 class InwardEntryController extends Controller implements HasMiddleware
 {
@@ -32,7 +33,7 @@ class InwardEntryController extends Controller implements HasMiddleware
         return [
             new Middleware('permission:inward-entry.view', only: ['index', 'show', 'poDetails']),
             new Middleware('permission:inward-entry.create', only: ['create', 'store']),
-            new Middleware('permission:inward-entry.edit', only: ['edit', 'update']),
+            new Middleware('permission:inward-entry.edit', only: ['edit', 'update', 'receiveAtStore']),
             new Middleware('permission:inward-entry.delete', only: ['destroy']),
             new Middleware('permission:inward-entry.approve', only: ['approve']),
         ];
@@ -92,9 +93,15 @@ class InwardEntryController extends Controller implements HasMiddleware
                 'items.product',
                 'items.purchaseOrderItem',
                 'qcInspector',
+                'storesReceiver',
                 'creator',
                 'updater',
             ]),
+            'warehouses' => \App\Models\Warehouse::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(),
+            'defaultWarehouseId' => \App\Models\Warehouse::defaultFabric()?->id,
         ]);
     }
 
@@ -125,6 +132,28 @@ class InwardEntryController extends Controller implements HasMiddleware
         return redirect()
             ->route('procurement.inward-entries.show', $inwardEntry)
             ->with('success', "Goods Inward receipt \"{$inwardEntry->inward_no}\" inspection completed: {$statusText}.");
+    }
+
+    public function receiveAtStore(InwardEntry $inwardEntry): RedirectResponse
+    {
+        $data = request()->validate([
+            'warehouse_id' => ['nullable', 'integer', 'exists:warehouses,id'],
+            'lot_numbers' => ['nullable', 'array'],
+            'lot_numbers.*' => ['nullable', 'string', 'max:80'],
+        ]);
+
+        try {
+            $this->inwardEntries->receiveAtStore($inwardEntry, (int) request()->user()->id, [
+                'warehouse_id' => isset($data['warehouse_id']) ? (int) $data['warehouse_id'] : null,
+                'lot_numbers' => $data['lot_numbers'] ?? [],
+            ]);
+        } catch (RuntimeException $e) {
+            return back()->with('warning', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('procurement.inward-entries.show', $inwardEntry)
+            ->with('success', "Stores received \"{$inwardEntry->inward_no}\" into stock (godown + lot).");
     }
 
     public function destroy(InwardEntry $inwardEntry): RedirectResponse

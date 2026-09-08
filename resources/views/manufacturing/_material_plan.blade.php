@@ -23,6 +23,9 @@
                     <tr>
                         <td>
                             {{ $row['name'] }}
+                            @if(! empty($row['size_range']) && $row['size_range'] !== 'All sizes')
+                                <div class="small text-body-secondary">{{ $row['size_range'] }}</div>
+                            @endif
                             <input type="hidden" name="materials[{{ $i }}][product_id]" value="{{ $row['product_id'] }}">
                         </td>
                         <td><span class="badge text-bg-light border">{{ $row['kind_label'] }}</span></td>

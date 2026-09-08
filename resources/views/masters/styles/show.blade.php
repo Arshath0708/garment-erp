@@ -103,8 +103,22 @@
             </div>
 
             <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-body fw-bold py-3 border-0">
-                    <i class="bi bi-box-seam me-2 text-primary"></i> Fabric &amp; accessories BOM
+                <div class="card-header bg-body fw-bold py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span>
+                        <i class="bi bi-box-seam me-2 text-primary"></i> Fabric &amp; accessories BOM
+                        <span class="badge text-bg-light border ms-1">v{{ $style->bom_version ?: 1 }}</span>
+                        @if($style->isBomApproved())
+                            <span class="badge text-bg-success">Approved {{ $style->bom_approved_at?->format('d M Y') }}{{ $style->bomApprover ? ' · '.$style->bomApprover->name : '' }}</span>
+                        @else
+                            <span class="badge text-bg-secondary">Not approved</span>
+                        @endif
+                    </span>
+                    @if(! $style->isBomApproved())
+                        <form action="{{ route('masters.styles.approve-bom', $style) }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-success">Approve BOM</button>
+                        </form>
+                    @endif
                 </div>
                 <div class="table-responsive">
                     <table class="table align-middle mb-0">
@@ -112,6 +126,7 @@
                             <tr>
                                 <th>Item</th>
                                 <th>Type</th>
+                                <th>Sizes</th>
                                 <th class="text-end">Qty / pc</th>
                                 <th>Unit</th>
                                 <th class="text-end">In stock</th>
@@ -122,12 +137,13 @@
                                 <tr>
                                     <td>{{ $line->product?->name ?? '—' }}</td>
                                     <td>{{ \App\Models\Product::KINDS[$line->product->item_kind ?? 'other'] ?? '' }}</td>
+                                    <td class="small">{{ $line->sizeRangeLabel() }}</td>
                                     <td class="text-end">{{ number_format((float) $line->qty_per_pc, 4) }}</td>
                                     <td>{{ $line->unit ?: $line->product?->unit_po }}</td>
                                     <td class="text-end">{{ number_format((float) ($line->product?->qty_on_hand ?? 0), 3) }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5" class="text-body-secondary text-center py-3">No BOM yet. Edit the style to add fabric and accessories.</td></tr>
+                                <tr><td colspan="6" class="text-body-secondary text-center py-3">No BOM yet. Edit the style to add fabric and accessories.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -172,6 +188,34 @@
         </div>
 
         <div class="col-lg-4">
+            @can('style-costing.view')
+                @php $approvedCosting = $style->latestApprovedCosting(); @endphp
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body">
+                        <h6 class="fw-bold text-body-secondary mb-2">Approved cost / pc</h6>
+                        @if($approvedCosting)
+                            <p class="display-6 fw-bold text-primary mb-2">₹ {{ number_format((float) $approvedCosting->total_cost_per_pc, 2) }}</p>
+                            <p class="small text-body-secondary mb-3">
+                                {{ $approvedCosting->costing_num }}
+                                · signed {{ $approvedCosting->approved_at?->format('d M Y') }}
+                            </p>
+                            <a href="{{ route('style-costings.show', $approvedCosting) }}" class="btn btn-sm btn-outline-primary">
+                                Open costing sheet
+                            </a>
+                        @else
+                            <p class="text-body-secondary small mb-3">No signed costing yet. BOM qty × rate plus cut-make.</p>
+                        @endif
+                        @can('style-costing.create')
+                            <a href="{{ route('style-costings.create', ['style_id' => $style->id]) }}" class="btn btn-sm btn-primary {{ $approvedCosting ? 'ms-1' : '' }}">
+                                {{ $approvedCosting ? 'New costing' : 'Cost this style' }}
+                            </a>
+                        @endcan
+                        <p class="small text-body-secondary mt-3 mb-0">Ready FG stock:
+                            <strong>{{ number_format($style->stock?->qty_on_hand ?? 0) }}</strong> pcs
+                        </p>
+                    </div>
+                </div>
+            @endcan
             <div class="card shadow-sm border-0 p-3 text-center">
                 <h6 class="fw-bold text-body-secondary mb-3">Garment Reference / Logo</h6>
                 @if ($style->logo_path)

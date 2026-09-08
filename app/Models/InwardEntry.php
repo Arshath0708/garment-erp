@@ -37,6 +37,8 @@ class InwardEntry extends Model
         'status',
         'qc_inspected_at',
         'qc_inspected_by',
+        'stores_received_at',
+        'stores_received_by',
     ];
 
     protected function casts(): array
@@ -44,7 +46,8 @@ class InwardEntry extends Model
         return [
             'inward_date'     => 'date',
             'challan_date'    => 'date',
-            'qc_inspected_at' => 'datetime',
+            'qc_inspected_at'     => 'datetime',
+            'stores_received_at'  => 'datetime',
         ];
     }
 
@@ -72,6 +75,21 @@ class InwardEntry extends Model
     public function qcInspector(): BelongsTo
     {
         return $this->belongsTo(User::class, 'qc_inspected_by');
+    }
+
+    public function storesReceiver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'stores_received_by');
+    }
+
+    public function isStoresReceived(): bool
+    {
+        return $this->stores_received_at !== null;
+    }
+
+    public function awaitingStores(): bool
+    {
+        return $this->status === 'approved' && ! $this->isStoresReceived();
     }
 
     /*

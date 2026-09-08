@@ -34,6 +34,13 @@
             <a href="{{ route('work-orders.index') }}" class="btn btn-sm btn-outline-secondary">Back</a>
         </x-slot>
 
+        @if($workOrder->status !== 'released' && $workOrder->garmentStyle && ! $workOrder->garmentStyle->latestApprovedCosting())
+            <div class="alert alert-warning">
+                Approve a style costing for {{ $workOrder->garmentStyle->style_number }} before releasing this work order.
+                <a href="{{ route('style-costings.create', ['style_id' => $workOrder->garment_style_id]) }}">Open costing</a>
+            </div>
+        @endif
+
         <dl class="row mb-4">
             <dt class="col-sm-3 text-body-secondary fw-normal">Status</dt>
             <dd class="col-sm-9">
@@ -96,6 +103,7 @@
                     <li>
                         <a href="{{ route('manufacturing.edit', $order) }}">{{ $order->order_number }}</a>
                         — {{ $order->current_stage }} ({{ number_format($order->total_qty) }} pcs)
+                        <a href="{{ route('manufacturing.bundle-ticket', $order) }}" class="small ms-1">bundle ticket</a>
                     </li>
                 @endforeach
             </ul>
